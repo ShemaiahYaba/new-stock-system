@@ -1,7 +1,7 @@
 <?php
 /**
- * REPLACE controllers/sales/create/index.php with this
- * Automatically updates coil status to OUT_OF_STOCK when all stock sold
+ * FIXED Sales Create Controller
+ * Replace controllers/sales/create/index.php with this
  */
 
 session_start();
@@ -28,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $customerId = (int)($_POST['customer_id'] ?? 0);
     $coilId = (int)($_POST['coil_id'] ?? 0);
     $stockEntryId = (int)($_POST['stock_entry_id'] ?? 0);
-    $saleType = sanitize($_POST['sale_type'] ?? '');
     $meters = floatval($_POST['meters'] ?? 0);
     $pricePerMeter = floatval($_POST['price_per_meter'] ?? 0);
     $totalAmount = floatval($_POST['total_amount'] ?? 0);
@@ -38,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($customerId <= 0) $errors[] = 'Please select a customer.';
     if ($coilId <= 0) $errors[] = 'Please select a coil.';
     if ($stockEntryId <= 0) $errors[] = 'Please select a stock entry.';
-    if (!in_array($saleType, array_keys(SALE_TYPES))) $errors[] = 'Invalid sale type.';
     if ($meters <= 0) $errors[] = 'Meters must be greater than 0.';
     if ($pricePerMeter <= 0) $errors[] = 'Price per meter must be greater than 0.';
     
@@ -74,36 +72,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
     
+    // Get stock entry status (with fallback)
     $stockStatus = $stockEntry['status'] ?? 'available';
     
-    // Enforce Wholesale Rules
-    if ($saleType === SALE_TYPE_WHOLESALE) {
-        if ($stockStatus !== 'available') {
-            setFlashMessage('error', 'Wholesale sales can only be made from AVAILABLE stock entries.');
-            header('Location: /new-stock-system/index.php?page=sales_create');
-            exit();
-        }
-        
+    // ✅ DETERMINE SALE TYPE FROM STOCK ENTRY STATUS
+    if ($stockStatus === 'available') {
+        $saleType = SALE_TYPE_WHOLESALE;
+        // Validate: Wholesale must use full entry meters
         if ($meters != $stockEntry['meters']) {
             setFlashMessage('error', 'Wholesale sales must use the fixed meter specification (' . number_format($stockEntry['meters'], 2) . 'm).');
             header('Location: /new-stock-system/index.php?page=sales_create');
             exit();
         }
-    }
-    
-    // Enforce Retail Rules
-    if ($saleType === SALE_TYPE_RETAIL) {
-        if ($stockStatus !== 'factory_use') {
-            setFlashMessage('error', 'Retail sales can only be made from FACTORY USE stock entries.');
-            header('Location: /new-stock-system/index.php?page=sales_create');
-            exit();
-        }
-        
+    } elseif ($stockStatus === 'factory_use') {
+        $saleType = SALE_TYPE_RETAIL;
+        // Validate: Retail cannot exceed remaining meters
         if ($meters > $stockEntry['meters_remaining']) {
             setFlashMessage('error', 'Sale meters (' . number_format($meters, 2) . 'm) exceed available meters (' . number_format($stockEntry['meters_remaining'], 2) . 'm).');
             header('Location: /new-stock-system/index.php?page=sales_create');
             exit();
         }
+    } else {
+        setFlashMessage('error', 'Invalid stock entry status.');
+        header('Location: /new-stock-system/index.php?page=sales_create');
+        exit();
     }
     
     // Start transaction
@@ -150,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // ✅ NEW: CHECK AND UPDATE COIL STATUS AUTOMATICALLY
+        // ✅ CHECK AND UPDATE COIL STATUS AUTOMATICALLY
         $stockEntryModel->checkAndUpdateCoilStatus($coilId);
         
         // Commit transaction
