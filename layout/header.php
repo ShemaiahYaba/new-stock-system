@@ -25,6 +25,22 @@ $currentUser = getCurrentUser();
     
     <!-- Custom CSS -->
     <style>
+        .alert {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1100;
+            min-width: 300px;
+            max-width: 90%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        
+        .navbar {
+            z-index: 1030;
+        }
+        
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
@@ -106,6 +122,7 @@ $currentUser = getCurrentUser();
         .alert {
             border-radius: 8px;
             border: none;
+            margin: 0 auto;
         }
         
         @media (max-width: 768px) {
@@ -160,8 +177,8 @@ $currentUser = getCurrentUser();
             'info' => 'alert-info'
         ][$flash['type']] ?? 'alert-info';
         ?>
-        <div class="container-fluid mt-3">
-            <div class="alert <?php echo $alertClass; ?> alert-dismissible fade show" role="alert">
+        <div class="container-fluid">
+            <div class="alert <?php echo $alertClass; ?> alert-dismissible fade show d-inline-block" role="alert" style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 1100;">
                 <?php echo htmlspecialchars($flash['message']); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>

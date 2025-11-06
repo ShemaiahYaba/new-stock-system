@@ -1,6 +1,7 @@
 <?php
 /**
- * Coils List View
+ * Coils List View - FIXED VERSION
+ * Replace views/stock/coils/index.php with this
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -47,6 +48,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         </div>
     </div>
     
+    <!-- Category Filter -->
     <div class="card mb-3">
         <div class="card-body">
             <div class="btn-group" role="group">
@@ -64,11 +66,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         </div>
     </div>
     
+    <!-- Coils Table -->
     <div class="card">
         <div class="card-header">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <i class="bi bi-box-seam"></i> Coils List
+                    <i class="bi bi-box-seam"></i> Coils List (<?php echo $totalCoils; ?> total)
                 </div>
                 <div class="col-md-6">
                     <form method="GET" action="/new-stock-system/index.php" class="d-flex">
@@ -116,20 +119,44 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <td><?php echo htmlspecialchars($coil['name']); ?></td>
                             <td><?php echo htmlspecialchars(COIL_COLORS[$coil['color']] ?? $coil['color']); ?></td>
                             <td><?php echo number_format($coil['net_weight'], 2); ?> kg</td>
-                            <td><span class="badge bg-info"><?php echo STOCK_CATEGORIES[$coil['category']]; ?></span></td>
-                            <td><span class="badge <?php echo getStatusBadgeClass($coil['status']); ?>">
-                                <?php echo STOCK_STATUSES[$coil['status']] ?? $coil['status']; ?>
-                            </span></td>
+                            <td>
+                                <span class="badge bg-info">
+                                    <?php echo STOCK_CATEGORIES[$coil['category']] ?? $coil['category']; ?>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge <?php echo getStatusBadgeClass($coil['status']); ?>">
+                                    <?php echo STOCK_STATUSES[$coil['status']] ?? ucfirst($coil['status']); ?>
+                                </span>
+                            </td>
                             <td><?php echo formatDate($coil['created_at']); ?></td>
                             <td>
-                                <?php
-                                $id = $coil['id'];
-                                $module = 'coils';
-                                $canView = hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_VIEW);
-                                $canEdit = hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT);
-                                $canDelete = hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_DELETE);
-                                include __DIR__ . '/../../../layout/quick_action_buttons.php';
-                                ?>
+                                <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_VIEW)): ?>
+                                <a href="/new-stock-system/index.php?page=coils_view&id=<?php echo $coil['id']; ?>" 
+                                   class="btn btn-info btn-sm" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <?php endif; ?>
+                                
+                                <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT)): ?>
+                                <a href="/new-stock-system/index.php?page=coils_edit&id=<?php echo $coil['id']; ?>" 
+                                   class="btn btn-warning btn-sm" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <?php endif; ?>
+                                
+                                <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_DELETE)): ?>
+                                <form method="POST" 
+                                      action="/new-stock-system/controllers/coils/delete/index.php" 
+                                      style="display: inline;" 
+                                      onsubmit="return confirm('Are you sure you want to delete this coil?');">
+                                    <input type="hidden" name="id" value="<?php echo $coil['id']; ?>">
+                                    <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

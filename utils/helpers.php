@@ -66,9 +66,9 @@ function verifyCsrfToken($token) {
  * @param string $format Output format
  * @return string
  */
-function formatDate($date, $format = DATE_DISPLAY_FORMAT) {
-    if (empty($date)) {
-        return '';
+function formatDate($date, $format = 'Y-m-d H:i:s') {
+    if (empty($date) || $date === '0000-00-00 00:00:00') {
+        return 'N/A';
     }
     
     $timestamp = strtotime($date);
@@ -203,9 +203,13 @@ function truncateText($text, $length = 50, $suffix = '...') {
  * @return string Bootstrap badge class
  */
 function getStatusBadgeClass($status) {
+    if (empty($status)) {
+        $status = STOCK_STATUS_AVAILABLE; // Default to available if status is empty
+    }
+    
     $classes = [
-        STOCK_STATUS_AVAILABLE => 'badge-success',
-        STOCK_STATUS_FACTORY_USE => 'badge-warning',
+        STOCK_STATUS_AVAILABLE => 'bg-success',
+        STOCK_STATUS_FACTORY_USE => 'bg-warning',
         STOCK_STATUS_SOLD => 'badge-danger',
         STOCK_STATUS_RESERVED => 'badge-info',
         SALE_STATUS_PENDING => 'badge-warning',

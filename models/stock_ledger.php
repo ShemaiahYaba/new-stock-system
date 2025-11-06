@@ -187,9 +187,20 @@ class StockLedger {
         $currentBalance = $this->getCurrentBalance($coilId);
         $newBalance = $currentBalance - $meters;
         
-        // Prevent negative balance
-        if ($newBalance < 0) {
-            error_log("Stock ledger: Attempted negative balance for coil $coilId");
+        // Get the stock entry to validate available meters
+        $stockEntryModel = new StockEntry();
+        $stockEntry = $stockEntryModel->findById($stockEntryId);
+        
+        // Prevent outflow if not enough meters available in the stock entry
+        if ($stockEntry && $meters > $stockEntry['meters_remaining']) {
+            error_log("Stock ledger: Attempted to record outflow of {$meters}m but only {$stockEntry['meters_remaining']}m available for entry $stockEntryId");
+            return false;
+        }
+        
+        // Only check for negative balance if we have previous entries
+        $hasEntries = $this->getSummary($coilId)['total_inflow'] > 0;
+        if ($hasEntries && $newBalance < 0) {
+            error_log("Stock ledger: Attempted negative balance for coil $coilId (current: $currentBalance, outflow: $meters)");
             return false;
         }
         

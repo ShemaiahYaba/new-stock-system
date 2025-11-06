@@ -25,20 +25,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     $customerId = (int)($_POST['customer_id'] ?? 0);
-    $coilId = (int)($_POST['coil_id'] ?? 0);
     $stockEntryId = (int)($_POST['stock_entry_id'] ?? 0);
-    $saleType = sanitize($_POST['sale_type'] ?? '');
+    $saleType = 'sale'; // Default sale type
     $meters = floatval($_POST['meters'] ?? 0);
     $pricePerMeter = floatval($_POST['price_per_meter'] ?? 0);
     $totalAmount = floatval($_POST['total_amount'] ?? 0);
+    
+    // Debug log
+    error_log("Form data: " . print_r($_POST, true));
     
     $errors = [];
     
     // Basic validation
     if ($customerId <= 0) $errors[] = 'Please select a customer.';
-    if ($coilId <= 0) $errors[] = 'Please select a coil.';
     if ($stockEntryId <= 0) $errors[] = 'Please select a stock entry.';
-    if (!in_array($saleType, array_keys(SALE_TYPES))) $errors[] = 'Invalid sale type.';
     if ($meters <= 0) $errors[] = 'Meters must be greater than 0.';
     if ($pricePerMeter <= 0) $errors[] = 'Price per meter must be greater than 0.';
     
@@ -69,15 +69,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Get coil from stock entry
-    $coil = $coilModel->findById($stockEntry['coil_id']);
+    $coilId = $stockEntry['coil_id'];
+    $coil = $coilModel->findById($coilId);
     if (!$coil) {
-        setFlashMessage('error', 'Coil not found.');
+        setFlashMessage('error', 'Coil not found for the selected stock entry.');
         header('Location: /new-stock-system/index.php?page=sales_create');
         exit();
     }
     
     // Get stock entry status
     $stockStatus = $stockEntry['status'] ?? 'available';
+    
+    // Set sale type based on stock status
+    $saleType = ($stockStatus === 'factory_use') ? SALE_TYPE_RETAIL : SALE_TYPE_WHOLESALE;
     
     // Enforce Wholesale Rules (Available Stock)
     if ($saleType === SALE_TYPE_WHOLESALE) {
@@ -143,30 +147,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Deduct meters from stock entry
         $newRemaining = $stockEntry['meters_remaining'] - $meters;
         
-        if (!$stockEntryModel->update($stockEntryId, ['meters_remaining' => $newRemaining])) {
+        // Update stock entry with remaining meters
+        $updateData = [
+            'meters_remaining' => $newRemaining,
+            'status' => ($newRemaining <= 0) ? 'sold' : $stockEntry['status']
+        ];
+        
+        if (!$stockEntryModel->update($stockEntryId, $updateData)) {
             throw new Exception('Failed to update stock entry.');
         }
         
-        // Record ledger entry for factory-use stock entries
-        if ($stockStatus === 'factory_use') {
-            $ledgerModel = new StockLedger();
-            $description = "Retail sale to {$customer['name']} ({$meters}m @ ₦{$pricePerMeter}/m)";
-            
-            if (!$ledgerModel->recordOutflow($coilId, $stockEntryId, $meters, $description, 'sale', $saleId, $currentUser['id'])) {
-                throw new Exception('Failed to record ledger entry.');
+        // Record the sale in the ledger for all stock types
+        $ledgerModel = new StockLedger();
+        $description = "Sale to {$customer['name']} ({$meters}m @ ₦{$pricePerMeter}/m)";
+        
+        if (!$ledgerModel->recordOutflow($coilId, $stockEntryId, $meters, $description, 'sale', $saleId, $currentUser['id'])) {
+            error_log("Failed to record ledger entry for sale $saleId");
+            // Don't fail the transaction for ledger issues
+        }
+        
+        
+        // Check if stock is exhausted and update coil status
+        $allEntries = $stockEntryModel->getByCoil($coilId, 1000, 0);
+        $totalRemaining = 0;
+        
+        foreach ($allEntries as $entry) {
+            if ($entry['status'] !== 'sold') {
+                $totalRemaining += $entry['meters_remaining'];
             }
         }
         
-        // Check if stock is exhausted and update coil status
-        if ($newRemaining <= 0) {
-            // Check if all stock entries for this coil are exhausted
-            $allEntries = $stockEntryModel->getByCoil($coilId, 1000, 0);
-            $totalRemaining = array_sum(array_column($allEntries, 'meters_remaining'));
-            
-            if ($totalRemaining <= 0) {
-                // Mark coil as SOLD
-                $coilModel->update($coilId, ['status' => STOCK_STATUS_SOLD]);
-            }
+        if ($totalRemaining <= 0) {
+            // Mark coil as SOLD if no remaining meters in any entry
+            $coilModel->update($coilId, ['status' => STOCK_STATUS_SOLD]);
+            logActivity('Coil marked as sold', "Coil ID: $coilId");
         }
         
         // Commit transaction

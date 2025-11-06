@@ -302,36 +302,97 @@ class Sale {
     }
     
     /**
-     * Search sales
+     * Get filtered sales with pagination
      * 
-     * @param string $query Search query
-     * @param int $limit Limit
-     * @param int $offset Offset
+     * @param string $whereClause WHERE clause with conditions
+     * @param array $params Query parameters
+     * @param int $limit Records per page
+     * @param int $offset Offset for pagination
      * @return array
      */
-    public function search($query, $limit = RECORDS_PER_PAGE, $offset = 0) {
+    public function getFilteredSales($whereClause, $params = [], $limit = RECORDS_PER_PAGE, $offset = 0) {
         try {
             $sql = "SELECT s.*, 
                            c.name as customer_name,
-                           co.code as coil_code, co.name as coil_name
+                           co.code as coil_code, co.name as coil_name,
+                           u.name as created_by_name
                     FROM {$this->table} s
                     LEFT JOIN customers c ON s.customer_id = c.id
                     LEFT JOIN coils co ON s.coil_id = co.id
-                    WHERE s.deleted_at IS NULL 
-                    AND (c.name LIKE :query OR co.code LIKE :query OR co.name LIKE :query)
+                    LEFT JOIN users u ON s.created_by = u.id
+                    $whereClause
                     ORDER BY s.created_at DESC
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':query', "%$query%", PDO::PARAM_STR);
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            $stmt->execute();
             
+            // Bind search parameters
+            foreach ($params as $key => $value) {
+                $paramType = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+                $stmt->bindValue($key, $value, $paramType);
+            }
+            
+            // Bind pagination parameters
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+            
+            $stmt->execute();
             return $stmt->fetchAll();
+            
         } catch (PDOException $e) {
-            error_log("Sale search error: " . $e->getMessage());
-            return [];
+            error_log("Filtered sales fetch error: " . $e->getMessage());
+            throw $e;
         }
+    }
+    
+    /**
+     * Count filtered sales
+     * 
+     * @param string $whereClause WHERE clause with conditions
+     * @param array $params Query parameters
+     * @return int
+     */
+    public function countFilteredSales($whereClause, $params = []) {
+        try {
+            $sql = "SELECT COUNT(*) as total 
+                    FROM {$this->table} s
+                    LEFT JOIN customers c ON s.customer_id = c.id
+                    LEFT JOIN coils co ON s.coil_id = co.id
+                    $whereClause";
+            
+            $stmt = $this->db->prepare($sql);
+            
+            // Bind parameters
+            foreach ($params as $key => $value) {
+                $paramType = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+                $stmt->bindValue($key, $value, $paramType);
+            }
+            
+            $stmt->execute();
+            $result = $stmt->fetch();
+            
+            return (int)($result['total'] ?? 0);
+            
+        } catch (PDOException $e) {
+            error_log("Filtered sales count error: " . $e->getMessage());
+            throw $e;
+        }
+    }
+    
+    /**
+     * Search sales (kept for backward compatibility)
+     * 
+     * @deprecated Use getFilteredSales instead
+     */
+    public function search($query, $limit = RECORDS_PER_PAGE, $offset = 0) {
+        $whereClause = 'WHERE s.deleted_at IS NULL 
+                       AND (c.name LIKE :query OR co.code LIKE :query OR co.name LIKE :query)';
+        
+        return $this->getFilteredSales(
+            $whereClause, 
+            [':query' => "%$query%"], 
+            $limit, 
+            $offset
+        );
     }
 }

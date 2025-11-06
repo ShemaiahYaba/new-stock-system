@@ -71,56 +71,38 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <strong>Customer:</strong> <span id="customer_info"></span>
                         </div>
                         
-                        <!-- Sale Type Selection -->
-                        <div class="mb-3">
-                            <label for="sale_type" class="form-label">Sale Type <span class="text-danger">*</span></label>
-                            <select class="form-select" id="sale_type" name="sale_type" required>
-                                <option value="">Select sale type</option>
-                                <option value="wholesale">Wholesale (Fixed Meters)</option>
-                                <option value="retail">Retail (Custom Meters)</option>
-                            </select>
-                            <div class="invalid-feedback">Please select sale type.</div>
-                        </div>
+                        <!-- Hidden sale type field (kept for backward compatibility) -->
+                        <input type="hidden" name="sale_type" id="sale_type" value="sale">
                         
                         <!-- Stock Entry Selection -->
                         <div class="mb-3">
-                            <label for="stock_entry_id" class="form-label">Stock Entry <span class="text-danger">*</span></label>
+                            <label for="stock_entry_id" class="form-label">Select Stock Entry <span class="text-danger">*</span></label>
                             <select class="form-select" id="stock_entry_id" name="stock_entry_id" required>
                                 <option value="">Select stock entry</option>
-                                <optgroup label="Available Stock (Wholesale)" id="available_group">
-                                    <?php foreach ($availableStock as $entry): ?>
-                                    <option value="<?php echo $entry['id']; ?>" 
-                                            data-status="available"
-                                            data-coil-id="<?php echo $entry['coil_id']; ?>"
-                                            data-coil-code="<?php echo htmlspecialchars($entry['coil_code']); ?>"
-                                            data-coil-name="<?php echo htmlspecialchars($entry['coil_name']); ?>"
-                                            data-coil-color="<?php echo COIL_COLORS[$entry['coil_color']] ?? $entry['coil_color']; ?>"
-                                            data-coil-weight="<?php echo $entry['coil_weight']; ?>"
-                                            data-coil-category="<?php echo STOCK_CATEGORIES[$entry['coil_category']]; ?>"
-                                            data-meters="<?php echo $entry['meters']; ?>"
-                                            data-remaining="<?php echo $entry['meters_remaining']; ?>">
-                                        Entry #<?php echo $entry['id']; ?> - <?php echo htmlspecialchars($entry['coil_code']); ?> 
-                                        (<?php echo number_format($entry['meters_remaining'], 2); ?>m available)
-                                    </option>
-                                    <?php endforeach; ?>
-                                </optgroup>
-                                <optgroup label="Factory Use Stock (Retail)" id="factory_group">
-                                    <?php foreach ($factoryStock as $entry): ?>
-                                    <option value="<?php echo $entry['id']; ?>" 
-                                            data-status="factory_use"
-                                            data-coil-id="<?php echo $entry['coil_id']; ?>"
-                                            data-coil-code="<?php echo htmlspecialchars($entry['coil_code']); ?>"
-                                            data-coil-name="<?php echo htmlspecialchars($entry['coil_name']); ?>"
-                                            data-coil-color="<?php echo COIL_COLORS[$entry['coil_color']] ?? $entry['coil_color']; ?>"
-                                            data-coil-weight="<?php echo $entry['coil_weight']; ?>"
-                                            data-coil-category="<?php echo STOCK_CATEGORIES[$entry['coil_category']]; ?>"
-                                            data-meters="<?php echo $entry['meters']; ?>"
-                                            data-remaining="<?php echo $entry['meters_remaining']; ?>">
-                                        Entry #<?php echo $entry['id']; ?> - <?php echo htmlspecialchars($entry['coil_code']); ?> 
-                                        (<?php echo number_format($entry['meters_remaining'], 2); ?>m available)
-                                    </option>
-                                    <?php endforeach; ?>
-                                </optgroup>
+                                <?php 
+                                // Combine both available and factory use stock
+                                $allStock = array_merge($availableStock, $factoryStock);
+                                foreach ($allStock as $entry): 
+                                    $status = in_array($entry, $availableStock) ? 'available' : 'factory_use';
+                                ?>
+                                <option value="<?php echo $entry['id']; ?>" 
+                                        data-status="<?php echo $status; ?>"
+                                        data-coil-id="<?php echo $entry['coil_id']; ?>"
+                                        data-coil-code="<?php echo htmlspecialchars($entry['coil_code']); ?>"
+                                        data-coil-name="<?php echo htmlspecialchars($entry['coil_name']); ?>"
+                                        data-coil-color="<?php echo COIL_COLORS[$entry['coil_color']] ?? $entry['coil_color']; ?>"
+                                        data-coil-weight="<?php echo $entry['coil_weight']; ?>"
+                                        data-coil-category="<?php echo STOCK_CATEGORIES[$entry['coil_category']]; ?>"
+                                        data-meters="<?php echo $entry['meters']; ?>"
+                                        data-remaining="<?php echo $entry['meters_remaining']; ?>">
+                                    <?php echo htmlspecialchars($entry['coil_code']); ?> - 
+                                    <?php echo htmlspecialchars($entry['coil_name']); ?> 
+                                    (<?php echo number_format($entry['meters_remaining'], 2); ?>m remaining)
+                                    <span class="badge bg-<?php echo $status === 'available' ? 'success' : 'warning'; ?> ms-2">
+                                        <?php echo ucfirst($status); ?>
+                                    </span>
+                                </option>
+                                <?php endforeach; ?>
                             </select>
                             <div class="invalid-feedback">Please select a stock entry.</div>
                         </div>
@@ -152,14 +134,15 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <label class="form-label">Total Amount</label>
                             <input type="text" class="form-control form-control-lg" id="total_amount_display" readonly value="₦0.00">
                             <input type="hidden" name="total_amount" id="total_amount" value="0">
+                            <input type="hidden" name="coil_id" id="coil_id" value="">
                         </div>
                         
-                        <div class="alert alert-warning">
+                        <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> 
                             <strong>Note:</strong>
                             <ul class="mb-0 mt-2">
-                                <li><strong>Wholesale:</strong> Select from Available Stock. Meters are locked to entry total.</li>
-                                <li><strong>Retail:</strong> Select from Factory Use Stock. Enter custom meters up to available.</li>
+                                <li><strong>Available</strong> stock entries have fixed meter quantities that cannot be changed.</li>
+                                <li><strong>Factory Use</strong> stock entries allow custom meter quantities up to the available amount.</li>
                             </ul>
                         </div>
                         
@@ -185,9 +168,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     <h6>Workflow</h6>
                     <ol class="small">
                         <li>Select customer</li>
-                        <li>Choose sale type (Wholesale/Retail)</li>
-                        <li>Select stock entry from table</li>
-                        <li>Enter meters (locked for wholesale)</li>
+                        <li>Select stock entry from the dropdown</li>
+                        <li>Meters will auto-fill based on stock type</li>
+                        <li>Adjust meters if needed (for Factory Use stock)</li>
                         <li>Enter price per meter</li>
                         <li>Submit to create sale & generate invoice</li>
                     </ol>
@@ -195,8 +178,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     <hr>
                     
                     <h6>Stock Status</h6>
-                    <p class="small mb-1"><span class="badge bg-info">Available</span> - For wholesale sales (fixed meters)</p>
-                    <p class="small"><span class="badge bg-warning">Factory Use</span> - For retail sales (custom meters)</p>
+                    <p class="small mb-1"><span class="badge bg-success">Available</span> - Fixed meter quantities</p>
+                    <p class="small"><span class="badge bg-warning">Factory Use</span> - Customizable meter quantities</p>
                 </div>
             </div>
         </div>
@@ -222,44 +205,21 @@ document.getElementById('customer_id').addEventListener('change', function() {
     }
 });
 
-// Filter stock entries based on sale type
-document.getElementById('sale_type').addEventListener('change', function() {
-    const saleType = this.value;
-    const stockSelect = document.getElementById('stock_entry_id');
-    const availableGroup = document.getElementById('available_group');
-    const factoryGroup = document.getElementById('factory_group');
-    
-    stockSelect.value = '';
-    document.getElementById('stock_details').classList.add('d-none');
-    document.getElementById('meters').value = '';
-    document.getElementById('meters').readOnly = false;
-    
-    if (saleType === 'wholesale') {
-        availableGroup.style.display = '';
-        factoryGroup.style.display = 'none';
-    } else if (saleType === 'retail') {
-        availableGroup.style.display = 'none';
-        factoryGroup.style.display = '';
-    } else {
-        availableGroup.style.display = '';
-        factoryGroup.style.display = '';
-    }
-});
-
 // Handle stock entry selection
 document.getElementById('stock_entry_id').addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
-    const saleType = document.getElementById('sale_type').value;
     const metersInput = document.getElementById('meters');
     const metersHint = document.getElementById('meters_hint');
     
     if (!this.value) {
         document.getElementById('stock_details').classList.add('d-none');
         metersInput.readOnly = false;
+        document.getElementById('coil_id').value = '';
         return;
     }
     
-    const status = selectedOption.dataset.status;
+    const status = (selectedOption.dataset.status || '').toLowerCase();
+    const coilId = selectedOption.dataset.coilId;
     const coilCode = selectedOption.dataset.coilCode;
     const coilName = selectedOption.dataset.coilName;
     const coilColor = selectedOption.dataset.coilColor;
@@ -267,6 +227,9 @@ document.getElementById('stock_entry_id').addEventListener('change', function() 
     const coilCategory = selectedOption.dataset.coilCategory;
     const meters = parseFloat(selectedOption.dataset.meters);
     const remaining = parseFloat(selectedOption.dataset.remaining);
+    
+    // Update hidden coil_id field
+    document.getElementById('coil_id').value = coilId;
     
     const stockInfo = `
         <strong>Coil:</strong> ${coilCode} - ${coilName}<br>
@@ -277,22 +240,30 @@ document.getElementById('stock_entry_id').addEventListener('change', function() 
     document.getElementById('stock_info').innerHTML = stockInfo;
     document.getElementById('stock_details').classList.remove('d-none');
     
-    // Lock/unlock meters based on status
-    if (status === 'available' && saleType === 'wholesale') {
-        // Wholesale: Lock to total meters
-        metersInput.value = meters.toFixed(2);
+    // Lock/unlock meters based on stock status
+    if (status === 'available') {
+        // Available stock: lock to remaining meters
+        metersInput.value = remaining.toFixed(2);
         metersInput.readOnly = true;
-        metersHint.textContent = 'Locked to entry total (Wholesale)';
-        metersHint.classList.add('text-warning');
-    } else if (status === 'factory_use' && saleType === 'retail') {
-        // Retail: Allow custom up to remaining
-        metersInput.value = '';
+        metersInput.max = remaining;
+        metersHint.textContent = 'Fixed quantity (Available Stock)';
+        metersHint.className = 'form-text text-muted';
+    } else if (status === 'factory_use') {
+        // Factory use: Allow custom up to remaining
+        metersInput.value = remaining.toFixed(2);
         metersInput.max = remaining;
         metersInput.readOnly = false;
-        metersHint.textContent = `Max: ${remaining.toFixed(2)}m (Retail)`;
-        metersHint.classList.remove('text-warning');
+        metersHint.textContent = `Enter quantity (max: ${remaining.toFixed(2)}m)`;
+        metersHint.className = 'form-text text-muted';
     }
-    
+
+    // Update price per meter if not set
+    const pricePerMeter = document.getElementById('price_per_meter');
+    if (!pricePerMeter.value) {
+        pricePerMeter.value = '0.00';
+    }
+
+    // Recalculate totals whenever selection changes
     calculateTotal();
 });
 
@@ -302,42 +273,78 @@ function calculateTotal() {
     const pricePerMeter = parseFloat(document.getElementById('price_per_meter').value) || 0;
     const total = meters * pricePerMeter;
     
+    // Update hidden total field with raw number
     document.getElementById('total_amount').value = total.toFixed(2);
-    document.getElementById('total_amount_display').value = '₦' + total.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    
+    // Format the display value with currency symbol and thousand separators
+    const formattedTotal = '₦' + total.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    document.getElementById('total_amount_display').value = formattedTotal;
+    
+    return total;
 }
 
 document.getElementById('meters').addEventListener('input', calculateTotal);
 document.getElementById('price_per_meter').addEventListener('input', calculateTotal);
 
+// Initialize form on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Trigger change event on stock entry if one is selected
+    const stockEntry = document.getElementById('stock_entry_id');
+    if (stockEntry.value) {
+        stockEntry.dispatchEvent(new Event('change'));
+    }
+    
+    // Initialize price per meter if empty
+    const pricePerMeter = document.getElementById('price_per_meter');
+    if (!pricePerMeter.value) {
+        pricePerMeter.value = '0.00';
+    }
+});
+
 // Form validation
 document.getElementById('saleForm').addEventListener('submit', function(e) {
-    const saleType = document.getElementById('sale_type').value;
     const stockEntry = document.getElementById('stock_entry_id');
+    const metersInput = document.getElementById('meters');
+    const priceInput = document.getElementById('price_per_meter');
+    
+    if (!stockEntry.value) {
+        e.preventDefault();
+        alert('Please select a stock entry.');
+        return false;
+    }
+    
     const selectedOption = stockEntry.options[stockEntry.selectedIndex];
     const status = selectedOption.dataset.status;
+    const meters = parseFloat(metersInput.value) || 0;
+    const remaining = parseFloat(selectedOption.dataset.remaining) || 0;
+    const pricePerMeter = parseFloat(priceInput.value) || 0;
     
-    // Validate sale type matches stock status
-    if (saleType === 'wholesale' && status !== 'available') {
+    if (meters <= 0) {
         e.preventDefault();
-        alert('Wholesale sales must use Available stock entries.');
+        alert('Please enter a valid meter value.');
+        metersInput.focus();
         return false;
     }
-    
-    if (saleType === 'retail' && status !== 'factory_use') {
-        e.preventDefault();
-        alert('Retail sales must use Factory Use stock entries.');
-        return false;
-    }
-    
-    // Validate meters
-    const meters = parseFloat(document.getElementById('meters').value);
-    const remaining = parseFloat(selectedOption.dataset.remaining);
     
     if (meters > remaining) {
         e.preventDefault();
-        alert(`Meters (${meters}m) exceed available (${remaining}m).`);
+        alert(`Cannot sell ${meters}m, only ${remaining.toFixed(2)}m available.`);
+        metersInput.focus();
         return false;
     }
+    
+    if (pricePerMeter <= 0) {
+        e.preventDefault();
+        alert('Please enter a valid price per meter.');
+        priceInput.focus();
+        return false;
+    }
+    
+    // No need to validate sale type against stock status anymore
 });
 </script>
 
