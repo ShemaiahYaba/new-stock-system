@@ -28,12 +28,14 @@ const USER_ROLES = [
 define('STOCK_STATUS_AVAILABLE', 'available');
 define('STOCK_STATUS_FACTORY_USE', 'factory_use');
 define('STOCK_STATUS_SOLD', 'sold');
+define('STOCK_STATUS_OUT_OF_STOCK', 'out_of_stock');
 
 // Stock Status Array
 const STOCK_STATUSES = [
     STOCK_STATUS_AVAILABLE => 'Available',
     STOCK_STATUS_FACTORY_USE => 'Factory Use',
     STOCK_STATUS_SOLD => 'Sold',
+    STOCK_STATUS_OUT_OF_STOCK => 'Out of stock',
 ];
 
 // Stock Categories
