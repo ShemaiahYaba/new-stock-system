@@ -316,4 +316,91 @@ class StockEntry {
             return 0;
         }
     }
+    
+    /**
+ * Check and update coil status based on stock availability
+ * 
+ * @param int $coilId Coil ID to check
+ * @return bool
+ */
+public function checkAndUpdateCoilStatus($coilId) {
+    try {
+        // Get all stock entries for this coil
+        $sql = "SELECT SUM(meters_remaining) as total_remaining 
+                FROM {$this->table} 
+                WHERE coil_id = :coil_id AND deleted_at IS NULL";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':coil_id' => $coilId]);
+        $result = $stmt->fetch();
+        
+        $totalRemaining = floatval($result['total_remaining'] ?? 0);
+        
+        // Get current coil status
+        $coilSql = "SELECT status FROM coils WHERE id = :id AND deleted_at IS NULL";
+        $coilStmt = $this->db->prepare($coilSql);
+        $coilStmt->execute([':id' => $coilId]);
+        $coil = $coilStmt->fetch();
+        
+        if (!$coil) {
+            return false;
+        }
+        
+        $currentStatus = $coil['status'];
+        $newStatus = null;
+        
+        // Determine new status
+        if ($totalRemaining <= 0) {
+            // All stock sold out
+            $newStatus = STOCK_STATUS_OUT_OF_STOCK;
+        } elseif ($totalRemaining > 0 && $currentStatus === STOCK_STATUS_OUT_OF_STOCK) {
+            // Stock was out but now has inventory - restore to available
+            $newStatus = STOCK_STATUS_AVAILABLE;
+        }
+        
+        // Update if status changed
+        if ($newStatus && $newStatus !== $currentStatus) {
+            $updateSql = "UPDATE coils 
+                         SET status = :status, updated_at = NOW() 
+                         WHERE id = :id";
+            $updateStmt = $this->db->prepare($updateSql);
+            $updateStmt->execute([
+                ':status' => $newStatus,
+                ':id' => $coilId
+            ]);
+            
+            error_log("Coil #{$coilId} status changed: {$currentStatus} → {$newStatus} (Remaining: {$totalRemaining}m)");
+            return true;
+        }
+        
+        return false;
+        
+    } catch (PDOException $e) {
+        error_log("Coil status check error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get total remaining meters for a coil
+ * 
+ * @param int $coilId Coil ID
+ * @return float
+ */
+public function getTotalRemainingForCoil($coilId) {
+    try {
+        $sql = "SELECT SUM(meters_remaining) as total 
+                FROM {$this->table} 
+                WHERE coil_id = :coil_id AND deleted_at IS NULL";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':coil_id' => $coilId]);
+        $result = $stmt->fetch();
+        
+        return floatval($result['total'] ?? 0);
+    } catch (PDOException $e) {
+        error_log("Get total remaining error: " . $e->getMessage());
+        return 0;
+    }
+}
 }

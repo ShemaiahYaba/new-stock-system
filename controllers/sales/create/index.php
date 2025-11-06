@@ -1,7 +1,7 @@
 <?php
 /**
- * Sale Create Controller - FIXED VERSION
- * Replace controllers/sales/create/index.php with this
+ * REPLACE controllers/sales/create/index.php with this
+ * Automatically updates coil status to OUT_OF_STOCK when all stock sold
  */
 
 session_start();
@@ -26,18 +26,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     $customerId = (int)($_POST['customer_id'] ?? 0);
+    $coilId = (int)($_POST['coil_id'] ?? 0);
     $stockEntryId = (int)($_POST['stock_entry_id'] ?? 0);
-    $saleType = 'sale';
+    $saleType = sanitize($_POST['sale_type'] ?? '');
     $meters = floatval($_POST['meters'] ?? 0);
     $pricePerMeter = floatval($_POST['price_per_meter'] ?? 0);
     $totalAmount = floatval($_POST['total_amount'] ?? 0);
     
-    error_log("Form data: " . print_r($_POST, true));
-    
     $errors = [];
     
     if ($customerId <= 0) $errors[] = 'Please select a customer.';
+    if ($coilId <= 0) $errors[] = 'Please select a coil.';
     if ($stockEntryId <= 0) $errors[] = 'Please select a stock entry.';
+    if (!in_array($saleType, array_keys(SALE_TYPES))) $errors[] = 'Invalid sale type.';
     if ($meters <= 0) $errors[] = 'Meters must be greater than 0.';
     if ($pricePerMeter <= 0) $errors[] = 'Price per meter must be greater than 0.';
     
@@ -66,17 +67,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
     
-    $coilId = $stockEntry['coil_id'];
-    $coil = $coilModel->findById($coilId);
+    $coil = $coilModel->findById($stockEntry['coil_id']);
     if (!$coil) {
-        setFlashMessage('error', 'Coil not found for the selected stock entry.');
+        setFlashMessage('error', 'Coil not found.');
         header('Location: /new-stock-system/index.php?page=sales_create');
         exit();
     }
     
     $stockStatus = $stockEntry['status'] ?? 'available';
-    $saleType = ($stockStatus === 'factory_use') ? SALE_TYPE_RETAIL : SALE_TYPE_WHOLESALE;
     
+    // Enforce Wholesale Rules
     if ($saleType === SALE_TYPE_WHOLESALE) {
         if ($stockStatus !== 'available') {
             setFlashMessage('error', 'Wholesale sales can only be made from AVAILABLE stock entries.');
@@ -91,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
+    // Enforce Retail Rules
     if ($saleType === SALE_TYPE_RETAIL) {
         if ($stockStatus !== 'factory_use') {
             setFlashMessage('error', 'Retail sales can only be made from FACTORY USE stock entries.');
@@ -105,10 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
+    // Start transaction
     try {
         $db = Database::getInstance()->getConnection();
         $db->beginTransaction();
         
+        // Create sale record
         $saleModel = new Sale();
         $currentUser = getCurrentUser();
         
@@ -130,45 +133,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Failed to create sale record.');
         }
         
+        // Deduct meters from stock entry
         $newRemaining = $stockEntry['meters_remaining'] - $meters;
         
-        // Update stock entry with new remaining and mark as sold if exhausted
-        $updateData = [
-            'meters_remaining' => $newRemaining,
-            'status' => ($newRemaining <= 0) ? 'sold' : $stockEntry['status']
-        ];
-        
-        if (!$stockEntryModel->update($stockEntryId, $updateData)) {
+        if (!$stockEntryModel->update($stockEntryId, ['meters_remaining' => $newRemaining])) {
             throw new Exception('Failed to update stock entry.');
         }
         
-        // Record ledger for all sales
-        $ledgerModel = new StockLedger();
-        $description = "Sale to {$customer['name']} ({$meters}m @ ₦{$pricePerMeter}/m)";
-        
-        if (!$ledgerModel->recordOutflow($coilId, $stockEntryId, $meters, $description, 'sale', $saleId, $currentUser['id'])) {
-            error_log("Failed to record ledger entry for sale $saleId");
+        // Record ledger entry for factory-use stock entries
+        if ($stockStatus === 'factory_use') {
+            $ledgerModel = new StockLedger();
+            $description = "Retail sale to {$customer['name']} ({$meters}m @ ₦{$pricePerMeter}/m)";
+            
+            if (!$ledgerModel->recordOutflow($coilId, $stockEntryId, $meters, $description, 'sale', $saleId, $currentUser['id'])) {
+                throw new Exception('Failed to record ledger entry.');
+            }
         }
         
-        // Check if ALL entries for this coil are exhausted
-        $allEntries = $stockEntryModel->getByCoil($coilId, 1000, 0);
-        $totalRemaining = 0;
+        // ✅ NEW: CHECK AND UPDATE COIL STATUS AUTOMATICALLY
+        $stockEntryModel->checkAndUpdateCoilStatus($coilId);
         
-        foreach ($allEntries as $entry) {
-            $totalRemaining += $entry['meters_remaining'];
-        }
-        
-        // Mark coil as SOLD if no remaining meters in ANY entry
-        if ($totalRemaining <= 0) {
-            $coilModel->update($coilId, ['status' => STOCK_STATUS_SOLD]);
-            logActivity('Coil marked as sold', "Coil ID: $coilId - All stock exhausted");
-        }
-        
+        // Commit transaction
         $db->commit();
         
         logActivity('Sale created', "Customer: {$customer['name']}, Coil: {$coil['code']}, Type: $saleType, Meters: $meters");
         setFlashMessage('success', 'Sale created successfully! Stock has been updated.');
         
+        // Redirect to invoice page
         header('Location: /new-stock-system/index.php?page=sales_invoice&id=' . $saleId);
         
     } catch (Exception $e) {

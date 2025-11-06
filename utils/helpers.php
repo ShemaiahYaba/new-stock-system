@@ -197,29 +197,24 @@ function truncateText($text, $length = 50, $suffix = '...') {
 }
 
 /**
- * Get status badge class
+ * Get status badge class - UPDATED
  * 
  * @param string $status Status value
  * @return string Bootstrap badge class
  */
 function getStatusBadgeClass($status) {
-    if (empty($status)) {
-        $status = STOCK_STATUS_AVAILABLE; // Default to available if status is empty
-    }
-    
     $classes = [
-        STOCK_STATUS_AVAILABLE => 'bg-success',
-        STOCK_STATUS_FACTORY_USE => 'bg-warning',
-        STOCK_STATUS_SOLD => 'badge-danger',
-        STOCK_STATUS_RESERVED => 'badge-info',
-        SALE_STATUS_PENDING => 'badge-warning',
-        SALE_STATUS_COMPLETED => 'badge-success',
-        SALE_STATUS_CANCELLED => 'badge-danger'
+        STOCK_STATUS_AVAILABLE => 'bg-success',        // Green
+        STOCK_STATUS_FACTORY_USE => 'bg-warning',      // Yellow
+        STOCK_STATUS_SOLD => 'bg-danger',              // Red
+        STOCK_STATUS_OUT_OF_STOCK => 'bg-secondary',   // Gray - NEW
+        SALE_STATUS_PENDING => 'bg-warning',
+        SALE_STATUS_COMPLETED => 'bg-success',
+        SALE_STATUS_CANCELLED => 'bg-danger'
     ];
     
-    return $classes[$status] ?? 'badge-secondary';
+    return $classes[$status] ?? 'bg-secondary';
 }
-
 /**
  * Log activity
  * 

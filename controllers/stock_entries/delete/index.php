@@ -1,6 +1,7 @@
 <?php
 /**
- * Stock Entry Delete Controller
+ * REPLACE controllers/stock_entries/delete/index.php
+ * Check status after deleting stock entry
  */
 
 session_start();
@@ -37,7 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
     
+    // Store coil_id before deletion
+    $coilId = $entry['coil_id'];
+    
     if ($stockEntryModel->delete($entryId)) {
+        // ✅ NEW: CHECK AND UPDATE COIL STATUS AUTOMATICALLY
+        // If this was the last stock entry, coil will become OUT_OF_STOCK
+        $stockEntryModel->checkAndUpdateCoilStatus($coilId);
+        
         logActivity('Stock entry deleted', "Entry ID: $entryId");
         setFlashMessage('success', 'Stock entry deleted successfully!');
     } else {

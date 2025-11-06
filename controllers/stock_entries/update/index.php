@@ -1,6 +1,7 @@
 <?php
 /**
- * Stock Entry Update Controller
+ * REPLACE controllers/stock_entries/update/index.php
+ * Check status after updating stock entry meters
  */
 
 session_start();
@@ -61,6 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     
     if ($stockEntryModel->update($entryId, $data)) {
+        // ✅ NEW: CHECK AND UPDATE COIL STATUS AUTOMATICALLY
+        $stockEntryModel->checkAndUpdateCoilStatus($entry['coil_id']);
+        
         logActivity('Stock entry updated', "Entry ID: $entryId, New meters: $meters");
         setFlashMessage('success', 'Stock entry updated successfully!');
         header('Location: /new-stock-system/index.php?page=stock_entries');
