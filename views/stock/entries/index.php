@@ -1,6 +1,7 @@
 <?php
 /**
- * Stock Entries List View
+ * Stock Entries List - UPDATED with Entry-specific Ledger Links
+ * Replace views/stock/entries/index.php
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -24,6 +25,8 @@ if ($coilId) {
 }
 
 $paginationData = getPaginationData($totalEntries, $currentPage);
+
+$db = Database::getInstance()->getConnection();
 
 require_once __DIR__ . '/../../../layout/header.php';
 require_once __DIR__ . '/../../../layout/sidebar.php';
@@ -70,6 +73,34 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     </thead>
                     <tbody>
                         <?php foreach ($entries as $entry): ?>
+                        <?php
+                        // Determine display status
+                        $displayStatus = $entry['status'] ?? 'available';
+                        
+                        // If meters are exhausted, show as "Sold Out"
+                        if ($entry['meters_remaining'] <= 0) {
+                            $displayStatus = 'sold';
+                        }
+                        
+                        // Set badge and text based on status
+                        $statusBadge = 'bg-info';
+                        $statusText = 'Available';
+                        
+                        if ($displayStatus === 'sold') {
+                            $statusBadge = 'bg-danger';
+                            $statusText = 'Sold Out';
+                        } elseif ($displayStatus === 'factory_use') {
+                            $statusBadge = 'bg-warning';
+                            $statusText = 'Factory Use';
+                        }
+                        
+                        // Check if THIS SPECIFIC ENTRY has ledger entries
+                        $checkLedgerSql = "SELECT COUNT(*) as count FROM stock_ledger WHERE stock_entry_id = ?";
+                        $checkStmt = $db->prepare($checkLedgerSql);
+                        $checkStmt->execute([$entry['id']]);
+                        $ledgerCheck = $checkStmt->fetch();
+                        $hasLedger = ($ledgerCheck['count'] > 0);
+                        ?>
                         <tr>
                             <td>#<?php echo $entry['id']; ?></td>
                             <td><strong><?php echo htmlspecialchars($entry['coil_code']); ?></strong></td>
@@ -81,18 +112,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 </span>
                             </td>
                             <td>
-                                <?php 
-                                $status = $entry['status'] ?? 'available';
-                                $statusBadge = $status === 'factory_use' ? 'bg-warning' : 'bg-info';
-                                $statusText = $status === 'factory_use' ? 'Factory Use' : 'Available';
-                                ?>
                                 <span class="badge <?php echo $statusBadge; ?>">
                                     <?php echo $statusText; ?>
                                 </span>
-                                <?php if ($status === 'factory_use' && hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_VIEW)): ?>
-                                <a href="/new-stock-system/index.php?page=stock_ledger&coil_id=<?php echo $entry['coil_id']; ?>" 
-                                   class="btn btn-sm btn-outline-primary ms-1" title="View Ledger">
-                                    <i class="bi bi-journal-text"></i>
+                                
+                                <?php if ($hasLedger && hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_VIEW)): ?>
+                                <a href="/new-stock-system/index.php?page=stock_ledger&entry_id=<?php echo $entry['id']; ?>" 
+                                   class="btn btn-sm btn-outline-primary ms-1" title="View Ledger for Entry #<?php echo $entry['id']; ?>">
+                                    <i class="bi bi-journal-text"></i> Ledger
                                 </a>
                                 <?php endif; ?>
                             </td>
@@ -102,11 +129,11 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 <form method="POST" action="/new-stock-system/controllers/stock_entries/toggle_status/index.php" style="display: inline;">
                                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
                                     <input type="hidden" name="id" value="<?php echo $entry['id']; ?>">
-                                    <input type="hidden" name="current_status" value="<?php echo $status; ?>">
-                                    <button type="submit" class="btn btn-sm btn-<?php echo $status === 'available' ? 'warning' : 'info'; ?>" 
-                                            title="<?php echo $status === 'available' ? 'Move to Factory Use' : 'Move to Available'; ?>">
-                                        <i class="bi bi-arrow-<?php echo $status === 'available' ? 'right' : 'left'; ?>-circle"></i>
-                                        <?php echo $status === 'available' ? 'To Factory' : 'To Available'; ?>
+                                    <input type="hidden" name="current_status" value="<?php echo $entry['status'] ?? 'available'; ?>">
+                                    <button type="submit" class="btn btn-sm btn-<?php echo ($entry['status'] ?? 'available') === 'available' ? 'warning' : 'info'; ?>" 
+                                            title="<?php echo ($entry['status'] ?? 'available') === 'available' ? 'Move to Factory Use' : 'Move to Available'; ?>">
+                                        <i class="bi bi-arrow-<?php echo ($entry['status'] ?? 'available') === 'available' ? 'right' : 'left'; ?>-circle"></i>
+                                        <?php echo ($entry['status'] ?? 'available') === 'available' ? 'To Factory' : 'To Available'; ?>
                                     </button>
                                 </form>
                                 <?php endif; ?>
