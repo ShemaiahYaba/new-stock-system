@@ -146,10 +146,10 @@ try {
     // Build invoice shape structure
     $invoiceShape = [
         'company' => [
-            'name' => COMPANY_NAME,
-            'address' => COMPANY_ADDRESS,
-            'phone' => COMPANY_PHONE,
-            'email' => COMPANY_EMAIL,
+            'name' => INVOICE_COMPANY_NAME,
+            'address' => INVOICE_COMPANY_ADDRESS,
+            'phone' => INVOICE_COMPANY_PHONE,
+            'email' => INVOICE_COMPANY_EMAIL,
         ],
         'customer' => $invoiceData['customer'],
         'meta' => [
@@ -171,7 +171,7 @@ try {
         ],
         'signatures' => [
             'customer' => null,
-            'for_company' => COMPANY_NAME,
+            'for_company' => INVOICE_COMPANY_NAME,
         ],
     ];
 
@@ -332,25 +332,43 @@ function logStockCardEntry(
     try {
         $db = Database::getInstance()->getConnection();
 
-        $sql = "INSERT INTO stock_card 
-                (coil_id, production_id, sale_id, change_type, meters_changed, balance_meters, note, created_at) 
+        // Map to the correct column structure
+        $transactionType = 'outflow';
+        $outflowMeters = $metersChanged;
+        $inflowMeters = 0.00;
+        
+        $sql = "INSERT INTO stock_ledger 
+                (coil_id, stock_entry_id, transaction_type, description, 
+                 inflow_meters, outflow_meters, balance_meters, 
+                 reference_type, reference_id, created_by, created_at) 
                 VALUES 
-                (:coil_id, :production_id, :sale_id, :change_type, :meters_changed, :balance_meters, :note, NOW())";
+                (:coil_id, :stock_entry_id, :transaction_type, :description,
+                 :inflow_meters, :outflow_meters, :balance_meters,
+                 :reference_type, :reference_id, :created_by, NOW())";
 
         $stmt = $db->prepare($sql);
-        $stmt->execute([
+        $result = $stmt->execute([
             ':coil_id' => $coilId,
-            ':production_id' => $productionId,
-            ':sale_id' => $saleId,
-            ':change_type' => 'drawdown',
-            ':meters_changed' => $metersChanged,
+            ':stock_entry_id' => null, // This would be set if it was a stock entry
+            ':transaction_type' => $transactionType,
+            ':description' => $note ?: 'Stock drawdown for production',
+            ':inflow_meters' => $inflowMeters,
+            ':outflow_meters' => $outflowMeters,
             ':balance_meters' => $balanceMeters,
-            ':note' => $note,
+            ':reference_type' => 'sale',
+            ':reference_id' => $saleId,
+            ':created_by' => $createdBy
         ]);
+
+        if (!$result) {
+            $errorInfo = $stmt->errorInfo();
+            error_log('Failed to log stock ledger entry: ' . json_encode($errorInfo));
+            throw new Exception('Failed to log stock ledger entry');
+        }
 
         return true;
     } catch (PDOException $e) {
-        error_log('Stock card entry error: ' . $e->getMessage());
-        throw new Exception('Failed to log stock card entry');
+        error_log('Stock ledger entry error: ' . $e->getMessage());
+        throw new Exception('Failed to log stock ledger entry: ' . $e->getMessage());
     }
 }

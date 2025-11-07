@@ -11,14 +11,14 @@ require_once __DIR__ . '/../../../models/stock_entry.php';
 require_once __DIR__ . '/../../../models/coil.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 
-$pageTitle = 'Stock Ledger - ' . APP_NAME;
+$pageTitle = 'Stock Card - ' . APP_NAME;
 
 $stockEntryModel = new StockEntry();
 $coilModel = new Coil();
 $db = Database::getInstance()->getConnection();
 
 // Get selected stock entry if any
-$selectedEntryId = isset($_GET['entry_id']) ? (int)$_GET['entry_id'] : null;
+$selectedEntryId = isset($_GET['entry_id']) ? (int) $_GET['entry_id'] : null;
 
 // Get all stock entries that have ledger entries
 $sql = "SELECT DISTINCT se.*, c.code as coil_code, c.name as coil_name, c.status as coil_status
@@ -35,17 +35,17 @@ $ledgerEntries = [];
 $summary = [
     'total_inflow' => 0,
     'total_outflow' => 0,
-    'current_balance' => 0
+    'current_balance' => 0,
 ];
 $selectedEntry = null;
 $selectedCoil = null;
 
 if ($selectedEntryId) {
     $selectedEntry = $stockEntryModel->findById($selectedEntryId);
-    
+
     if ($selectedEntry) {
         $selectedCoil = $coilModel->findById($selectedEntry['coil_id']);
-        
+
         // Get summary data for THIS stock entry only
         $summarySql = "SELECT 
                         COALESCE(SUM(inflow_meters), 0) as total_inflow,
@@ -56,19 +56,19 @@ if ($selectedEntryId) {
                          LIMIT 1), 0) as current_balance
                     FROM stock_ledger
                     WHERE stock_entry_id = ?";
-        
+
         $summaryStmt = $db->prepare($summarySql);
         $summaryStmt->execute([$selectedEntryId, $selectedEntryId]);
         $summaryResult = $summaryStmt->fetch();
-        
+
         if ($summaryResult) {
             $summary = [
                 'total_inflow' => floatval($summaryResult['total_inflow']),
                 'total_outflow' => floatval($summaryResult['total_outflow']),
-                'current_balance' => floatval($summaryResult['current_balance'])
+                'current_balance' => floatval($summaryResult['current_balance']),
             ];
         }
-        
+
         // Get ledger entries for THIS stock entry in ASCENDING order (oldest first)
         $entriesSql = "SELECT sl.*, u.name as created_by_name
                 FROM stock_ledger sl
@@ -76,7 +76,7 @@ if ($selectedEntryId) {
                 WHERE sl.stock_entry_id = ?
                 ORDER BY sl.created_at ASC, sl.id ASC
                 LIMIT 100";
-        
+
         $entriesStmt = $db->prepare($entriesSql);
         $entriesStmt->execute([$selectedEntryId]);
         $ledgerEntries = $entriesStmt->fetchAll();
@@ -91,7 +91,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     <div class="page-header">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h1 class="page-title">Stock Entry Ledger</h1>
+                <h1 class="page-title">Stock Card</h1>
                 <p class="text-muted">Individual accounting for each stock entry</p>
             </div>
             <a href="/new-stock-system/index.php?page=stock_entries" class="btn btn-secondary">
@@ -104,7 +104,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-funnel"></i> Select Stock Entry
+                    <i class="bi bi-funnel"></i> Select Stock Card
                 </div>
                 <div class="card-body">
                     <form method="GET" action="/new-stock-system/index.php">
@@ -112,7 +112,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <div class="row">
                             <div class="col-md-10">
                                 <select class="form-select" name="entry_id" required>
-                                    <option value="">Select a stock entry with ledger transactions</option>
+                                    <option value="">Select a stock card to view transactions</option>
                                     <?php foreach ($stockEntriesWithLedger as $entry): ?>
                                     <?php
                                     // Get balance for this stock entry
@@ -122,7 +122,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     $balStmt->execute([$entry['id']]);
                                     $balResult = $balStmt->fetch();
                                     $balance = $balResult ? floatval($balResult['bal']) : 0;
-                                    
+
                                     // Status badge
                                     $statusBadge = 'Available';
                                     if ($entry['meters_remaining'] <= 0) {
@@ -131,7 +131,11 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                         $statusBadge = 'Factory Use';
                                     }
                                     ?>
-                                    <option value="<?php echo $entry['id']; ?>" <?php echo $selectedEntryId == $entry['id'] ? 'selected' : ''; ?>>
+                                    <option value="<?php echo $entry[
+                                        'id'
+                                    ]; ?>" <?php echo $selectedEntryId == $entry['id']
+    ? 'selected'
+    : ''; ?>>
                                         Entry #<?php echo $entry['id']; ?> - 
                                         <?php echo htmlspecialchars($entry['coil_code']); ?> - 
                                         <?php echo htmlspecialchars($entry['coil_name']); ?> 
@@ -144,7 +148,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </div>
                             <div class="col-md-2">
                                 <button type="submit" class="btn btn-primary w-100">
-                                    <i class="bi bi-search"></i> View Ledger
+                                    <i class="bi bi-search"></i> View Stock Card
                                 </button>
                             </div>
                         </div>
@@ -159,7 +163,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <i class="bi bi-receipt"></i> Stock Entry #<?php echo $selectedEntry['id']; ?> - 
+                    <i class="bi bi-receipt"></i> Stock Card #<?php echo $selectedEntry['id']; ?> - 
                     <?php echo htmlspecialchars($selectedCoil['code']); ?> - 
                     <?php echo htmlspecialchars($selectedCoil['name']); ?>
                     <?php if ($selectedEntry['meters_remaining'] <= 0): ?>
@@ -175,8 +179,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <div class="col-md-12">
                             <div class="alert alert-info">
                                 <strong>Entry Details:</strong><br>
-                                Total Meters: <?php echo number_format($selectedEntry['meters'], 2); ?>m | 
-                                Remaining: <?php echo number_format($selectedEntry['meters_remaining'], 2); ?>m | 
+                                Total Meters: <?php echo number_format(
+                                    $selectedEntry['meters'],
+                                    2,
+                                ); ?>m | 
+                                Remaining: <?php echo number_format(
+                                    $selectedEntry['meters_remaining'],
+                                    2,
+                                ); ?>m | 
                                 Created: <?php echo formatDate($selectedEntry['created_at']); ?>
                             </div>
                         </div>
@@ -187,7 +197,10 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <div class="card bg-success text-white">
                                 <div class="card-body">
                                     <h6><i class="bi bi-arrow-down-circle"></i> Total Inflow</h6>
-                                    <h2><?php echo number_format($summary['total_inflow'], 2); ?>m</h2>
+                                    <h2><?php echo number_format(
+                                        $summary['total_inflow'],
+                                        2,
+                                    ); ?>m</h2>
                                     <small>Stock additions</small>
                                 </div>
                             </div>
@@ -196,7 +209,10 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <div class="card bg-danger text-white">
                                 <div class="card-body">
                                     <h6><i class="bi bi-arrow-up-circle"></i> Total Outflow</h6>
-                                    <h2><?php echo number_format($summary['total_outflow'], 2); ?>m</h2>
+                                    <h2><?php echo number_format(
+                                        $summary['total_outflow'],
+                                        2,
+                                    ); ?>m</h2>
                                     <small>Sales & removals</small>
                                 </div>
                             </div>
@@ -205,7 +221,10 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <div class="card bg-info text-white">
                                 <div class="card-body">
                                     <h6><i class="bi bi-calculator"></i> Current Balance</h6>
-                                    <h2><?php echo number_format($summary['current_balance'], 2); ?>m</h2>
+                                    <h2><?php echo number_format(
+                                        $summary['current_balance'],
+                                        2,
+                                    ); ?>m</h2>
                                     <small>Available meters</small>
                                 </div>
                             </div>
@@ -259,22 +278,33 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     <td><?php echo htmlspecialchars($entry['description']); ?></td>
                                     <td class="text-end">
                                         <?php if ($entry['inflow_meters'] > 0): ?>
-                                        <strong class="text-success">+<?php echo number_format($entry['inflow_meters'], 2); ?></strong>
+                                        <strong class="text-success">+<?php echo number_format(
+                                            $entry['inflow_meters'],
+                                            2,
+                                        ); ?></strong>
                                         <?php else: ?>
                                         <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-end">
                                         <?php if ($entry['outflow_meters'] > 0): ?>
-                                        <strong class="text-danger">-<?php echo number_format($entry['outflow_meters'], 2); ?></strong>
+                                        <strong class="text-danger">-<?php echo number_format(
+                                            $entry['outflow_meters'],
+                                            2,
+                                        ); ?></strong>
                                         <?php else: ?>
                                         <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-end">
-                                        <strong><?php echo number_format($entry['balance_meters'], 2); ?></strong>
+                                        <strong><?php echo number_format(
+                                            $entry['balance_meters'],
+                                            2,
+                                        ); ?></strong>
                                     </td>
-                                    <td><?php echo htmlspecialchars($entry['created_by_name']); ?></td>
+                                    <td><?php echo htmlspecialchars(
+                                        $entry['created_by_name'],
+                                    ); ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -290,9 +320,9 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         <div class="col-md-12">
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i> 
-                <strong>Select a stock entry above to view its ledger.</strong>
+                <strong>Select a stock entry above to view its stock card.</strong>
                 <p class="mb-0 mt-2">
-                    Each stock entry has its own independent ledger. Multiple entries for the same coil 
+                    Each stock entry has its own independent stock card. Multiple entries for the same coil 
                     are tracked separately, so a sold-out entry doesn't affect a new entry of the same coil.
                 </p>
             </div>

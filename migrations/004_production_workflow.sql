@@ -48,9 +48,9 @@ CREATE TABLE IF NOT EXISTS invoices (
     production_id INT(11) DEFAULT NULL,
     invoice_number VARCHAR(50) NOT NULL,
     invoice_shape JSON NOT NULL COMMENT 'Complete invoice data structure',
-    total DECIMAL(12,2) NOT NULL,
-    tax DECIMAL(10,2) DEFAULT 0.00,
-    shipping DECIMAL(10,2) DEFAULT 0.00,
+    total DECIMAL(12,2) NOT NULL COMMENT 'Final amount after all calculations',
+    shipping DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Shipping charges',
+    
     paid_amount DECIMAL(12,2) DEFAULT 0.00,
     status ENUM('unpaid', 'partial', 'paid', 'cancelled') DEFAULT 'unpaid',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

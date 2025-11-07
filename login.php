@@ -1,7 +1,7 @@
 <?php
 /**
  * Login Page
- * 
+ *
  * User authentication entry point
  */
 
@@ -90,23 +90,38 @@ $pageTitle = 'Login - ' . APP_NAME;
 <body>
     <div class="login-container">
         <div class="login-card">
-            <div class="login-header">
-                <i class="bi bi-box-seam"></i>
-                <h3><?php echo APP_NAME; ?></h3>
-                <p class="mb-0"><?php echo COMPANY_NAME; ?></p>
+            <div class="login-header text-center mb-4">
+                <?php if (file_exists('assets/logo.png')): ?>
+                <div class="d-flex flex-column align-items-center">
+                    <img src="/new-stock-system/assets/logo.png" alt="<?php echo htmlspecialchars(
+                        COMPANY_NAME,
+                    ); ?>" 
+                         width="200" height="200" class="img-fluid mb-3" style="object-fit: contain;">
+                    <h1 class="h5 mb-1"><?php echo COMPANY_NAME; ?></h1>
+                    <h2 class="h6 mb-1"><?php echo APP_NAME; ?></h2>
+                </div>
+                <?php else: ?>
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-box-seam display-4 mb-2"></i>
+                    <h1 class="h5 mb-1"><?php echo COMPANY_NAME; ?></h1>
+                    <h2 class="h6 mb-1"><?php echo APP_NAME; ?></h2>
+                </div>
+                <?php endif; ?>
             </div>
             
             <div class="login-body">
                 <?php
                 // Display flash messages
                 if (hasFlashMessage()) {
+
                     $flash = getFlashMessage();
-                    $alertClass = [
-                        'success' => 'alert-success',
-                        'error' => 'alert-danger',
-                        'warning' => 'alert-warning',
-                        'info' => 'alert-info'
-                    ][$flash['type']] ?? 'alert-info';
+                    $alertClass =
+                        [
+                            'success' => 'alert-success',
+                            'error' => 'alert-danger',
+                            'warning' => 'alert-warning',
+                            'info' => 'alert-info',
+                        ][$flash['type']] ?? 'alert-info';
                     ?>
                     <div class="alert <?php echo $alertClass; ?> alert-dismissible fade show" role="alert">
                         <?php echo htmlspecialchars($flash['message']); ?>
@@ -114,16 +129,14 @@ $pageTitle = 'Login - ' . APP_NAME;
                     </div>
                     <?php
                 }
-                
+
                 // Check for timeout parameter
-                if (isset($_GET['timeout'])) {
-                    ?>
+                if (isset($_GET['timeout'])) { ?>
                     <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         Your session has expired. Please log in again.
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                    <?php
-                }
+                    <?php }
                 ?>
                 
                 <h4 class="mb-4 text-center">Sign In</h4>
@@ -173,7 +186,9 @@ $pageTitle = 'Login - ' . APP_NAME;
         </div>
         
         <div class="text-center mt-3 text-white">
-            <small>&copy; <?php echo date('Y'); ?> <?php echo COMPANY_NAME; ?>. All rights reserved.</small>
+            <small>&copy; <?php echo date(
+                'Y',
+            ); ?> <?php echo COMPANY_NAME; ?>. All rights reserved.</small>
         </div>
     </div>
     

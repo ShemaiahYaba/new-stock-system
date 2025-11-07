@@ -30,8 +30,15 @@ if (!$production) {
     exit();
 }
 
-// Decode production paper
-$prodPaper = json_decode($production['production_paper'], true);
+// Handle production paper data
+$prodPaper = [];
+if (isset($production['production_paper'])) {
+    if (is_array($production['production_paper'])) {
+        $prodPaper = $production['production_paper'];
+    } elseif (is_string($production['production_paper'])) {
+        $prodPaper = json_decode($production['production_paper'], true) ?: [];
+    }
+}
 
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';

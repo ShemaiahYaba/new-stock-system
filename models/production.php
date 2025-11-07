@@ -100,7 +100,7 @@ class Production
                 LEFT JOIN warehouses w ON p.warehouse_id = w.id
                 LEFT JOIN (
                     SELECT i.sale_id, i.invoice_number, 
-                           i.invoice_shape->>'$.customer.name' as customer_name
+                           JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.customer.name')) as customer_name
                     FROM invoices i
                 ) s ON p.sale_id = s.sale_id
                 WHERE 1=1";
@@ -129,10 +129,19 @@ class Production
         // Decode JSON fields
         foreach ($productions as &$production) {
             if (isset($production['production_paper'])) {
-                $production['production_paper'] = json_decode(
-                    $production['production_paper'],
-                    true,
-                );
+                // If it's already an array, use it as is
+                if (is_array($production['production_paper'])) {
+                    continue;
+                }
+                // If it's a string, try to decode it
+                if (is_string($production['production_paper'])) {
+                    $decoded = json_decode($production['production_paper'], true);
+                    $production['production_paper'] = is_array($decoded) ? $decoded : [];
+                } else {
+                    $production['production_paper'] = [];
+                }
+            } else {
+                $production['production_paper'] = [];
             }
         }
 

@@ -145,8 +145,16 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     </thead>
                     <tbody>
                         <?php foreach ($productions as $prod):
-
-                            $prodPaper = json_decode($prod['production_paper'], true);
+                            // Ensure production_paper is an array
+                            $prodPaper = [];
+                            if (isset($prod['production_paper'])) {
+                                if (is_array($prod['production_paper'])) {
+                                    $prodPaper = $prod['production_paper'];
+                                } elseif (is_string($prod['production_paper'])) {
+                                    $prodPaper = json_decode($prod['production_paper'], true) ?: [];
+                                }
+                            }
+                            
                             $totalMeters = $prodPaper['total_meters'] ?? 0;
                             $totalAmount = $prodPaper['total_amount'] ?? 0;
                             ?>
@@ -197,7 +205,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 'M d, Y H:i',
                                 strtotime($prod['created_at']),
                             ); ?></td>
-                            <td><?php echo htmlspecialchars($prod['created_by_name']); ?></td>
+                            <td><?php echo isset($prod['created_by_name']) ? htmlspecialchars($prod['created_by_name']) : 'System'; ?></td>
                             <td>
                                 <div class="btn-group" role="group">
                                     <a href="/new-stock-system/index.php?page=production_view&id=<?php echo $prod[

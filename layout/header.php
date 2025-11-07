@@ -1,7 +1,7 @@
 <?php
 /**
  * Header Layout Component
- * 
+ *
  * Common header for all pages
  */
 
@@ -136,8 +136,18 @@ $currentUser = getCurrentUser();
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/new-stock-system/index.php">
-                <i class="bi bi-box-seam"></i> <?php echo APP_NAME; ?>
+            <a class="navbar-brand d-flex align-items-center" href="/new-stock-system/index.php">
+                <?php if (file_exists('assets/logo.png')): ?>
+                <img src="/new-stock-system/assets/logo.png" alt="<?php echo htmlspecialchars(
+                    APP_NAME,
+                ); ?>" height="40" class="d-inline-block align-text-top me-2">
+                <span class="d-none d-md-inline"><?php echo COMPANY_NAME .
+                    ' - ' .
+                    APP_NAME; ?></span>
+                <?php else: ?>
+                <i class="bi bi-box-seam fs-4 me-2"></i>
+                <span class="d-none d-md-inline"><?php echo APP_NAME; ?></span>
+                <?php endif; ?>
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -149,10 +159,14 @@ $currentUser = getCurrentUser();
                     <?php if ($currentUser): ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($currentUser['name']); ?>
+                                <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars(
+                                    $currentUser['name'],
+                                ); ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><span class="dropdown-item-text"><small>Role: <?php echo USER_ROLES[$currentUser['role']] ?? $currentUser['role']; ?></small></span></li>
+                                <li><span class="dropdown-item-text"><small>Role: <?php echo USER_ROLES[
+                                    $currentUser['role']
+                                ] ?? $currentUser['role']; ?></small></span></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="/new-stock-system/index.php?page=profile"><i class="bi bi-person"></i> Profile</a></li>
                                 <li><a class="dropdown-item" href="/new-stock-system/logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
@@ -166,16 +180,18 @@ $currentUser = getCurrentUser();
     
     <div style="height: 56px;"></div> <!-- Spacer for fixed navbar -->
     
-    <?php
-    // Display flash messages
-    if (hasFlashMessage()) {
+    <?php // Display flash messages
+
+if (hasFlashMessage()) {
+
         $flash = getFlashMessage();
-        $alertClass = [
-            'success' => 'alert-success',
-            'error' => 'alert-danger',
-            'warning' => 'alert-warning',
-            'info' => 'alert-info'
-        ][$flash['type']] ?? 'alert-info';
+        $alertClass =
+            [
+                'success' => 'alert-success',
+                'error' => 'alert-danger',
+                'warning' => 'alert-warning',
+                'info' => 'alert-info',
+            ][$flash['type']] ?? 'alert-info';
         ?>
         <div class="container-fluid">
             <div class="alert <?php echo $alertClass; ?> alert-dismissible fade show d-inline-block" role="alert" style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 1100;">
@@ -185,4 +201,4 @@ $currentUser = getCurrentUser();
         </div>
         <?php
     }
-    ?>
+?>

@@ -13,27 +13,32 @@ require_once __DIR__ . '/../../utils/auth_middleware.php';
 header('Content-Type: application/json');
 
 // Check authentication
-if (!isAuthenticated()) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit();
-}
+checkAuth();
 
-$coilId = (int)($_GET['coil_id'] ?? 0);
+$coilId = (int) ($_GET['coil_id'] ?? 0);
 
 if ($coilId <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid coil ID']);
     exit();
 }
 
-$stockEntryModel = new StockEntry();
-$entries = $stockEntryModel->getByCoil($coilId, 1000, 0);
+try {
+    $stockEntryModel = new StockEntry();
 
-// Filter only entries with remaining meters
-$availableEntries = array_filter($entries, function($entry) {
-    return $entry['meters_remaining'] > 0;
-});
+    // Get available entries (already filtered by the model)
+    $entries = $stockEntryModel->getByCoil($coilId, 1000, 0, true);
 
-echo json_encode([
-    'success' => true,
-    'entries' => array_values($availableEntries)
-]);
+    // Return the entries array directly since that's what the frontend expects
+    echo json_encode([
+        'success' => true,
+        'entries' => $entries
+    ]);
+} catch (Exception $e) {
+    error_log('Error in get_stock_entries: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error retrieving stock entries',
+        'error' => $e->getMessage(),
+    ]);
+}

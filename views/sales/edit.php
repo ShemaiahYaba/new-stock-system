@@ -33,7 +33,7 @@ $stockEntryModel = new StockEntry();
 
 $customers = $customerModel->getAll();
 $coils = $coilModel->getAll();
-$stockEntries = $stockEntryModel->getByCoilId($sale['coil_id']);
+$stockEntries = $stockEntryModel->getByCoil($sale['coil_id']);
 
 $pageTitle = 'Edit Sale - ' . APP_NAME;
 require_once __DIR__ . '/../../layout/header.php';
@@ -54,9 +54,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
 
     <div class="card">
         <div class="card-body">
-            <?php if (hasFlashMessage('error')): ?>
+            <?php if (hasFlashMessage()): ?>
                 <div class="alert alert-danger">
-                    <?php echo getFlashMessage('error'); ?>
+                    <?php echo getFlashMessage(); ?>
                 </div>
             <?php endif; ?>
 
@@ -70,7 +70,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <option value="">Select Customer</option>
                         <?php foreach ($customers as $customer): ?>
                             <option value="<?php echo $customer['id']; ?>" 
-                                <?php echo $customer['id'] == $sale['customer_id'] ? 'selected' : ''; ?>>
+                                <?php echo $customer['id'] == $sale['customer_id']
+                                    ? 'selected'
+                                    : ''; ?>>
                                 <?php echo htmlspecialchars($customer['name']); ?>
                             </option>
                         <?php endforeach; ?>
@@ -83,9 +85,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <option value="">Select Coil</option>
                         <?php foreach ($coils as $coil): ?>
                             <option value="<?php echo $coil['id']; ?>" 
-                                data-stock-entries='<?php echo json_encode($stockEntryModel->getByCoilId($coil['id'])); ?>'
+                                data-stock-entries='<?php echo json_encode(
+                                    $stockEntryModel->getByCoil($coil['id']),
+                                ); ?>'
                                 <?php echo $coil['id'] == $sale['coil_id'] ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($coil['code'] . ' - ' . $coil['name']); ?>
+                                <?php echo htmlspecialchars(
+                                    $coil['code'] . ' - ' . $coil['name'],
+                                ); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -98,8 +104,14 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <?php foreach ($stockEntries as $entry): ?>
                             <option value="<?php echo $entry['id']; ?>" 
                                 data-available-meters="<?php echo $entry['meters_remaining']; ?>"
-                                <?php echo $entry['id'] == $sale['stock_entry_id'] ? 'selected' : ''; ?>>
-                                <?php echo 'ID: ' . $entry['id'] . ' - ' . $entry['meters_remaining'] . 'm remaining'; ?>
+                                <?php echo $entry['id'] == $sale['stock_entry_id']
+                                    ? 'selected'
+                                    : ''; ?>>
+                                <?php echo 'ID: ' .
+                                    $entry['id'] .
+                                    ' - ' .
+                                    $entry['meters_remaining'] .
+                                    'm remaining'; ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -108,8 +120,12 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <div class="mb-3">
                     <label for="sale_type" class="form-label">Sale Type</label>
                     <select class="form-select" id="sale_type" name="sale_type" required>
-                        <option value="retail" <?php echo $sale['sale_type'] === 'retail' ? 'selected' : ''; ?>>Retail</option>
-                        <option value="wholesale" <?php echo $sale['sale_type'] === 'wholesale' ? 'selected' : ''; ?>>Wholesale</option>
+                        <option value="retail" <?php echo $sale['sale_type'] === 'retail'
+                            ? 'selected'
+                            : ''; ?>>Retail</option>
+                        <option value="wholesale" <?php echo $sale['sale_type'] === 'wholesale'
+                            ? 'selected'
+                            : ''; ?>>Wholesale</option>
                     </select>
                 </div>
 
@@ -125,7 +141,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     <div class="input-group">
                         <span class="input-group-text">$</span>
                         <input type="number" step="0.01" class="form-control" id="price_per_meter" 
-                               name="price_per_meter" value="<?php echo htmlspecialchars($sale['price_per_meter']); ?>" required>
+                               name="price_per_meter" value="<?php echo htmlspecialchars(
+                                   $sale['price_per_meter'],
+                               ); ?>" required>
                     </div>
                 </div>
 
@@ -134,16 +152,24 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     <div class="input-group">
                         <span class="input-group-text">$</span>
                         <input type="number" step="0.01" class="form-control" id="total_amount" 
-                               name="total_amount" value="<?php echo htmlspecialchars($sale['total_amount']); ?>" readonly>
+                               name="total_amount" value="<?php echo htmlspecialchars(
+                                   $sale['total_amount'],
+                               ); ?>" readonly>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="status" class="form-label">Status</label>
                     <select class="form-select" id="status" name="status" required>
-                        <option value="pending" <?php echo $sale['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                        <option value="completed" <?php echo $sale['status'] === 'completed' ? 'selected' : ''; ?>>Completed</option>
-                        <option value="cancelled" <?php echo $sale['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                        <option value="pending" <?php echo $sale['status'] === 'pending'
+                            ? 'selected'
+                            : ''; ?>>Pending</option>
+                        <option value="completed" <?php echo $sale['status'] === 'completed'
+                            ? 'selected'
+                            : ''; ?>>Completed</option>
+                        <option value="cancelled" <?php echo $sale['status'] === 'cancelled'
+                            ? 'selected'
+                            : ''; ?>>Cancelled</option>
                     </select>
                 </div>
 

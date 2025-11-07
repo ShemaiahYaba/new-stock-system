@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 07, 2025 at 01:00 PM
+-- Generation Time: Nov 07, 2025 at 04:17 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -129,10 +129,18 @@ CREATE TABLE `invoices` (
   `production_id` int(11) DEFAULT NULL,
   `invoice_number` varchar(50) NOT NULL,
   `invoice_shape` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Complete invoice data structure' CHECK (json_valid(`invoice_shape`)),
-  `total` decimal(12,2) NOT NULL,
+  `subtotal` decimal(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Amount before tax and discount',
+  `tax_type` enum('fixed','percentage') NOT NULL DEFAULT 'fixed',
+  `tax_value` decimal(10,2) DEFAULT 0.00 COMMENT 'Tax amount or percentage',
+  `tax_amount` decimal(10,2) DEFAULT 0.00 COMMENT 'Calculated tax amount',
+  `discount_type` enum('fixed','percentage') NOT NULL DEFAULT 'fixed',
+  `discount_value` decimal(10,2) DEFAULT 0.00 COMMENT 'Discount amount or percentage',
+  `discount_amount` decimal(10,2) DEFAULT 0.00 COMMENT 'Calculated discount amount',
+  `total` decimal(12,2) NOT NULL COMMENT 'Final amount after all calculations',
   `tax` decimal(10,2) DEFAULT 0.00,
-  `shipping` decimal(10,2) DEFAULT 0.00,
-  `paid_amount` decimal(12,2) DEFAULT 0.00,
+  `other_charges` decimal(10,2) DEFAULT 0.00,
+  `paid_amount` decimal(12,2) DEFAULT 0.00 COMMENT 'Amount paid by customer',
+  `shipping` decimal(10,2) DEFAULT 0.00 COMMENT 'Shipping charges',
   `status` enum('unpaid','partial','paid','cancelled') DEFAULT 'unpaid',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
@@ -218,7 +226,8 @@ CREATE TABLE `stock_entries` (
 --
 
 INSERT INTO `stock_entries` (`id`, `coil_id`, `meters`, `meters_remaining`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(12, 49, 10000.00, 10000.00, 'available', 2, '2025-11-07 11:57:09', NULL, NULL);
+(12, 49, 10000.00, 10000.00, 'factory_use', 2, '2025-11-07 11:57:09', '2025-11-07 12:11:03', NULL),
+(13, 49, 1000.00, 1000.00, 'available', 2, '2025-11-07 15:04:56', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -240,6 +249,13 @@ CREATE TABLE `stock_ledger` (
   `created_by` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tracks all stock movements with running balance for factory-use coils';
+
+--
+-- Dumping data for table `stock_ledger`
+--
+
+INSERT INTO `stock_ledger` (`id`, `coil_id`, `stock_entry_id`, `transaction_type`, `description`, `inflow_meters`, `outflow_meters`, `balance_meters`, `reference_type`, `reference_id`, `created_by`, `created_at`) VALUES
+(17, 49, 12, 'inflow', 'Stock moved to factory use - Entry #12 (10000.00m available)', 10000.00, 0.00, 10000.00, 'stock_entry', 12, 2, '2025-11-07 12:11:03');
 
 -- --------------------------------------------------------
 
@@ -344,7 +360,8 @@ CREATE TABLE `warehouses` (
 --
 
 INSERT INTO `warehouses` (`id`, `name`, `location`, `contact`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'Head Office', 'Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja', '+2348065336645', 1, '2025-11-07 07:51:17', NULL, NULL);
+(1, 'Head Office', 'Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja', '+2348065336645', 1, '2025-11-07 07:51:17', NULL, NULL),
+(2, 'Branch', 'BRANCH ADDRESS', '192019101912', 0, '2025-11-07 12:28:24', '2025-11-07 12:28:35', '2025-11-07 12:28:35');
 
 --
 -- Indexes for dumped tables
@@ -515,13 +532,13 @@ ALTER TABLE `customers`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `production`
 --
 ALTER TABLE `production`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `receipts`
@@ -533,19 +550,19 @@ ALTER TABLE `receipts`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `stock_entries`
 --
 ALTER TABLE `stock_entries`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `stock_ledger`
 --
 ALTER TABLE `stock_ledger`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `supply_delivery`
@@ -569,7 +586,7 @@ ALTER TABLE `user_permissions`
 -- AUTO_INCREMENT for table `warehouses`
 --
 ALTER TABLE `warehouses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables

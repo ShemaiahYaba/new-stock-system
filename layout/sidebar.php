@@ -121,6 +121,19 @@ $currentPage = $_GET['page'] ?? 'dashboard';
             </a>
         </li>
         <?php endif; ?>
+
+         <!-- Warehouse Management -->
+        <?php if (hasPermission(MODULE_WAREHOUSE_MANAGEMENT)): ?>
+        <li class="nav-item">
+            <a href="/new-stock-system/index.php?page=warehouses" class="nav-link <?php echo $currentPage ===
+            'warehouses'
+                ? 'active'
+                : ''; ?>">
+                <i class="bi bi-person-badge"></i>
+                <span>Warehouses</span>
+            </a>
+        </li>
+        <?php endif; ?>
         
         <!-- Stock Management -->
         <?php if (hasPermission(MODULE_STOCK_MANAGEMENT)): ?>
@@ -162,6 +175,7 @@ $currentPage = $_GET['page'] ?? 'dashboard';
                         <i class="bi bi-circle"></i> Stock Entries
                     </a>
                 </li>
+                
             </ul>
         </li>
         <?php endif; ?>

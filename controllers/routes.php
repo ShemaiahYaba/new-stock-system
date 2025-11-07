@@ -16,6 +16,16 @@ checkAuth();
 // Get requested page
 $page = $_GET['page'] ?? 'dashboard';
 
+// Handle API routes
+if (strpos($_SERVER['REQUEST_URI'], '/api/') !== false) {
+    $apiPath = str_replace('/api/', '', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+    $apiRoute = 'api_' . str_replace('/', '_', trim($apiPath, '/'));
+
+    if (isset($routes[$apiRoute])) {
+        $page = $apiRoute;
+    }
+}
+
 // Define route mappings with required permissions
 $routes = [
     // Dashboard
@@ -71,6 +81,28 @@ $routes = [
     'customers_view' => [
         'view' => 'views/customers/view.php',
         'module' => MODULE_CUSTOMER_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+
+    // Warehouse Management
+    'warehouses' => [
+        'view' => 'views/warehouses/index.php',
+        'module' => MODULE_STOCK_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'warehouses_create' => [
+        'view' => 'views/warehouses/create.php',
+        'module' => MODULE_STOCK_MANAGEMENT,
+        'action' => ACTION_CREATE,
+    ],
+    'warehouses_edit' => [
+        'view' => 'views/warehouses/edit.php',
+        'module' => MODULE_STOCK_MANAGEMENT,
+        'action' => ACTION_EDIT,
+    ],
+    'warehouses_view' => [
+        'view' => 'views/warehouses/view.php',
+        'module' => MODULE_STOCK_MANAGEMENT,
         'action' => ACTION_VIEW,
     ],
 
@@ -213,6 +245,42 @@ $routes = [
         'module' => null,
         'action' => null,
     ],
+
+    // Available Stock Sales
+    'sales_available_stock' => [
+        'view' => 'views/sales/available_stock/index.php',
+        'module' => MODULE_SALES_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'sales_available_stock_create' => [
+        'view' => 'views/sales/available_stock/create.html',
+        'module' => MODULE_SALES_MANAGEMENT,
+        'action' => ACTION_CREATE,
+    ],
+    'api_sales_available_stock' => [
+        'view' => 'api/sales/available_stock/index.php',
+        'module' => MODULE_SALES_MANAGEMENT,
+        'action' => ACTION_CREATE,
+        'is_api' => true,
+    ],
+
+    // Factory Use Workflow
+    'sales_factory_use' => [
+        'view' => 'views/sales/factory_use/index.php',
+        'module' => MODULE_SALES_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'sales_factory_use_create' => [
+        'view' => 'views/sales/factory_use/create.html',
+        'module' => MODULE_SALES_MANAGEMENT,
+        'action' => ACTION_CREATE,
+    ],
+    'api_sales_factory_use' => [
+        'view' => 'api/sales/factory_use/index.php',
+        'module' => MODULE_SALES_MANAGEMENT,
+        'action' => ACTION_CREATE,
+        'is_api' => true,
+    ],
 ];
 
 // Check if route exists
@@ -230,12 +298,24 @@ if ($route['module'] !== null && !hasPermission($route['module'], $route['action
 }
 
 // Load the view
+// Load the view or API endpoint
 $viewPath = __DIR__ . '/../' . $route['view'];
 
 if (file_exists($viewPath)) {
+    if (isset($route['is_api']) && $route['is_api']) {
+        // For API endpoints, set JSON content type
+        header('Content-Type: application/json');
+    }
     require_once $viewPath;
 } else {
-    // View file not found
-    echo "<div class='alert alert-danger'>Page not found: {$page}</div>";
+    if (isset($route['is_api']) && $route['is_api']) {
+        // Return JSON error for API endpoints
+        header('Content-Type: application/json');
+        http_response_code(404);
+        echo json_encode(['error' => 'Endpoint not found']);
+    } else {
+        // Return HTML error for regular pages
+        echo "<div class='alert alert-danger'>Page not found: {$page}</div>";
+    }
     error_log("View file not found: {$viewPath}");
 }

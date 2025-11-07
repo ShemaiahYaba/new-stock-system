@@ -362,6 +362,26 @@ class Coil
     }
 
     /**
+     * Get all active coils for dropdown selection
+     *
+     * @return array
+     */
+    public function getForDropdown()
+    {
+        try {
+            $sql = "SELECT id, code, name, category, status, color, net_weight 
+                    FROM {$this->table} 
+                    WHERE deleted_at IS NULL 
+                    ORDER BY code ASC";
+            $stmt = $this->db->query($sql);
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log('Coil dropdown fetch error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * New✅
      * Get coils with remaining stock meters
      * Joins with stock_entries to show available meters
@@ -371,6 +391,7 @@ class Coil
     public function getWithStockInfo()
     {
         try {
+            // First, get all coils with stock info
             $sql = "SELECT c.*, 
                        COALESCE(SUM(se.meters_remaining), 0) as total_remaining_meters,
                        COUNT(se.id) as stock_entry_count
@@ -380,10 +401,38 @@ class Coil
                     AND se.meters_remaining > 0
                 WHERE c.deleted_at IS NULL
                 GROUP BY c.id
+                HAVING stock_entry_count > 0
                 ORDER BY c.code ASC";
 
             $stmt = $this->db->query($sql);
-            return $stmt->fetchAll();
+            $coils = $stmt->fetchAll();
+            
+            // Get stock entries for each coil
+            $coilIds = array_column($coils, 'id');
+            $entriesByCoil = [];
+            
+            if (!empty($coilIds)) {
+                $placeholders = rtrim(str_repeat('?,', count($coilIds)), ',');
+                $sql = "SELECT * FROM stock_entries 
+                        WHERE coil_id IN ($placeholders) 
+                        AND deleted_at IS NULL 
+                        AND meters_remaining > 0";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute($coilIds);
+                $entries = $stmt->fetchAll();
+                
+                // Group entries by coil_id
+                foreach ($entries as $entry) {
+                    $entriesByCoil[$entry['coil_id']][] = $entry;
+                }
+            }
+            
+            // Merge stock entries into coils data
+            foreach ($coils as &$coil) {
+                $coil['stock_entries'] = $entriesByCoil[$coil['id']] ?? [];
+            }
+            
+            return $coils;
         } catch (PDOException $e) {
             error_log('Coil with stock info fetch error: ' . $e->getMessage());
             return [];

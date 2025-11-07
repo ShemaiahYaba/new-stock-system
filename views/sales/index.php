@@ -23,12 +23,17 @@ $invoiceModel = new Invoice();
 $receiptModel = new Receipt();
 
 if (!empty($searchQuery)) {
-    $sales = $saleModel->search(
-        $searchQuery,
+    $whereClause = 'WHERE s.deleted_at IS NULL 
+                   AND (c.name LIKE :query OR co.code LIKE :query OR co.name LIKE :query)';
+    $params = [':query' => "%$searchQuery%"];
+    
+    $sales = $saleModel->getFilteredSales(
+        $whereClause,
+        $params,
         RECORDS_PER_PAGE,
-        ($currentPage - 1) * RECORDS_PER_PAGE,
+        ($currentPage - 1) * RECORDS_PER_PAGE
     );
-    $totalSales = count($sales);
+    $totalSales = $saleModel->countFilteredSales($whereClause, $params);
 } else {
     $sales = $saleModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
     $totalSales = $saleModel->count();
@@ -36,18 +41,43 @@ if (!empty($searchQuery)) {
 
 // Enhance sales data with workflow status
 foreach ($sales as &$sale) {
-    // Get production status
-    $production = $productionModel->findBySaleId($sale['id']);
-    $sale['production_status'] = $production ? $production['status'] : null;
-    $sale['production_id'] = $production ? $production['id'] : null;
+    // Initialize all fields with default values
+    $sale['production_status'] = null;
+    $sale['production_id'] = null;
+    $sale['invoice_status'] = null;
+    $sale['invoice_id'] = null;
+    $sale['has_receipts'] = false;
+    
+    // Skip if sale ID is not set or invalid
+    if (empty($sale['id']) || !is_numeric($sale['id'])) {
+        error_log('Warning: Invalid or missing sale ID in sales list: ' . json_encode($sale));
+        continue;
+    }
+    
+    try {
+        // Get production status
+        $production = $productionModel->findBySaleId($sale['id']);
+        if ($production) {
+            $sale['production_status'] = $production['status'] ?? null;
+            $sale['production_id'] = $production['id'] ?? null;
+        }
 
-    // Get invoice status
-    $invoice = $invoiceModel->findBySaleId($sale['id']);
-    $sale['invoice_status'] = $invoice ? $invoice['status'] : null;
-    $sale['invoice_id'] = $invoice ? $invoice['id'] : null;
-
-    // Get receipt info
-    $sale['has_receipts'] = $invoice ? $receiptModel->count('', $invoice['id']) > 0 : false;
+        // Get invoice status
+        $invoice = $invoiceModel->findBySaleId($sale['id']);
+        if ($invoice) {
+            $sale['invoice_status'] = $invoice['status'] ?? null;
+            $sale['invoice_id'] = $invoice['id'] ?? null;
+            
+            // Get receipt info only if we have a valid invoice ID
+            if (!empty($invoice['id'])) {
+                $sale['has_receipts'] = $receiptModel->count('', $invoice['id']) > 0;
+            }
+        }
+    } catch (Exception $e) {
+        error_log('Error processing sale ID ' . ($sale['id'] ?? 'unknown') . ': ' . $e->getMessage());
+        // Continue with next sale even if one fails
+        continue;
+    }
 }
 
 $paginationData = getPaginationData($totalSales, $currentPage);
@@ -249,7 +279,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                             <!-- Create Invoice (if doesn't exist) -->
                                             <?php if (
                                                 !$sale['invoice_id'] &&
-                                                hasPermission(MODULE_INVOICES, ACTION_CREATE)
+                                                hasPermission(MODULE_INVOICE_MANAGEMENT, ACTION_CREATE)
                                             ): ?>
                                             <li>
                                                 <a class="dropdown-item" href="?page=invoices&action=create&sale_id=<?= $sale[

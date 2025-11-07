@@ -109,9 +109,17 @@ class StockEntry
      * @param int $offset Offset
      * @return array
      */
-    public function getByCoil($coilId, $limit = 1000, $offset = 0)
+    public function getByCoil($coilId, $limit = 1000, $offset = 0, $onlyAvailable = true)
     {
-        return $this->getByCoilId($coilId, $limit, $offset);
+        $entries = $this->getByCoilId($coilId, $limit, $offset);
+        
+        if ($onlyAvailable) {
+            return array_filter($entries, function($entry) {
+                return $entry['meters_remaining'] > 0 && $entry['deleted_at'] === null;
+            });
+        }
+        
+        return $entries;
     }
 
     /**
