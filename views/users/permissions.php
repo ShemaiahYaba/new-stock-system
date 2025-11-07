@@ -76,7 +76,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         
                         <?php foreach (PERMISSION_MODULES as $moduleKey => $moduleName): ?>
                         <div class="card mb-3">
-                            <div class="card-header bg-light">
+                            <div class="card-header bg-red">
                                 <div class="form-check">
                                     <input class="form-check-input module-checkbox" 
                                            type="checkbox" 

@@ -167,12 +167,7 @@ $pageTitle = 'Login - ' . APP_NAME;
                         </button>
                     </div>
                     
-                    <div class="text-center">
-                        <p class="mb-0">
-                            Don't have an account? 
-                            <a href="/new-stock-system/register.php" class="text-decoration-none">Register here</a>
-                        </p>
-                    </div>
+                    <!-- Registration has been disabled -->
                 </form>
             </div>
         </div>

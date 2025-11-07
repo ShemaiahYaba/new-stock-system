@@ -103,8 +103,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         ?>
                         <tr>
                             <td>#<?php echo $entry['id']; ?></td>
-                            <td><strong><?php echo htmlspecialchars($entry['coil_code']); ?></strong></td>
-                            <td><?php echo htmlspecialchars($entry['coil_name']); ?></td>
+                            <td><strong><?php echo !empty($entry['coil_code']) ? htmlspecialchars($entry['coil_code']) : 'N/A'; ?></strong></td>
+                            <td><?php echo !empty($entry['coil_name']) ? htmlspecialchars($entry['coil_name']) : 'N/A'; ?></td>
                             <td><?php echo number_format($entry['meters'], 2); ?>m</td>
                             <td>
                                 <span class="badge <?php echo $entry['meters_remaining'] > 0 ? 'bg-success' : 'bg-secondary'; ?>">

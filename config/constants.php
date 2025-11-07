@@ -166,6 +166,18 @@ define('DATE_DISPLAY_FORMAT', 'd/m/Y');
 // Session Configuration
 define('SESSION_TIMEOUT', 3600); // 1 hour in seconds
 
+// Module Permissions
+if (!defined('MODULE_SALES')) define('MODULE_SALES', 'sales');
+if (!defined('MODULE_STOCK')) define('MODULE_STOCK', 'stock');
+if (!defined('MODULE_CUSTOMERS')) define('MODULE_CUSTOMERS', 'customers');
+if (!defined('MODULE_USERS')) define('MODULE_USERS', 'users');
+
+// Action Permissions
+if (!defined('ACTION_VIEW')) define('ACTION_VIEW', 'view');
+if (!defined('ACTION_CREATE')) define('ACTION_CREATE', 'create');
+if (!defined('ACTION_EDIT')) define('ACTION_EDIT', 'edit');
+if (!defined('ACTION_DELETE')) define('ACTION_DELETE', 'delete');
+
 // Application Settings
 define('APP_NAME', 'Stock Taking System');
 define('APP_VERSION', '1.0.0');
