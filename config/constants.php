@@ -1,7 +1,7 @@
 <?php
 /**
  * Global Constants and Enumerations
- * 
+ *
  * Centralized static data for the stock taking system
  * All enums, statuses, and reusable constants are defined here
  */
@@ -21,7 +21,7 @@ const USER_ROLES = [
     ROLE_ACCOUNTANT => 'Accountant',
     ROLE_SALES_MANAGER => 'Sales Manager',
     ROLE_STOCK_MANAGER => 'Stock Manager',
-    ROLE_VIEWER => 'Viewer'
+    ROLE_VIEWER => 'Viewer',
 ];
 
 // Stock Status
@@ -39,15 +39,16 @@ const STOCK_STATUSES = [
 ];
 
 // Stock Categories
-define('STOCK_CATEGORY_ALLOY_STEEL', 'alloy_steel');
+define('STOCK_CATEGORY_ALUSTEEL', 'alusteel');
+define('STOCK_CATEGORY_ALLOY_STEEL', STOCK_CATEGORY_ALUSTEEL); // backward compatibility
 define('STOCK_CATEGORY_ALUMINUM', 'aluminum');
 define('STOCK_CATEGORY_KZINC', 'kzinc');
 
 // Stock Categories Array
 const STOCK_CATEGORIES = [
-    STOCK_CATEGORY_ALLOY_STEEL => 'Alloy Steel',
+    STOCK_CATEGORY_ALUSTEEL => 'Alusteel',
     STOCK_CATEGORY_ALUMINUM => 'Aluminum',
-    STOCK_CATEGORY_KZINC => 'K-Zinc'
+    STOCK_CATEGORY_KZINC => 'K-Zinc',
 ];
 
 // Sale Types
@@ -57,7 +58,7 @@ define('SALE_TYPE_RETAIL', 'retail');
 // Sale Types Array
 const SALE_TYPES = [
     SALE_TYPE_WHOLESALE => 'Wholesale',
-    SALE_TYPE_RETAIL => 'Retail'
+    SALE_TYPE_RETAIL => 'Retail',
 ];
 
 // Sale Status
@@ -69,7 +70,44 @@ define('SALE_STATUS_CANCELLED', 'cancelled');
 const SALE_STATUSES = [
     SALE_STATUS_PENDING => 'Pending',
     SALE_STATUS_COMPLETED => 'Completed',
-    SALE_STATUS_CANCELLED => 'Cancelled'
+    SALE_STATUS_CANCELLED => 'Cancelled',
+];
+
+// Production Status - NEW
+define('PRODUCTION_STATUS_PENDING', 'pending');
+define('PRODUCTION_STATUS_IN_PROGRESS', 'in_progress');
+define('PRODUCTION_STATUS_COMPLETED', 'completed');
+define('PRODUCTION_STATUS_CANCELLED', 'cancelled');
+
+const PRODUCTION_STATUSES = [
+    PRODUCTION_STATUS_PENDING => 'Pending',
+    PRODUCTION_STATUS_IN_PROGRESS => 'In Progress',
+    PRODUCTION_STATUS_COMPLETED => 'Completed',
+    PRODUCTION_STATUS_CANCELLED => 'Cancelled',
+];
+
+// Invoice Status - NEW
+define('INVOICE_STATUS_UNPAID', 'unpaid');
+define('INVOICE_STATUS_PARTIAL', 'partial');
+define('INVOICE_STATUS_PAID', 'paid');
+define('INVOICE_STATUS_CANCELLED', 'cancelled');
+
+const INVOICE_STATUSES = [
+    INVOICE_STATUS_UNPAID => 'Unpaid',
+    INVOICE_STATUS_PARTIAL => 'Partial',
+    INVOICE_STATUS_PAID => 'Paid',
+    INVOICE_STATUS_CANCELLED => 'Cancelled',
+];
+
+// Supply/Delivery Status - NEW
+define('SUPPLY_STATUS_PENDING', 'pending');
+define('SUPPLY_STATUS_SUPPLIED', 'supplied');
+define('SUPPLY_STATUS_RETURNED', 'returned');
+
+const SUPPLY_STATUSES = [
+    SUPPLY_STATUS_PENDING => 'Pending',
+    SUPPLY_STATUS_SUPPLIED => 'Supplied',
+    SUPPLY_STATUS_RETURNED => 'Returned',
 ];
 
 // Coil Colors
@@ -84,7 +122,7 @@ const COIL_COLORS = [
     'grey' => 'Grey',
     'brown' => 'Brown',
     'orange' => 'Orange',
-    'custom' => 'Custom'
+    'custom' => 'Custom',
 ];
 
 // Permission Modules
@@ -92,6 +130,9 @@ define('MODULE_USER_MANAGEMENT', 'user_management');
 define('MODULE_CUSTOMER_MANAGEMENT', 'customer_management');
 define('MODULE_STOCK_MANAGEMENT', 'stock_management');
 define('MODULE_SALES_MANAGEMENT', 'sales_management');
+define('MODULE_PRODUCTION_MANAGEMENT', 'production_management'); // NEW
+define('MODULE_INVOICE_MANAGEMENT', 'invoice_management'); // NEW
+define('MODULE_SUPPLY_MANAGEMENT', 'supply_management'); // NEW
 define('MODULE_REPORTS', 'reports');
 define('MODULE_DASHBOARD', 'dashboard');
 
@@ -101,8 +142,11 @@ const PERMISSION_MODULES = [
     MODULE_CUSTOMER_MANAGEMENT => 'Customer Management',
     MODULE_STOCK_MANAGEMENT => 'Stock Management',
     MODULE_SALES_MANAGEMENT => 'Sales Management',
+    MODULE_PRODUCTION_MANAGEMENT => 'Production Management', // NEW
+    MODULE_INVOICE_MANAGEMENT => 'Invoice Management', // NEW
+    MODULE_SUPPLY_MANAGEMENT => 'Supply Management', // NEW
     MODULE_REPORTS => 'Reports',
-    MODULE_DASHBOARD => 'Dashboard'
+    MODULE_DASHBOARD => 'Dashboard',
 ];
 
 // Permission Actions
@@ -116,7 +160,7 @@ const PERMISSION_ACTIONS = [
     ACTION_VIEW => 'View',
     ACTION_CREATE => 'Create',
     ACTION_EDIT => 'Edit',
-    ACTION_DELETE => 'Delete'
+    ACTION_DELETE => 'Delete',
 ];
 
 // Default Permissions by Role
@@ -126,57 +170,91 @@ const DEFAULT_PERMISSIONS = [
         MODULE_CUSTOMER_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
         MODULE_STOCK_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
         MODULE_SALES_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
+        MODULE_PRODUCTION_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE], // NEW
+        MODULE_INVOICE_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE], // NEW
+        MODULE_SUPPLY_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE], // NEW
         MODULE_REPORTS => [ACTION_VIEW],
-        MODULE_DASHBOARD => [ACTION_VIEW]
+        MODULE_DASHBOARD => [ACTION_VIEW],
     ],
     ROLE_HR_DIRECTOR => [
         MODULE_USER_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
-        MODULE_DASHBOARD => [ACTION_VIEW]
+        MODULE_DASHBOARD => [ACTION_VIEW],
     ],
     ROLE_ACCOUNTANT => [
         MODULE_STOCK_MANAGEMENT => [ACTION_VIEW],
         MODULE_SALES_MANAGEMENT => [ACTION_VIEW],
         MODULE_REPORTS => [ACTION_VIEW],
-        MODULE_DASHBOARD => [ACTION_VIEW]
+        MODULE_DASHBOARD => [ACTION_VIEW],
     ],
     ROLE_SALES_MANAGER => [
         MODULE_CUSTOMER_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT],
         MODULE_SALES_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT],
         MODULE_STOCK_MANAGEMENT => [ACTION_VIEW],
-        MODULE_DASHBOARD => [ACTION_VIEW]
+        MODULE_DASHBOARD => [ACTION_VIEW],
     ],
     ROLE_STOCK_MANAGER => [
         MODULE_STOCK_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
-        MODULE_DASHBOARD => [ACTION_VIEW]
+        MODULE_DASHBOARD => [ACTION_VIEW],
     ],
     ROLE_VIEWER => [
         MODULE_DASHBOARD => [ACTION_VIEW],
         MODULE_STOCK_MANAGEMENT => [ACTION_VIEW],
-        MODULE_SALES_MANAGEMENT => [ACTION_VIEW]
-    ]
+        MODULE_SALES_MANAGEMENT => [ACTION_VIEW],
+    ],
+];
+
+// Alusteel Properties - NEW
+const ALUSTEEL_PROPERTIES = [
+    'mainsheet' => 'Mainsheet',
+    'flatsheet' => 'Flatsheet',
+    'cladding' => 'Cladding',
+];
+
+// Payment Methods - NEW
+const PAYMENT_METHODS = [
+    'cash' => 'Cash',
+    'bank_transfer' => 'Bank Transfer',
+    'cheque' => 'Cheque',
+    'pos' => 'POS',
 ];
 
 // Pagination
-define('RECORDS_PER_PAGE', 20);
+define('RECORDS_PER_PAGE', 10);
 
 // Date Format
 define('DATE_FORMAT', 'Y-m-d H:i:s');
 define('DATE_DISPLAY_FORMAT', 'd/m/Y');
 
 // Session Configuration
-define('SESSION_TIMEOUT', 3600); // 1 hour in seconds
+define('SESSION_TIMEOUT', 3600); // 30 minutes in seconds
 
 // Module Permissions
-if (!defined('MODULE_SALES')) define('MODULE_SALES', 'sales');
-if (!defined('MODULE_STOCK')) define('MODULE_STOCK', 'stock');
-if (!defined('MODULE_CUSTOMERS')) define('MODULE_CUSTOMERS', 'customers');
-if (!defined('MODULE_USERS')) define('MODULE_USERS', 'users');
+if (!defined('MODULE_SALES')) {
+    define('MODULE_SALES', 'sales');
+}
+if (!defined('MODULE_STOCK')) {
+    define('MODULE_STOCK', 'stock');
+}
+if (!defined('MODULE_CUSTOMERS')) {
+    define('MODULE_CUSTOMERS', 'customers');
+}
+if (!defined('MODULE_USERS')) {
+    define('MODULE_USERS', 'users');
+}
 
 // Action Permissions
-if (!defined('ACTION_VIEW')) define('ACTION_VIEW', 'view');
-if (!defined('ACTION_CREATE')) define('ACTION_CREATE', 'create');
-if (!defined('ACTION_EDIT')) define('ACTION_EDIT', 'edit');
-if (!defined('ACTION_DELETE')) define('ACTION_DELETE', 'delete');
+if (!defined('ACTION_VIEW')) {
+    define('ACTION_VIEW', 'view');
+}
+if (!defined('ACTION_CREATE')) {
+    define('ACTION_CREATE', 'create');
+}
+if (!defined('ACTION_EDIT')) {
+    define('ACTION_EDIT', 'edit');
+}
+if (!defined('ACTION_DELETE')) {
+    define('ACTION_DELETE', 'delete');
+}
 
 // Application Settings
 define('APP_NAME', 'Stock Taking System');

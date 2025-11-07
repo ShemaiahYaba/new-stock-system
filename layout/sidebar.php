@@ -1,7 +1,7 @@
 <?php
 /**
  * Sidebar Layout Component
- * 
+ *
  * Navigation sidebar with permission-based menu items
  */
 
@@ -86,7 +86,10 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         <!-- Dashboard - Available to all authenticated users -->
         <?php if (hasPermission(MODULE_DASHBOARD)): ?>
         <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=dashboard" class="nav-link <?php echo $currentPage === 'dashboard' ? 'active' : ''; ?>">
+            <a href="/new-stock-system/index.php?page=dashboard" class="nav-link <?php echo $currentPage ===
+            'dashboard'
+                ? 'active'
+                : ''; ?>">
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
@@ -96,7 +99,10 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         <!-- User Management -->
         <?php if (hasPermission(MODULE_USER_MANAGEMENT)): ?>
         <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=users" class="nav-link <?php echo $currentPage === 'users' ? 'active' : ''; ?>">
+            <a href="/new-stock-system/index.php?page=users" class="nav-link <?php echo $currentPage ===
+            'users'
+                ? 'active'
+                : ''; ?>">
                 <i class="bi bi-people"></i>
                 <span>User Management</span>
             </a>
@@ -106,7 +112,10 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         <!-- Customer Management -->
         <?php if (hasPermission(MODULE_CUSTOMER_MANAGEMENT)): ?>
         <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=customers" class="nav-link <?php echo $currentPage === 'customers' ? 'active' : ''; ?>">
+            <a href="/new-stock-system/index.php?page=customers" class="nav-link <?php echo $currentPage ===
+            'customers'
+                ? 'active'
+                : ''; ?>">
                 <i class="bi bi-person-badge"></i>
                 <span>Customers</span>
             </a>
@@ -123,13 +132,16 @@ $currentPage = $_GET['page'] ?? 'dashboard';
             </a>
             <ul class="collapse list-unstyled ps-4" id="stockMenu">
                 <li>
-                    <a href="/new-stock-system/index.php?page=coils" class="nav-link <?php echo $currentPage === 'coils' ? 'active' : ''; ?>">
+                    <a href="/new-stock-system/index.php?page=coils" class="nav-link <?php echo $currentPage ===
+                    'coils'
+                        ? 'active'
+                        : ''; ?>">
                         <i class="bi bi-circle"></i> All Coils
                     </a>
                 </li>
                 <li>
-                    <a href="/new-stock-system/index.php?page=coils&category=<?php echo STOCK_CATEGORY_ALLOY_STEEL; ?>" class="nav-link">
-                        <i class="bi bi-circle"></i> Alloy Steel
+                    <a href="/new-stock-system/index.php?page=coils&category=<?php echo STOCK_CATEGORY_ALUSTEEL; ?>" class="nav-link">
+                        <i class="bi bi-circle"></i> Alusteel
                     </a>
                 </li>
                 <li>
@@ -143,7 +155,10 @@ $currentPage = $_GET['page'] ?? 'dashboard';
                     </a>
                 </li>
                 <li>
-                    <a href="/new-stock-system/index.php?page=stock_entries" class="nav-link <?php echo $currentPage === 'stock_entries' ? 'active' : ''; ?>">
+                    <a href="/new-stock-system/index.php?page=stock_entries" class="nav-link <?php echo $currentPage ===
+                    'stock_entries'
+                        ? 'active'
+                        : ''; ?>">
                         <i class="bi bi-circle"></i> Stock Entries
                     </a>
                 </li>
@@ -152,19 +167,50 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         <?php endif; ?>
         
         <!-- Sales Management -->
-        <?php if (hasPermission(MODULE_SALES_MANAGEMENT)): ?>
-        <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=sales" class="nav-link <?php echo $currentPage === 'sales' ? 'active' : ''; ?>">
-                <i class="bi bi-cart"></i>
-                <span>Sales</span>
+<?php if (hasPermission(MODULE_SALES_MANAGEMENT)): ?>
+<li class="nav-item">
+    <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#salesMenu">
+        <i class="bi bi-cart"></i>
+        <span>Sales</span>
+        <i class="bi bi-chevron-down ms-auto"></i>
+    </a>
+    <ul class="collapse list-unstyled ps-4" id="salesMenu">
+        <li>
+            <a href="/new-stock-system/index.php?page=sales" class="nav-link">
+                <i class="bi bi-circle"></i> All Sales
             </a>
         </li>
-        <?php endif; ?>
+        <li>
+            <a href="/new-stock-system/index.php?page=production" class="nav-link">
+                <i class="bi bi-circle"></i> Production
+            </a>
+        </li>
+        <li>
+            <a href="/new-stock-system/index.php?page=supply" class="nav-link">
+                <i class="bi bi-circle"></i> Supply / Delivery
+            </a>
+        </li>
+        <li>
+            <a href="/new-stock-system/index.php?page=invoices" class="nav-link">
+                <i class="bi bi-circle"></i> Invoices
+            </a>
+        </li>
+        <li>
+            <a href="/new-stock-system/index.php?page=receipts" class="nav-link">
+                <i class="bi bi-circle"></i> Receipts
+            </a>
+        </li>
+    </ul>
+</li>
+<?php endif; ?>
         
         <!-- Reports -->
         <?php if (hasPermission(MODULE_REPORTS)): ?>
         <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=reports" class="nav-link <?php echo $currentPage === 'reports' ? 'active' : ''; ?>">
+            <a href="/new-stock-system/index.php?page=reports" class="nav-link <?php echo $currentPage ===
+            'reports'
+                ? 'active'
+                : ''; ?>">
                 <i class="bi bi-graph-up"></i>
                 <span>Reports</span>
             </a>

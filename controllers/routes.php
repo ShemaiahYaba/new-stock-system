@@ -1,7 +1,7 @@
 <?php
 /**
  * Central Routing System
- * 
+ *
  * Maps page requests to appropriate view files
  * Enforces authentication and authorization
  */
@@ -22,154 +22,197 @@ $routes = [
     'dashboard' => [
         'view' => 'views/dashboard.php',
         'module' => MODULE_DASHBOARD,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
-    
+
     // User Management
     'users' => [
         'view' => 'views/users/index.php',
         'module' => MODULE_USER_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
     'users_create' => [
         'view' => 'views/users/create.php',
         'module' => MODULE_USER_MANAGEMENT,
-        'action' => ACTION_CREATE
+        'action' => ACTION_CREATE,
     ],
     'users_edit' => [
         'view' => 'views/users/edit.php',
         'module' => MODULE_USER_MANAGEMENT,
-        'action' => ACTION_EDIT
+        'action' => ACTION_EDIT,
     ],
     'users_view' => [
         'view' => 'views/users/view.php',
         'module' => MODULE_USER_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
     'users_permissions' => [
         'view' => 'views/users/permissions.php',
         'module' => MODULE_USER_MANAGEMENT,
-        'action' => ACTION_EDIT
+        'action' => ACTION_EDIT,
     ],
-    
+
     // Customer Management
     'customers' => [
         'view' => 'views/customers/index.php',
         'module' => MODULE_CUSTOMER_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
     'customers_create' => [
         'view' => 'views/customers/create.php',
         'module' => MODULE_CUSTOMER_MANAGEMENT,
-        'action' => ACTION_CREATE
+        'action' => ACTION_CREATE,
     ],
     'customers_edit' => [
         'view' => 'views/customers/edit.php',
         'module' => MODULE_CUSTOMER_MANAGEMENT,
-        'action' => ACTION_EDIT
+        'action' => ACTION_EDIT,
     ],
     'customers_view' => [
         'view' => 'views/customers/view.php',
         'module' => MODULE_CUSTOMER_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
-    
+
     // Stock Management - Coils
     'coils' => [
         'view' => 'views/stock/coils/index.php',
         'module' => MODULE_STOCK_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
     'coils_create' => [
         'view' => 'views/stock/coils/create.php',
         'module' => MODULE_STOCK_MANAGEMENT,
-        'action' => ACTION_CREATE
+        'action' => ACTION_CREATE,
     ],
     'coils_edit' => [
         'view' => 'views/stock/coils/edit.php',
         'module' => MODULE_STOCK_MANAGEMENT,
-        'action' => ACTION_EDIT
+        'action' => ACTION_EDIT,
     ],
     'coils_view' => [
         'view' => 'views/stock/coils/view.php',
         'module' => MODULE_STOCK_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
-    
+
     // Stock Management - Stock Entries
     'stock_entries' => [
         'view' => 'views/stock/entries/index.php',
         'module' => MODULE_STOCK_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
     'stock_entries_create' => [
         'view' => 'views/stock/entries/create.php',
         'module' => MODULE_STOCK_MANAGEMENT,
-        'action' => ACTION_CREATE
+        'action' => ACTION_CREATE,
     ],
     'stock_entries_edit' => [
         'view' => 'views/stock/entries/edit.php',
         'module' => MODULE_STOCK_MANAGEMENT,
-        'action' => ACTION_EDIT
+        'action' => ACTION_EDIT,
     ],
     'stock_entries_view' => [
         'view' => 'views/stock/entries/view.php',
         'module' => MODULE_STOCK_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
     'stock_ledger' => [
         'view' => 'views/stock/ledger/index.php',
         'module' => MODULE_STOCK_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
-    
+
     // Sales Management
     'sales' => [
         'view' => 'views/sales/index.php',
         'module' => MODULE_SALES_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
+    ],
+    // New Sale (Production Workflow)
+    'sales_create_new' => [
+        'view' => 'views/sales/create_workflow.php',
+        'module' => MODULE_SALES_MANAGEMENT,
+        'action' => ACTION_CREATE,
     ],
     'sales_create' => [
         'view' => 'views/sales/create.php',
         'module' => MODULE_SALES_MANAGEMENT,
-        'action' => ACTION_CREATE
+        'action' => ACTION_CREATE,
     ],
     'sales_edit' => [
         'view' => 'views/sales/edit.php',
         'module' => MODULE_SALES_MANAGEMENT,
-        'action' => ACTION_EDIT
+        'action' => ACTION_EDIT,
     ],
     'sales_view' => [
         'view' => 'views/sales/view.php',
         'module' => MODULE_SALES_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
     'sales_invoice' => [
         'view' => 'views/sales/invoice.php',
         'module' => MODULE_SALES_MANAGEMENT,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
-    
+    // Production Management
+    'production' => [
+        'view' => 'views/production/index.php',
+        'module' => MODULE_PRODUCTION_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'production_view' => [
+        'view' => 'views/production/view.php',
+        'module' => MODULE_PRODUCTION_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+
+    // Invoice Management
+    'invoices' => [
+        'view' => 'views/invoices/index.php',
+        'module' => MODULE_INVOICE_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'invoice_view' => [
+        'view' => 'views/invoices/view.php',
+        'module' => MODULE_INVOICE_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+
+    // Supply/Delivery Management
+    'supply' => [
+        'view' => 'views/supply/index.php',
+        'module' => MODULE_SUPPLY_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+
+    // Receipts
+    'receipts' => [
+        'view' => 'views/receipts/index.php',
+        'module' => MODULE_INVOICE_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+
     // Reports
     'reports' => [
         'view' => 'views/reports/index.php',
         'module' => MODULE_REPORTS,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
-    
+
     // Profile
     'profile' => [
         'view' => 'views/profile.php',
         'module' => MODULE_DASHBOARD,
-        'action' => ACTION_VIEW
+        'action' => ACTION_VIEW,
     ],
-    
+
     // Access Denied
     'access_denied' => [
         'view' => 'views/access_denied.php',
         'module' => null,
-        'action' => null
-    ]
+        'action' => null,
+    ],
 ];
 
 // Check if route exists
