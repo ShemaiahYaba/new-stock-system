@@ -79,6 +79,83 @@ class Invoice
         return $stmt->fetchAll();
     }
 
+    public function getAll($limit = 10, $offset = 0, $status = '')
+    {
+        // First, get basic invoice data
+        $sql = "SELECT i.* FROM {$this->table} i WHERE 1=1";
+
+        $params = [];
+
+        if (!empty($status)) {
+            $sql .= ' AND i.status = :status';
+            $params[':status'] = $status;
+        }
+
+        $sql .= ' ORDER BY i.created_at DESC LIMIT :limit OFFSET :offset';
+
+        $stmt = $this->db->prepare($sql);
+
+        // Bind parameters
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+
+        // Bind status parameter if set
+        if (!empty($status)) {
+            $stmt->bindValue(':status', $status);
+        }
+
+        $stmt->execute();
+        $results = $stmt->fetchAll();
+
+        // Process each invoice to add customer data from invoice_shape
+        foreach ($results as &$row) {
+            if (isset($row['invoice_shape'])) {
+                $invoiceData = json_decode($row['invoice_shape'], true);
+                $row['invoice_shape'] = $invoiceData;
+
+                // Add customer data directly from invoice_shape
+                if (isset($invoiceData['customer'])) {
+                    $row['customer_name'] = $invoiceData['customer']['name'] ?? 'N/A';
+                    $row['customer_phone'] = $invoiceData['customer']['phone'] ?? '';
+                } else {
+                    $row['customer_name'] = 'N/A';
+                    $row['customer_phone'] = '';
+                }
+
+                // Add sale reference if available
+                if (isset($invoiceData['meta']['ref'])) {
+                    $row['sale_reference'] = $invoiceData['meta']['ref'];
+                } else {
+                    $row['sale_reference'] = 'N/A';
+                }
+            } else {
+                $row['customer_name'] = 'N/A';
+                $row['customer_phone'] = '';
+                $row['sale_reference'] = 'N/A';
+                $row['invoice_shape'] = [];
+            }
+        }
+
+        return $results;
+    }
+
+    public function count($status = '')
+    {
+        $sql = "SELECT COUNT(*) as total FROM {$this->table}";
+        $params = [];
+
+        if (!empty($status)) {
+            $sql .= ' WHERE status = :status';
+            $params[':status'] = $status;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $result = $stmt->fetch();
+        return (int) $result['total'];
+    }
+
     public function updatePaidAmount($id, $amount)
     {
         $sql = "SELECT paid_amount, total FROM {$this->table} WHERE id = :id";
