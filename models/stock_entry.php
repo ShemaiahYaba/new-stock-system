@@ -1,80 +1,85 @@
 <?php
 /**
  * Stock Entry Model
- * 
+ *
  * Handles stock entry operations (meter specifications for coils)
  */
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/constants.php';
 
-class StockEntry {
+class StockEntry
+{
     private $db;
     private $table = 'stock_entries';
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->db = Database::getInstance()->getConnection();
     }
-    
+
     /**
      * Create a new stock entry
-     * 
+     *
      * @param array $data Stock entry data
      * @return int|false Stock entry ID or false on failure
      */
-    public function create($data) {
+    public function create($data)
+    {
         try {
             $sql = "INSERT INTO {$this->table} 
                     (coil_id, meters, meters_remaining, created_by, created_at) 
                     VALUES (:coil_id, :meters, :meters_remaining, :created_by, NOW())";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
                 ':coil_id' => $data['coil_id'],
                 ':meters' => $data['meters'],
                 ':meters_remaining' => $data['meters'],
-                ':created_by' => $data['created_by']
+                ':created_by' => $data['created_by'],
             ]);
-            
+
             return $this->db->lastInsertId();
         } catch (PDOException $e) {
-            error_log("Stock entry creation error: " . $e->getMessage());
+            error_log('Stock entry creation error: ' . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
      * Find stock entry by ID
-     * 
+     *
      * @param int $id Stock entry ID
      * @return array|false
      */
-    public function findById($id) {
+    public function findById($id)
+    {
         try {
             $sql = "SELECT se.*, c.code as coil_code, c.name as coil_name, c.status as coil_status
                     FROM {$this->table} se
                     LEFT JOIN coils c ON se.coil_id = c.id
                     WHERE se.id = :id AND se.deleted_at IS NULL";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':id' => $id]);
-            
+
             return $stmt->fetch();
         } catch (PDOException $e) {
-            error_log("Stock entry find error: " . $e->getMessage());
+            error_log('Stock entry find error: ' . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
      * Get stock entries by coil ID
-     * 
+     *
      * @param int $coilId Coil ID
      * @param int $limit Limit
      * @param int $offset Offset
      * @return array
      */
-    public function getByCoilId($coilId, $limit = 1000, $offset = 0) {
+    public function getByCoilId($coilId, $limit = 1000, $offset = 0)
+    {
         try {
             $sql = "SELECT se.*, u.name as created_by_name
                     FROM {$this->table} se
@@ -82,40 +87,42 @@ class StockEntry {
                     WHERE se.coil_id = :coil_id AND se.deleted_at IS NULL
                     ORDER BY se.created_at DESC
                     LIMIT :limit OFFSET :offset";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->bindValue(':coil_id', $coilId, PDO::PARAM_INT);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
-            
+
             return $stmt->fetchAll();
         } catch (PDOException $e) {
-            error_log("Stock entry fetch error: " . $e->getMessage());
+            error_log('Stock entry fetch error: ' . $e->getMessage());
             return [];
         }
     }
-    
+
     /**
      * Alias for getByCoilId for backward compatibility
-     * 
+     *
      * @param int $coilId Coil ID
      * @param int $limit Limit
      * @param int $offset Offset
      * @return array
      */
-    public function getByCoil($coilId, $limit = 1000, $offset = 0) {
+    public function getByCoil($coilId, $limit = 1000, $offset = 0)
+    {
         return $this->getByCoilId($coilId, $limit, $offset);
     }
-    
+
     /**
      * Get all stock entries with pagination
-     * 
+     *
      * @param int $limit Limit
      * @param int $offset Offset
      * @return array
      */
-    public function getAll($limit = RECORDS_PER_PAGE, $offset = 0) {
+    public function getAll($limit = RECORDS_PER_PAGE, $offset = 0)
+    {
         try {
             $sql = "SELECT se.*, c.code as coil_code, c.name as coil_name, c.status as coil_status, u.name as created_by_name
                     FROM {$this->table} se
@@ -124,283 +131,300 @@ class StockEntry {
                     WHERE se.deleted_at IS NULL
                     ORDER BY se.created_at DESC
                     LIMIT :limit OFFSET :offset";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
-            
+
             return $stmt->fetchAll();
         } catch (PDOException $e) {
-            error_log("Stock entry fetch error: " . $e->getMessage());
+            error_log('Stock entry fetch error: ' . $e->getMessage());
             return [];
         }
     }
-    
+
     /**
      * Count total stock entries
-     * 
+     *
      * @return int
      */
-    public function count() {
+    public function count()
+    {
         try {
             $sql = "SELECT COUNT(*) as total FROM {$this->table} WHERE deleted_at IS NULL";
             $stmt = $this->db->query($sql);
             $result = $stmt->fetch();
-            
+
             return $result['total'] ?? 0;
         } catch (PDOException $e) {
-            error_log("Stock entry count error: " . $e->getMessage());
+            error_log('Stock entry count error: ' . $e->getMessage());
             return 0;
         }
     }
-    
+
     /**
+     * updated✅
      * Update stock entry
-     * 
+     *
      * @param int $id Stock entry ID
-     * @param array $data Stock entry data
+     * @param array $data Update data
      * @return bool
      */
-    public function update($id, $data) {
+    public function update($id, $data)
+    {
         try {
             $fields = [];
             $params = [':id' => $id];
-            
-            if (isset($data['meters'])) {
-                $fields[] = "meters = :meters";
-                $params[':meters'] = $data['meters'];
+
+            $allowedFields = ['meters_remaining', 'status'];
+
+            foreach ($allowedFields as $field) {
+                if (isset($data[$field])) {
+                    $fields[] = "$field = :$field";
+                    $params[":$field"] = $data[$field];
+                }
             }
-            
-            if (isset($data['meters_remaining'])) {
-                $fields[] = "meters_remaining = :meters_remaining";
-                $params[':meters_remaining'] = $data['meters_remaining'];
-            }
-            
-            if (isset($data['status'])) {
-                $fields[] = "status = :status";
-                $params[':status'] = $data['status'];
-            }
-            
+
             if (empty($fields)) {
                 return false;
             }
-            
-            $sql = "UPDATE {$this->table} 
-                    SET " . implode(', ', $fields) . ", 
-                        updated_at = NOW() 
-                    WHERE id = :id";
-            
+
+            $fields[] = 'updated_at = NOW()';
+
+            $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . ' WHERE id = :id';
             $stmt = $this->db->prepare($sql);
-            
+
             return $stmt->execute($params);
         } catch (PDOException $e) {
-            error_log("Stock entry update error: " . $e->getMessage());
+            error_log('Stock entry update error: ' . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
      * Update remaining meters
-     * 
+     *
      * @param int $id Stock entry ID
      * @param float $metersUsed Meters used
      * @return bool
      */
-    public function updateRemainingMeters($id, $metersUsed) {
+    public function updateRemainingMeters($id, $metersUsed)
+    {
         try {
             $sql = "UPDATE {$this->table} 
                     SET meters_remaining = meters_remaining - :meters_used,
                         updated_at = NOW() 
                     WHERE id = :id AND meters_remaining >= :meters_used";
-            
+
             $stmt = $this->db->prepare($sql);
-            
+
             return $stmt->execute([
                 ':id' => $id,
-                ':meters_used' => $metersUsed
+                ':meters_used' => $metersUsed,
             ]);
         } catch (PDOException $e) {
-            error_log("Stock entry update error: " . $e->getMessage());
+            error_log('Stock entry update error: ' . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
      * Soft delete stock entry
-     * 
+     *
      * @param int $id Stock entry ID
      * @return bool
      */
-    public function delete($id) {
+    public function delete($id)
+    {
         try {
             $sql = "UPDATE {$this->table} SET deleted_at = NOW() WHERE id = :id";
             $stmt = $this->db->prepare($sql);
-            
+
             return $stmt->execute([':id' => $id]);
         } catch (PDOException $e) {
-            error_log("Stock entry delete error: " . $e->getMessage());
+            error_log('Stock entry delete error: ' . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
      * Get available meters for a coil
-     * 
+     *
      * @param int $coilId Coil ID
      * @return float
      */
-    public function getAvailableMeters($coilId) {
+    public function getAvailableMeters($coilId)
+    {
         try {
             $sql = "SELECT SUM(meters_remaining) as total 
                     FROM {$this->table} 
                     WHERE coil_id = :coil_id AND deleted_at IS NULL";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':coil_id' => $coilId]);
             $result = $stmt->fetch();
-            
+
             return $result['total'] ?? 0;
         } catch (PDOException $e) {
-            error_log("Available meters fetch error: " . $e->getMessage());
+            error_log('Available meters fetch error: ' . $e->getMessage());
             return 0;
         }
     }
-    
+
     /**
-     * Get stock entries by status with available meters
-     * 
-     * @param string $status Status (available or factory_use)
-     * @return array
+     * updated✅
+     * Get stock entries by status (for dropdown selection)
+     *
+     * @param string $status Status filter
+     * @return array Stock entries with coil details
      */
-    public function getByStatus($status) {
+    public function getByStatus($status)
+    {
         try {
-            $sql = "SELECT se.*, c.code as coil_code, c.name as coil_name, c.color as coil_color, 
-                           c.net_weight as coil_weight, c.category as coil_category
-                    FROM {$this->table} se
-                    LEFT JOIN coils c ON se.coil_id = c.id
-                    WHERE se.status = :status 
-                    AND se.meters_remaining > 0 
-                    AND se.deleted_at IS NULL
-                    ORDER BY se.created_at DESC";
-            
+            $sql = "SELECT se.*, 
+                       c.code as coil_code, 
+                       c.name as coil_name, 
+                       c.color as coil_color,
+                       c.net_weight as coil_weight,
+                       c.category as coil_category
+                FROM {$this->table} se
+                INNER JOIN coils c ON se.coil_id = c.id
+                WHERE se.status = :status 
+                AND se.meters_remaining > 0
+                AND se.deleted_at IS NULL
+                AND c.deleted_at IS NULL
+                ORDER BY se.created_at DESC";
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':status' => $status]);
-            
+
             return $stmt->fetchAll();
         } catch (PDOException $e) {
-            error_log("Stock entry by status fetch error: " . $e->getMessage());
+            error_log('Stock entry fetch error: ' . $e->getMessage());
             return [];
         }
     }
-    
+
     /**
      * Get total meters for a coil
-     * 
+     *
      * @param int $coilId Coil ID
      * @return float
      */
-    public function getTotalMeters($coilId) {
+    public function getTotalMeters($coilId)
+    {
         try {
             $sql = "SELECT SUM(meters) as total 
                     FROM {$this->table} 
                     WHERE coil_id = :coil_id AND deleted_at IS NULL";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':coil_id' => $coilId]);
             $result = $stmt->fetch();
-            
+
             return $result['total'] ?? 0;
         } catch (PDOException $e) {
-            error_log("Total meters fetch error: " . $e->getMessage());
+            error_log('Total meters fetch error: ' . $e->getMessage());
             return 0;
         }
     }
-    
+
     /**
- * Check and update coil status based on stock availability
- * 
- * @param int $coilId Coil ID to check
- * @return bool
- */
-public function checkAndUpdateCoilStatus($coilId) {
-    try {
-        // Get all stock entries for this coil
-        $sql = "SELECT SUM(meters_remaining) as total_remaining 
+     * updated✅
+     * Check and update coil status based on stock entries
+     * Updates coil to "out_of_stock" if all entries are depleted
+     *
+     * @param int $coilId Coil ID
+     * @return bool
+     */
+    public function checkAndUpdateCoilStatus($coilId)
+    {
+        try {
+            // Check if any stock entries have remaining meters
+            $sql = "SELECT SUM(meters_remaining) as total_remaining 
                 FROM {$this->table} 
-                WHERE coil_id = :coil_id AND deleted_at IS NULL";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':coil_id' => $coilId]);
-        $result = $stmt->fetch();
-        
-        $totalRemaining = floatval($result['total_remaining'] ?? 0);
-        
-        // Get current coil status
-        $coilSql = "SELECT status FROM coils WHERE id = :id AND deleted_at IS NULL";
-        $coilStmt = $this->db->prepare($coilSql);
-        $coilStmt->execute([':id' => $coilId]);
-        $coil = $coilStmt->fetch();
-        
-        if (!$coil) {
+                WHERE coil_id = :coil_id 
+                AND deleted_at IS NULL";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':coil_id' => $coilId]);
+            $result = $stmt->fetch();
+
+            $totalRemaining = $result['total_remaining'] ?? 0;
+
+            // Update coil status if no meters remaining
+            if ($totalRemaining <= 0) {
+                $coilSql = "UPDATE coils 
+                       SET status = :status, updated_at = NOW() 
+                       WHERE id = :id";
+
+                $coilStmt = $this->db->prepare($coilSql);
+                return $coilStmt->execute([
+                    ':id' => $coilId,
+                    ':status' => STOCK_STATUS_OUT_OF_STOCK,
+                ]);
+            }
+
+            return true;
+        } catch (PDOException $e) {
+            error_log('Coil status update error: ' . $e->getMessage());
             return false;
         }
-        
-        $currentStatus = $coil['status'];
-        $newStatus = null;
-        
-        // Determine new status
-        if ($totalRemaining <= 0) {
-            // All stock sold out
-            $newStatus = STOCK_STATUS_OUT_OF_STOCK;
-        } elseif ($totalRemaining > 0 && $currentStatus === STOCK_STATUS_OUT_OF_STOCK) {
-            // Stock was out but now has inventory - restore to available
-            $newStatus = STOCK_STATUS_AVAILABLE;
-        }
-        
-        // Update if status changed
-        if ($newStatus && $newStatus !== $currentStatus) {
-            $updateSql = "UPDATE coils 
-                         SET status = :status, updated_at = NOW() 
-                         WHERE id = :id";
-            $updateStmt = $this->db->prepare($updateSql);
-            $updateStmt->execute([
-                ':status' => $newStatus,
-                ':id' => $coilId
-            ]);
-            
-            error_log("Coil #{$coilId} status changed: {$currentStatus} → {$newStatus} (Remaining: {$totalRemaining}m)");
-            return true;
-        }
-        
-        return false;
-        
-    } catch (PDOException $e) {
-        error_log("Coil status check error: " . $e->getMessage());
-        return false;
     }
-}
 
-/**
- * Get total remaining meters for a coil
- * 
- * @param int $coilId Coil ID
- * @return float
- */
-public function getTotalRemainingForCoil($coilId) {
-    try {
-        $sql = "SELECT SUM(meters_remaining) as total 
+    /**
+     * Get total remaining meters for a coil
+     *
+     * @param int $coilId Coil ID
+     * @return float
+     */
+    public function getTotalRemainingForCoil($coilId)
+    {
+        try {
+            $sql = "SELECT SUM(meters_remaining) as total 
                 FROM {$this->table} 
                 WHERE coil_id = :coil_id AND deleted_at IS NULL";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':coil_id' => $coilId]);
-        $result = $stmt->fetch();
-        
-        return floatval($result['total'] ?? 0);
-    } catch (PDOException $e) {
-        error_log("Get total remaining error: " . $e->getMessage());
-        return 0;
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':coil_id' => $coilId]);
+            $result = $stmt->fetch();
+
+            return floatval($result['total'] ?? 0);
+        } catch (PDOException $e) {
+            error_log('Get total remaining error: ' . $e->getMessage());
+            return 0;
+        }
     }
-}
+
+    /**
+     * NEW FUNCTION✅
+     * Get stock entries by coil and status
+     *
+     * @param int $coilId Coil ID
+     * @param string $status Status filter
+     * @return array
+     */
+    public function getByCoilAndStatus($coilId, $status)
+    {
+        try {
+            $sql = "SELECT * FROM {$this->table} 
+                WHERE coil_id = :coil_id 
+                AND status = :status 
+                AND meters_remaining > 0
+                AND deleted_at IS NULL
+                ORDER BY created_at ASC";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                ':coil_id' => $coilId,
+                ':status' => $status,
+            ]);
+
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log('Stock entry fetch error: ' . $e->getMessage());
+            return [];
+        }
+    }
 }

@@ -11,13 +11,17 @@ require_once __DIR__ . '/../../utils/helpers.php';
 
 $pageTitle = 'Sales - ' . APP_NAME;
 
-$currentPage = isset($_GET['page_num']) ? (int)$_GET['page_num'] : 1;
+$currentPage = isset($_GET['page_num']) ? (int) $_GET['page_num'] : 1;
 $searchQuery = $_GET['search'] ?? '';
 
 $saleModel = new Sale();
 
 if (!empty($searchQuery)) {
-    $sales = $saleModel->search($searchQuery, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
+    $sales = $saleModel->search(
+        $searchQuery,
+        RECORDS_PER_PAGE,
+        ($currentPage - 1) * RECORDS_PER_PAGE,
+    );
     $totalSales = count($sales);
 } else {
     $sales = $saleModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
@@ -38,7 +42,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <p class="text-muted">Track and manage sales transactions</p>
             </div>
             <?php if (hasPermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE)): ?>
-            <a href="/new-stock-system/index.php?page=sales_create" class="btn btn-primary">
+            <a href="/new-stock-system/index.php?page=sales_create_new" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> New Sale
             </a>
             <?php endif; ?>
@@ -55,7 +59,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     <form method="GET" action="/new-stock-system/index.php" class="d-flex">
                         <input type="hidden" name="page" value="sales">
                         <input type="text" name="search" class="form-control form-control-sm me-2" 
-                               placeholder="Search sales..." value="<?php echo htmlspecialchars($searchQuery); ?>">
+                               placeholder="Search sales..." value="<?php echo htmlspecialchars(
+                                   $searchQuery,
+                               ); ?>">
                         <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search"></i></button>
                         <?php if (!empty($searchQuery)): ?>
                         <a href="/new-stock-system/index.php?page=sales" class="btn btn-sm btn-secondary ms-2">
@@ -91,7 +97,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <?php foreach ($sales as $sale): ?>
                         <tr>
                             <td>#<?php echo $sale['id']; ?></td>
-                            <td><?php echo htmlspecialchars($sale['customer_name'] ?? 'N/A'); ?></td>
+                            <td><?php echo htmlspecialchars(
+                                $sale['customer_name'] ?? 'N/A',
+                            ); ?></td>
                             <td><?php echo htmlspecialchars($sale['coil_code'] ?? 'N/A'); ?></td>
                             <td>
                                 <span class="badge bg-info">
@@ -101,24 +109,32 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <td><?php echo number_format($sale['meters'], 2); ?>m</td>
                             <td><?php echo formatCurrency($sale['total_amount']); ?></td>
                             <td>
-                                <span class="badge <?php echo $sale['status'] === 'completed' ? 'bg-success' : 'bg-warning'; ?>">
+                                <span class="badge <?php echo $sale['status'] === 'completed'
+                                    ? 'bg-success'
+                                    : 'bg-warning'; ?>">
                                     <?php echo ucfirst($sale['status'] ?? 'pending'); ?>
                                 </span>
                             </td>
                             <td><?php echo formatDate($sale['created_at']); ?></td>
                             <td>
-                                <a href="/new-stock-system/index.php?page=sales_invoice&id=<?php echo $sale['id']; ?>" 
+                                <a href="/new-stock-system/index.php?page=sales_invoice&id=<?php echo $sale[
+                                    'id'
+                                ]; ?>" 
                                    class="btn btn-sm btn-success" title="View Invoice">
                                     <i class="bi bi-file-text"></i>
                                 </a>
                                 <?php if (hasPermission(MODULE_SALES_MANAGEMENT, ACTION_VIEW)): ?>
-                                <a href="/new-stock-system/index.php?page=sales_view&id=<?php echo $sale['id']; ?>" 
+                                <a href="/new-stock-system/index.php?page=sales_view&id=<?php echo $sale[
+                                    'id'
+                                ]; ?>" 
                                    class="btn btn-sm btn-info" title="View">
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <?php endif; ?>
                                 <?php if (hasPermission(MODULE_SALES_MANAGEMENT, ACTION_EDIT)): ?>
-                                <a href="/new-stock-system/index.php?page=sales_edit&id=<?php echo $sale['id']; ?>" 
+                                <a href="/new-stock-system/index.php?page=sales_edit&id=<?php echo $sale[
+                                    'id'
+                                ]; ?>" 
                                    class="btn btn-sm btn-warning" title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </a>
@@ -133,7 +149,10 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         </div>
         <?php if (!empty($sales)): ?>
         <div class="card-footer">
-            <?php $queryParams = $_GET; include __DIR__ . '/../../layout/pagination.php'; ?>
+            <?php
+            $queryParams = $_GET;
+            include __DIR__ . '/../../layout/pagination.php';
+            ?>
         </div>
         <?php endif; ?>
     </div>
