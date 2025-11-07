@@ -26,7 +26,7 @@ $customers = $customerModel->getAll(1000, 0);
 $warehouses = $warehouseModel->getActive();
 
 // Get only Factory Use coils for production workflow
-$factoryCoils = $coilModel->getByStatus(STOCK_STATUS_FACTORY_USE);
+$factoryCoils = $coilModel->getByStatus(STOCK_STATUS_AVAILABLE);
 
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';

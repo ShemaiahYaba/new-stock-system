@@ -6,6 +6,12 @@
  * All enums, statuses, and reusable constants are defined here
  */
 
+// Company Information
+define('COMPANY_NAME', 'Your Company Name');
+define('COMPANY_ADDRESS', '123 Business Street, City, Country');
+define('COMPANY_PHONE', '+1 234 567 890');
+define('COMPANY_EMAIL', 'info@yourcompany.com');
+
 // User Roles
 define('ROLE_SUPER_ADMIN', 'super_admin');
 define('ROLE_HR_DIRECTOR', 'hr_director');

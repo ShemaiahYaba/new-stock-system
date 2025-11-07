@@ -120,7 +120,7 @@ $pageTitle = 'Receipt #' . $receipt['id'] . ' - ' . APP_NAME;
                                     <strong>Amount Paid:</strong> 
                                     <?= formatCurrency($receipt['amount_paid']) ?><br>
                                     <strong>Payment Date:</strong> 
-                                    <?= formatDateTime($receipt['created_at']) ?><br>
+                                    <?= formatDate($receipt['created_at']) ?><br>
                                     <strong>Processed By:</strong> 
                                     <?= htmlspecialchars($receipt['created_by_name'] ?? 'System') ?>
                                 </p>

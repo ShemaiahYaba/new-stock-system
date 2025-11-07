@@ -26,7 +26,7 @@ if (!$supply) {
 }
 
 $productionModel = new Production();
-$production = $productionModel->getById($supply['production_id']);
+$production = $productionModel->findById($supply['production_id']);
 
 $pageTitle = 'Supply/Delivery #SD-' . str_pad($supplyId, 5, '0', STR_PAD_LEFT) . ' - ' . APP_NAME;
 
