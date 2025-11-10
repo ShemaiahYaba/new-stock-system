@@ -167,6 +167,11 @@ $routes = [
         'module' => MODULE_SALES_MANAGEMENT,
         'action' => ACTION_CREATE,
     ],
+    'sales_create_available' => [
+        'view' => 'views/sales/create_available_workflow.php',
+        'module' => MODULE_SALES_MANAGEMENT,
+        'action' => ACTION_CREATE,
+    ],
     'sales_create' => [
         'view' => 'views/sales/create.php',
         'module' => MODULE_SALES_MANAGEMENT,

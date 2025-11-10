@@ -8,6 +8,8 @@ require_once __DIR__ . '/../../config/constants.php';
 require_once __DIR__ . '/../../models/sale.php';
 require_once __DIR__ . '/../../models/coil.php';
 require_once __DIR__ . '/../../models/customer.php';
+require_once __DIR__ . '/../../models/stock_entry.php';
+require_once __DIR__ . '/../../models/stock_ledger.php';
 require_once __DIR__ . '/../../utils/helpers.php';
 
 $pageTitle = 'Reports - ' . APP_NAME;
@@ -16,6 +18,8 @@ $pageTitle = 'Reports - ' . APP_NAME;
 $saleModel = new Sale();
 $coilModel = new Coil();
 $customerModel = new Customer();
+$stockEntryModel = new StockEntry();
+$stockLedgerModel = new StockLedger();
 
 $totalSales = $saleModel->count();
 $totalRevenue = $saleModel->getTotalSalesAmount();
@@ -26,6 +30,19 @@ $totalCustomers = $customerModel->count();
 $currentMonth = date('Y-m-01 00:00:00');
 $endOfMonth = date('Y-m-t 23:59:59');
 $monthlyRevenue = $saleModel->getTotalSalesAmount($currentMonth, $endOfMonth);
+
+// Get stock entry statistics by status
+$availableStock = $stockEntryModel->getByStatus(STOCK_STATUS_AVAILABLE);
+$factoryUseStock = $stockEntryModel->getByStatus(STOCK_STATUS_FACTORY_USE);
+$soldStock = $stockEntryModel->countByStatus(STOCK_STATUS_SOLD);
+
+// Calculate total meters by status
+$totalAvailableMeters = array_sum(array_column($availableStock, 'meters_remaining'));
+$totalFactoryUseMeters = 0;
+foreach ($factoryUseStock as $entry) {
+    $balance = $stockLedgerModel->getCurrentBalance($entry['id']);
+    $totalFactoryUseMeters += $balance;
+}
 
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';
@@ -83,7 +100,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-box-seam"></i> Stock Overview
+                    <i class="bi bi-box-seam"></i> Coil Categories
                 </div>
                 <div class="card-body">
                     <table class="table">
@@ -97,11 +114,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <?php foreach (STOCK_CATEGORIES as $catKey => $catName): ?>
                             <tr>
                                 <td><?php echo $catName; ?></td>
-                                <td><strong><?php echo $coilModel->count($catKey); ?></strong></td>
+                                <td><strong><?php echo $coilModel->countByCategory(
+                                    $catKey,
+                                ); ?></strong></td>
                             </tr>
                             <?php endforeach; ?>
                             <tr class="table-active">
-                                <td><strong>Total</strong></td>
+                                <td><strong>Total Coils</strong></td>
                                 <td><strong><?php echo $totalCoils; ?></strong></td>
                             </tr>
                         </tbody>
@@ -113,30 +132,93 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-graph-up"></i> Stock Status
+                    <i class="bi bi-graph-up"></i> Stock Entry Status
                 </div>
                 <div class="card-body">
                     <table class="table">
                         <thead>
                             <tr>
                                 <th>Status</th>
-                                <th>Count</th>
+                                <th>Entries</th>
+                                <th>Total Meters</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach (STOCK_STATUSES as $statusKey => $statusName): ?>
-                            <?php $statusCoils = $coilModel->getByStatus($statusKey); ?>
                             <tr>
                                 <td>
-                                    <span class="badge <?php echo getStatusBadgeClass($statusKey); ?>">
-                                        <?php echo $statusName; ?>
+                                    <span class="badge bg-success">
+                                        Available
                                     </span>
                                 </td>
-                                <td><strong><?php echo count($statusCoils); ?></strong></td>
+                                <td><strong><?php echo count($availableStock); ?></strong></td>
+                                <td><strong><?php echo number_format(
+                                    $totalAvailableMeters,
+                                    2,
+                                ); ?>m</strong></td>
                             </tr>
-                            <?php endforeach; ?>
+                            <tr>
+                                <td>
+                                    <span class="badge bg-warning">
+                                        Factory Use
+                                    </span>
+                                </td>
+                                <td><strong><?php echo count($factoryUseStock); ?></strong></td>
+                                <td><strong><?php echo number_format(
+                                    $totalFactoryUseMeters,
+                                    2,
+                                ); ?>m</strong></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        Sold
+                                    </span>
+                                </td>
+                                <td><strong><?php echo $soldStock; ?></strong></td>
+                                <td><span class="text-muted">Completed</span></td>
+                            </tr>
+                            <tr class="table-active">
+                                <td><strong>Total Stock Entries</strong></td>
+                                <td colspan="2"><strong><?php echo $stockEntryModel->count(); ?></strong></td>
+                            </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4 mt-2">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-speedometer2"></i> Quick Stats
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h4 class="text-primary"><?php echo $totalCoils; ?></h4>
+                            <p class="text-muted mb-0">Total Coils Registered</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-success"><?php echo number_format(
+                                $totalAvailableMeters,
+                                2,
+                            ); ?>m</h4>
+                            <p class="text-muted mb-0">Available for Sale</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-warning"><?php echo number_format(
+                                $totalFactoryUseMeters,
+                                2,
+                            ); ?>m</h4>
+                            <p class="text-muted mb-0">In Factory Use</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-info"><?php echo $totalSales; ?></h4>
+                            <p class="text-muted mb-0">Completed Sales</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

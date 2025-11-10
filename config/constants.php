@@ -118,17 +118,14 @@ const SUPPLY_STATUSES = [
 
 // Coil Colors
 const COIL_COLORS = [
-    'red' => 'Red',
-    'blue' => 'Blue',
-    'green' => 'Green',
-    'yellow' => 'Yellow',
-    'black' => 'Black',
-    'white' => 'White',
-    'silver' => 'Silver',
-    'grey' => 'Grey',
-    'brown' => 'Brown',
-    'orange' => 'Orange',
-    'custom' => 'Custom',
+    'IBeige' => 'I/Beige',
+    'PGreen' => 'P/Green',
+    'SBlue' => 'S/Blue',
+    'TBlack' => 'T/Black',
+    'TCRed' => 'TC/Red',
+    'GBeige' => 'G/Beige',
+    'BGreen' => 'B/Green',
+    'IWhite' => 'I/White',
 ];
 
 // Permission Modules

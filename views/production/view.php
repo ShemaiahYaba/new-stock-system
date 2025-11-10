@@ -372,11 +372,6 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 ]; ?>" class="btn btn-info">
                     <i class="bi bi-eye"></i> View Related Sale
                 </a>
-                <a href="/new-stock-system/index.php?page=invoice_view&id=<?php echo $production[
-                    'sale_id'
-                ]; ?>" class="btn btn-success">
-                    <i class="bi bi-receipt"></i> View Invoice
-                </a>
             </div>
         </div>
     </div>

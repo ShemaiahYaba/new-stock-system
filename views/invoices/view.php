@@ -6,6 +6,8 @@
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../models/invoice.php';
 require_once __DIR__ . '/../../utils/helpers.php';
+// Add this after other require_once statements
+require_once __DIR__ . '/../../utils/print_helpers.php';
 
 $invoiceId = (int) ($_GET['id'] ?? 0);
 
@@ -24,11 +26,25 @@ if (!$invoice) {
     exit();
 }
 
-// Decode invoice shape
-$invoiceData = json_decode($invoice['invoice_shape'], true);
-$balance = $invoice['total_amount'] - $invoice['paid_amount'];
+// Handle both array and JSON string for invoice_shape
+$invoiceData = is_array($invoice['invoice_shape'])
+    ? $invoice['invoice_shape']
+    : (is_string($invoice['invoice_shape'])
+        ? json_decode($invoice['invoice_shape'], true)
+        : []);
+
+// Ensure we have an array
+if (!is_array($invoiceData)) {
+    $invoiceData = [];
+    error_log('Warning: invoice_shape could not be decoded to array for invoice ' . $invoiceId);
+}
+
+// Calculate balance and payment status
+$totalAmount = $invoice['total'] ?? ($invoice['total_amount'] ?? 0);
+$paidAmount = $invoice['paid_amount'] ?? 0;
+$balance = $totalAmount - $paidAmount;
 $isPaid = $balance <= 0;
-$isPartial = !$isPaid && $invoice['paid_amount'] > 0;
+$isPartial = !$isPaid && $paidAmount > 0;
 
 $pageTitle = 'Invoice ' . $invoice['invoice_number'] . ' - ' . APP_NAME;
 
@@ -99,7 +115,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <p class="text-muted">#<?= htmlspecialchars($invoice['invoice_number']) ?></p>
             </div>
             <div class="d-flex gap-2">
-                <a href="/new-stock-system/index.php?page=invoice_print&id=<?= $invoiceId ?>" 
+                <a href="/new-stock-system/views/invoices/print_view.php?id=<?= $invoiceId ?>" 
                    class="btn btn-outline-secondary" target="_blank">
                     <i class="bi bi-printer"></i> Print
                 </a>
@@ -115,11 +131,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-md-6">
-                    <?php if (!empty($invoiceData['company']['logo'])): ?>
-                        <img src="<?= htmlspecialchars($invoiceData['company']['logo']) ?>" 
-                             alt="Company Logo" class="company-logo">
-                    <?php endif; ?>
-                    <h4><?= htmlspecialchars($invoiceData['company']['banner'] ?? 'INVOICE') ?></h4>
+                    <img src="/new-stock-system/assets/logo.png" 
+                         alt="Company Logo" class="company-logo">
                     <p class="mb-1"><?= nl2br(
                         htmlspecialchars($invoiceData['company']['address'] ?? ''),
                     ) ?></p>
@@ -131,7 +144,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     ) ?></p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <h2>INVOICE</h2>
+                    <h2>SALES INVOICE</h2>
                     <p class="mb-1"><strong>Invoice #:</strong> <?= htmlspecialchars(
                         $invoice['invoice_number'],
                     ) ?></p>
@@ -159,7 +172,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
             <div class="row">
                 <div class="col-md-6">
                     <div class="card">
-                        <div class="card-header bg-light">
+                        <div class="card-header">
                             <strong>Bill To:</strong>
                         </div>
                         <div class="card-body">
@@ -177,45 +190,64 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 </div>
                 <div class="col-md-6">
                     <div class="card h-100">
-                        <div class="card-header bg-light">
+                        <div class="card-header">
                             <strong>Payment Summary</strong>
                         </div>
                         <div class="card-body">
                             <table class="table table-sm">
+                                <?php // Calculate subtotal (total - tax - shipping + discount)
+                                $subtotal =
+                                    $totalAmount -
+                                    ($invoice['tax'] ?? 0) -
+                                    ($invoice['shipping'] ?? 0) +
+                                    ($invoice['discount'] ?? 0); ?>
                                 <tr>
                                     <td>Subtotal:</td>
-                                    <td class="text-end">₦<?= number_format(
-                                        $invoice['total_amount'] -
-                                            ($invoiceData['tax'] ?? 0) -
-                                            ($invoiceData['shipping'] ?? 0),
-                                        2,
-                                    ) ?></td>
+                                    <td class="text-end">₦<?= number_format($subtotal, 2) ?></td>
                                 </tr>
-                                <?php if (!empty($invoiceData['tax'])): ?>
+                                <?php if (($invoice['tax'] ?? 0) > 0): ?>
                                 <tr>
-                                    <td>Tax:</td>
+                                    <td>Order Tax (<?= ($invoiceData['tax_type'] ?? 'fixed') ===
+                                    'percentage'
+                                        ? ($invoiceData['tax_rate'] ?? '0') . '%'
+                                        : 'Fixed' ?>):</td>
                                     <td class="text-end">₦<?= number_format(
-                                        $invoiceData['tax'],
+                                        $invoice['tax'],
                                         2,
                                     ) ?></td>
                                 </tr>
                                 <?php endif; ?>
-                                <?php if (!empty($invoiceData['shipping'])): ?>
+
+                                <?php if (($invoice['discount'] ?? 0) > 0): ?>
+                                <tr>
+                                    <td>Discount (<?= $invoiceData['discount_type'] === 'percentage'
+                                        ? ($invoiceData['discount_rate'] ?? '0') . '%'
+                                        : 'Fixed' ?>):</td>
+                                    <td class="text-end">-₦<?= number_format(
+                                        $invoice['discount'],
+                                        2,
+                                    ) ?></td>
+                                </tr>
+                                <?php endif; ?>
+
+                                <?php if (($invoice['shipping'] ?? 0) > 0): ?>
                                 <tr>
                                     <td>Shipping:</td>
                                     <td class="text-end">₦<?= number_format(
-                                        $invoiceData['shipping'],
+                                        $invoice['shipping'],
                                         2,
                                     ) ?></td>
                                 </tr>
                                 <?php endif; ?>
+
                                 <tr class="table-active">
                                     <td><strong>Total:</strong></td>
                                     <td class="text-end"><strong>₦<?= number_format(
-                                        $invoice['total_amount'],
+                                        $invoice['total'],
                                         2,
                                     ) ?></strong></td>
                                 </tr>
+
                                 <tr>
                                     <td>Paid:</td>
                                     <td class="text-end">₦<?= number_format(
@@ -223,10 +255,11 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                         2,
                                     ) ?></td>
                                 </tr>
+
                                 <tr class="table-active">
-                                    <td><strong>Balance Due:</strong></td>
+                                    <td><strong>Due:</strong></td>
                                     <td class="text-end"><strong>₦<?= number_format(
-                                        $balance,
+                                        max(0, $invoice['total'] - $invoice['paid_amount']),
                                         2,
                                     ) ?></strong></td>
                                 </tr>
@@ -240,7 +273,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
 
     <!-- Items Table -->
     <div class="card mb-4">
-        <div class="card-header bg-light">
+        <div class="card-header">
             <strong>Items</strong>
         </div>
         <div class="card-body p-0">
@@ -298,13 +331,11 @@ require_once __DIR__ . '/../../layout/sidebar.php';
     </div>
 
     <!-- Amount in Words -->
-    <div class="row mb-4">
-        <div class="col-md-8">
+    <div class="card mb-4">
+        <div class="card-body">
             <div class="amount-in-words">
-                <strong>Amount in words:</strong> 
-                <?= !empty($invoiceData['notes']['amount_in_words'])
-                    ? htmlspecialchars($invoiceData['notes']['amount_in_words'])
-                    : 'N/A' ?>
+                <strong>Amount in words:</strong>
+                <div class="mt-2"><?= numberToWords($totalAmount) ?></div>
             </div>
         </div>
     </div>
@@ -312,7 +343,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
     <!-- Payment History -->
     <?php if ($invoice['paid_amount'] > 0): ?>
     <div class="card mb-4">
-        <div class="card-header bg-light">
+        <div class="card-header">
             <strong>Payment History</strong>
         </div>
         <div class="card-body p-0">
@@ -349,7 +380,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <div class="col-md-6">
             <?php if (!empty($invoiceData['notes'])): ?>
             <div class="card">
-                <div class="card-header bg-light">
+                <div class="card-header">
                     <strong>Notes</strong>
                 </div>
                 <div class="card-body">
@@ -369,7 +400,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         </div>
         <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header bg-light">
+                <div class="card-header">
                     <strong>Signatures</strong>
                 </div>
                 <div class="card-body text-center">
@@ -403,7 +434,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <i class="bi bi-cash-coin"></i> Record Payment
             </button>
             <?php endif; ?>
-            <a href="/new-stock-system/index.php?page=invoice_print&id=<?= $invoiceId ?>" 
+            <a href="/new-stock-system/views/invoices/print_view.php?id=<?= $invoiceId ?>" 
                class="btn btn-primary" target="_blank">
                 <i class="bi bi-printer"></i> Print Invoice
             </a>

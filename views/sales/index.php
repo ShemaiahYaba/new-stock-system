@@ -26,12 +26,12 @@ if (!empty($searchQuery)) {
     $whereClause = 'WHERE s.deleted_at IS NULL 
                    AND (c.name LIKE :query OR co.code LIKE :query OR co.name LIKE :query)';
     $params = [':query' => "%$searchQuery%"];
-    
+
     $sales = $saleModel->getFilteredSales(
         $whereClause,
         $params,
         RECORDS_PER_PAGE,
-        ($currentPage - 1) * RECORDS_PER_PAGE
+        ($currentPage - 1) * RECORDS_PER_PAGE,
     );
     $totalSales = $saleModel->countFilteredSales($whereClause, $params);
 } else {
@@ -41,40 +41,37 @@ if (!empty($searchQuery)) {
 
 // Enhance sales data with workflow status
 foreach ($sales as &$sale) {
-    // Initialize all fields with default values
-    $sale['production_status'] = null;
-    $sale['production_id'] = null;
-    $sale['invoice_status'] = null;
-    $sale['invoice_id'] = null;
+    // Initialize all fields with default values if not set by the model
+    $sale['production_status'] = $sale['production_status'] ?? null;
+    $sale['production_id'] = $sale['production_id'] ?? null;
+    $sale['invoice_status'] = $sale['invoice']['status'] ?? null;
+    $sale['invoice_id'] = $sale['invoice']['id'] ?? null;
     $sale['has_receipts'] = false;
-    
+
     // Skip if sale ID is not set or invalid
     if (empty($sale['id']) || !is_numeric($sale['id'])) {
         error_log('Warning: Invalid or missing sale ID in sales list: ' . json_encode($sale));
         continue;
     }
-    
-    try {
-        // Get production status
-        $production = $productionModel->findBySaleId($sale['id']);
-        if ($production) {
-            $sale['production_status'] = $production['status'] ?? null;
-            $sale['production_id'] = $production['id'] ?? null;
-        }
 
-        // Get invoice status
-        $invoice = $invoiceModel->findBySaleId($sale['id']);
-        if ($invoice) {
-            $sale['invoice_status'] = $invoice['status'] ?? null;
-            $sale['invoice_id'] = $invoice['id'] ?? null;
-            
-            // Get receipt info only if we have a valid invoice ID
-            if (!empty($invoice['id'])) {
-                $sale['has_receipts'] = $receiptModel->count('', $invoice['id']) > 0;
+    try {
+        // Only fetch production status if not already set by the model
+        if (empty($sale['production_id'])) {
+            $production = $productionModel->findBySaleId($sale['id']);
+            if ($production) {
+                $sale['production_status'] = $production['status'] ?? null;
+                $sale['production_id'] = $production['id'] ?? null;
             }
         }
+
+        // Check for receipts if we have an invoice
+        if (!empty($sale['invoice_id'])) {
+            $sale['has_receipts'] = $receiptModel->count('', $sale['invoice_id']) > 0;
+        }
     } catch (Exception $e) {
-        error_log('Error processing sale ID ' . ($sale['id'] ?? 'unknown') . ': ' . $e->getMessage());
+        error_log(
+            'Error processing sale ID ' . ($sale['id'] ?? 'unknown') . ': ' . $e->getMessage(),
+        );
         // Continue with next sale even if one fails
         continue;
     }
@@ -93,11 +90,16 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <h1 class="page-title">Sales Management</h1>
                 <p class="text-muted">Track and manage sales transactions</p>
             </div>
-            <?php if (hasPermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE)): ?>
-            <a href="?page=sales_create_new" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> New Sale
-            </a>
-            <?php endif; ?>
+            <div class="btn-group gap-2">
+                <?php if (hasPermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE)): ?>
+                <a href="?page=sales_create_new" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> New Production Order
+                </a>
+                <a href="?page=sales_create_available" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Sale from Available stock
+                </a>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
     
@@ -279,7 +281,10 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                             <!-- Create Invoice (if doesn't exist) -->
                                             <?php if (
                                                 !$sale['invoice_id'] &&
-                                                hasPermission(MODULE_INVOICE_MANAGEMENT, ACTION_CREATE)
+                                                hasPermission(
+                                                    MODULE_INVOICE_MANAGEMENT,
+                                                    ACTION_CREATE,
+                                                )
                                             ): ?>
                                             <li>
                                                 <a class="dropdown-item" href="?page=invoices&action=create&sale_id=<?= $sale[

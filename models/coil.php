@@ -90,6 +90,34 @@ class Coil
     }
 
     /**
+     * Count coils by category
+     *
+     * @param string $category Category filter (optional)
+     * @return int
+     */
+    public function countByCategory($category = null)
+    {
+        try {
+            if ($category === null) {
+                $sql = "SELECT COUNT(*) as total FROM {$this->table} WHERE deleted_at IS NULL";
+                $stmt = $this->db->query($sql);
+            } else {
+                $sql = "SELECT COUNT(*) as total 
+                    FROM {$this->table} 
+                    WHERE category = :category AND deleted_at IS NULL";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([':category' => $category]);
+            }
+
+            $result = $stmt->fetch();
+            return $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log('Coil count by category error: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Get all coils with pagination
      *
      * @param string $category Category filter
@@ -406,11 +434,11 @@ class Coil
 
             $stmt = $this->db->query($sql);
             $coils = $stmt->fetchAll();
-            
+
             // Get stock entries for each coil
             $coilIds = array_column($coils, 'id');
             $entriesByCoil = [];
-            
+
             if (!empty($coilIds)) {
                 $placeholders = rtrim(str_repeat('?,', count($coilIds)), ',');
                 $sql = "SELECT * FROM stock_entries 
@@ -420,18 +448,18 @@ class Coil
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute($coilIds);
                 $entries = $stmt->fetchAll();
-                
+
                 // Group entries by coil_id
                 foreach ($entries as $entry) {
                     $entriesByCoil[$entry['coil_id']][] = $entry;
                 }
             }
-            
+
             // Merge stock entries into coils data
             foreach ($coils as &$coil) {
                 $coil['stock_entries'] = $entriesByCoil[$coil['id']] ?? [];
             }
-            
+
             return $coils;
         } catch (PDOException $e) {
             error_log('Coil with stock info fetch error: ' . $e->getMessage());

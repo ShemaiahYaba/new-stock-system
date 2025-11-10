@@ -31,7 +31,9 @@ require_once __DIR__ . '/../layout/sidebar.php';
 <div class="content-wrapper">
     <div class="page-header">
         <h1 class="page-title">Dashboard</h1>
-        <p class="text-muted">Welcome back, <?php echo htmlspecialchars($currentUser['name']); ?>!</p>
+        <p class="text-muted">Welcome back, <?php echo htmlspecialchars(
+            $currentUser['name'],
+        ); ?>!</p>
     </div>
     
     <div class="row g-4 mb-4">
@@ -118,7 +120,7 @@ require_once __DIR__ . '/../layout/sidebar.php';
                         
                         <?php if (hasPermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE)): ?>
                         <div class="col-md-3 mb-3">
-                            <a href="/new-stock-system/index.php?page=sales_create" class="btn btn-success w-100">
+                            <a href="/new-stock-system/index.php?page=sales" class="btn btn-success w-100">
                                 <i class="bi bi-cart-plus"></i> New Sale
                             </a>
                         </div>

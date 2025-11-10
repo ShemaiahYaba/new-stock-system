@@ -1,7 +1,7 @@
 <?php
 /**
  * Sales List Controller
- * 
+ *
  * Handles listing and searching of sales records
  */
 
@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../models/sale.php';
 require_once __DIR__ . '/../../utils/helpers.php';
 
 // Initialize variables
-$currentPage = isset($_GET['page_num']) ? max(1, (int)$_GET['page_num']) : 1;
+$currentPage = isset($_GET['page_num']) ? max(1, (int) $_GET['page_num']) : 1;
 $searchQuery = trim($_GET['search'] ?? '');
 $statusFilter = $_GET['status'] ?? '';
 $fromDate = $_GET['from_date'] ?? '';
@@ -29,12 +29,13 @@ $whereClause = 'WHERE s.deleted_at IS NULL';
 
 // Apply search filter
 if (!empty($searchQuery)) {
-    $whereClause .= ' AND (c.name LIKE :query OR co.code LIKE :query OR co.name LIKE :query OR s.id = :id)';
+    $whereClause .=
+        ' AND (c.name LIKE :query OR co.code LIKE :query OR co.name LIKE :query OR s.id = :id)';
     $queryParams[':query'] = "%$searchQuery%";
-    
+
     // If search query is numeric, try to match by sale ID
     if (is_numeric($searchQuery)) {
-        $queryParams[':id'] = (int)$searchQuery;
+        $queryParams[':id'] = (int) $searchQuery;
     }
 }
 
@@ -58,25 +59,18 @@ if (!empty($toDate)) {
 try {
     // Get paginated sales
     $sales = $saleModel->getFilteredSales($whereClause, $queryParams, $recordsPerPage, $offset);
-    
+
     // Get total count for pagination
     $totalSales = $saleModel->countFilteredSales($whereClause, $queryParams);
-    
+
     // Calculate pagination data
     $paginationData = getPaginationData($totalSales, $currentPage, $recordsPerPage);
-    
 } catch (Exception $e) {
     // Log error and set empty results
-    error_log("Sales list error: " . $e->getMessage());
+    error_log('Sales list error: ' . $e->getMessage());
     $sales = [];
     $totalSales = 0;
     $paginationData = null;
-    
-    // Set error message
-    $errorMessage = "An error occurred while fetching sales. Please try again later.";
-    if (DEBUG_MODE) {
-        $errorMessage .= " Error: " . $e->getMessage();
-    }
 }
 
 // Set page title

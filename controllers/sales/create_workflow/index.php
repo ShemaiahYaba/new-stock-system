@@ -1,15 +1,7 @@
 <?php
 /**
- * Production Workflow Controller
+ * Production Workflow Controller - UPDATED FOR KZINC
  * File: controllers/sales/create_workflow/index.php
- *
- * Handles the 3-tab workflow submission:
- * 1. Creates Sale record
- * 2. Creates Production record (immutable)
- * 3. Creates Invoice record (immutable)
- * 4. Deducts stock meters
- * 5. Creates Stock Card entries
- * 6. Returns success response
  */
 
 session_start();
@@ -19,17 +11,13 @@ require_once __DIR__ . '/../../../config/constants.php';
 require_once __DIR__ . '/../../../models/sale.php';
 require_once __DIR__ . '/../../../models/production.php';
 require_once __DIR__ . '/../../../models/invoice.php';
-require_once __DIR__ . '/../../../models/warehouse.php';
-require_once __DIR__ . '/../../../models/customer.php';
 require_once __DIR__ . '/../../../models/coil.php';
 require_once __DIR__ . '/../../../models/stock_entry.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 require_once __DIR__ . '/../../../utils/auth_middleware.php';
 
-// Require permission
 requirePermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE);
 
-// Set JSON response header
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -37,17 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// Verify CSRF token
 if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid CSRF token']);
     exit();
 }
 
-// Get current user
 $currentUser = getCurrentUser();
 
 try {
-    // Parse JSON data from hidden inputs
     $productionData = json_decode($_POST['production_data'], true);
     $invoiceData = json_decode($_POST['invoice_data'], true);
 
@@ -55,7 +40,6 @@ try {
         throw new Exception('Invalid workflow data');
     }
 
-    // Validate required fields
     if (
         !isset($productionData['customer_id']) ||
         !isset($productionData['warehouse_id']) ||
@@ -65,7 +49,11 @@ try {
         throw new Exception('Missing required production data');
     }
 
-    // Start database transaction
+    // ✅ NEW: Check if this is a KZINC coil
+    $coilModel = new Coil();
+    $coil = $coilModel->findById($productionData['coil_id']);
+    $isKzinc = strtolower($coil['category']) === 'kzinc';
+
     $db = Database::getInstance()->getConnection();
     $db->beginTransaction();
 
@@ -78,10 +66,10 @@ try {
     $saleData = [
         'customer_id' => $productionData['customer_id'],
         'coil_id' => $productionData['coil_id'],
-        'stock_entry_id' => null, // Will be set after stock entry creation
-        'sale_type' => SALE_TYPE_RETAIL, // Production workflow is always retail
-        'meters' => $productionPaper['summary']['totalMeters'],
-        'price_per_meter' => calculateAveragePrice($productionPaper['properties']),
+        'stock_entry_id' => $isKzinc ? null : null, // Will be set later for Alusteel
+        'sale_type' => SALE_TYPE_RETAIL,
+        'meters' => $productionPaper['summary']['totalMeters'], // Will be 0 for KZINC
+        'price_per_meter' => $isKzinc ? 0 : calculateAveragePrice($productionPaper['properties']),
         'total_amount' => $productionPaper['summary']['totalAmount'],
         'status' => SALE_STATUS_COMPLETED,
         'created_by' => $currentUser['id'],
@@ -98,7 +86,6 @@ try {
     // ========================================
     $productionModel = new Production();
 
-    // Build production paper structure
     $productionPaperStructure = [
         'production_reference' =>
             'PR-' . date('Ymd') . '-' . str_pad($saleId, 4, '0', STR_PAD_LEFT),
@@ -112,9 +99,11 @@ try {
             return [
                 'property_id' => $prop['propertyType'],
                 'label' => ucfirst($prop['propertyType']),
-                'sheet_qty' => $prop['sheetQty'],
-                'sheet_meter' => $prop['sheetMeter'],
-                'meters' => $prop['meters'],
+                'sheet_qty' => $prop['sheetQty'] ?? $prop['quantity'],
+                'sheet_meter' => $prop['sheetMeter'] ?? 0,
+                'meters' => $prop['meters'] ?? 0,
+                'quantity' => $prop['quantity'] ?? 0,
+                'pieces' => $prop['pieces'] ?? 0,
                 'unit_price' => $prop['unitPrice'],
                 'row_subtotal' => $prop['subtotal'],
             ];
@@ -143,7 +132,6 @@ try {
     // ========================================
     $invoiceModel = new Invoice();
 
-    // Build invoice shape structure
     $invoiceShape = [
         'company' => [
             'name' => INVOICE_COMPANY_NAME,
@@ -193,84 +181,80 @@ try {
     }
 
     // ========================================
-    // STEP 4: DEDUCT STOCK METERS & CREATE STOCK CARD ENTRIES
+    // STEP 4: DEDUCT STOCK METERS (ALUSTEEL ONLY)
     // ========================================
-    $stockEntryModel = new StockEntry();
-    $totalMeters = $productionPaper['summary']['totalMeters'];
+    if (!$isKzinc) {
+        // Original meter deduction logic for Alusteel
+        $stockEntryModel = new StockEntry();
+        $totalMeters = $productionPaper['summary']['totalMeters'];
 
-    // Get coil's factory-use stock entries
-    $stockEntries = $stockEntryModel->getByCoilAndStatus(
-        $productionData['coil_id'],
-        STOCK_STATUS_FACTORY_USE,
-    );
+        $stockEntries = $stockEntryModel->getByCoilAndStatus(
+            $productionData['coil_id'],
+            STOCK_STATUS_FACTORY_USE,
+        );
 
-    if (empty($stockEntries)) {
-        throw new Exception('No factory-use stock entries available for this coil');
-    }
-
-    // Deduct meters from available stock entries (FIFO)
-    $remainingToDeduct = $totalMeters;
-    $usedStockEntries = [];
-
-    foreach ($stockEntries as $entry) {
-        if ($remainingToDeduct <= 0) {
-            break;
+        if (empty($stockEntries)) {
+            throw new Exception('No factory-use stock entries available for this coil');
         }
 
-        $availableMeters = $entry['meters_remaining'];
-        $deductAmount = min($remainingToDeduct, $availableMeters);
+        $remainingToDeduct = $totalMeters;
+        $usedStockEntries = [];
 
-        // Update stock entry
-        $newRemaining = $availableMeters - $deductAmount;
-        $stockEntryModel->update($entry['id'], [
-            'meters_remaining' => $newRemaining,
+        foreach ($stockEntries as $entry) {
+            if ($remainingToDeduct <= 0) {
+                break;
+            }
+
+            $availableMeters = $entry['meters_remaining'];
+            $deductAmount = min($remainingToDeduct, $availableMeters);
+
+            $newRemaining = $availableMeters - $deductAmount;
+            $stockEntryModel->update($entry['id'], [
+                'meters_remaining' => $newRemaining,
+            ]);
+
+            $usedStockEntries[] = $entry['id'];
+
+            logStockCardEntry(
+                $productionData['coil_id'],
+                $productionId,
+                $saleId,
+                $deductAmount,
+                $newRemaining,
+                "Production drawdown for sale #$saleId",
+                $currentUser['id'],
+                $entry['id'],
+            );
+
+            $remainingToDeduct -= $deductAmount;
+        }
+
+        if ($remainingToDeduct > 0) {
+            throw new Exception(
+                "Insufficient stock: Need $totalMeters meters, only " .
+                    ($totalMeters - $remainingToDeduct) .
+                    ' meters available',
+            );
+        }
+
+        $saleModel->update($saleId, [
+            'stock_entry_id' => $usedStockEntries[0],
         ]);
 
-        // Log stock card entry
-        logStockCardEntry(
-            $productionData['coil_id'],
-            $productionId,
-            $saleId,
-            $deductAmount,
-            $newRemaining,
-            "Production drawdown for sale #$saleId",
-            $currentUser['id'],
-        );
-
-        $usedStockEntries[] = $entry['id'];
-        $remainingToDeduct -= $deductAmount;
+        $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
+    } else {
+        // ✅ KZINC: No stock deduction, no ledger entries
+        error_log("KZINC sale #{$saleId}: Skipping meter deduction and ledger entries");
     }
 
-    if ($remainingToDeduct > 0) {
-        throw new Exception(
-            "Insufficient stock: Need $totalMeters meters, only " .
-                ($totalMeters - $remainingToDeduct) .
-                ' meters available',
-        );
-    }
-
-    // Update sale with first stock entry ID
-    $saleModel->update($saleId, [
-        'stock_entry_id' => $usedStockEntries[0],
-    ]);
-
-    // ========================================
-    // STEP 5: CHECK & UPDATE COIL STATUS
-    // ========================================
-    $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
-
-    // ========================================
-    // COMMIT TRANSACTION
-    // ========================================
     $db->commit();
 
-    // Log activity
     logActivity(
         'Production Workflow Completed',
-        "Sale ID: $saleId, Production ID: $productionId, Invoice ID: $invoiceId, Customer: {$productionPaper['customer']['name']}",
+        "Sale ID: $saleId, Production ID: $productionId, Invoice ID: $invoiceId, Customer: {$productionPaper['customer']['name']}, Type: " .
+            ($isKzinc ? 'KZINC' : 'Alusteel'),
     );
 
-    // Return success response
     echo json_encode([
         'success' => true,
         'message' => 'Order created successfully',
@@ -279,16 +263,13 @@ try {
         'invoice_id' => $invoiceId,
     ]);
 } catch (Exception $e) {
-    // Rollback transaction on error
     if (isset($db) && $db->inTransaction()) {
         $db->rollBack();
     }
 
-    // Log error
     error_log('Production workflow error: ' . $e->getMessage());
     error_log('Stack trace: ' . $e->getTraceAsString());
 
-    // Return error response
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage(),
@@ -301,25 +282,19 @@ exit();
 // HELPER FUNCTIONS
 // ========================================
 
-/**
- * Calculate average price per meter from properties
- */
 function calculateAveragePrice($properties)
 {
     $totalMeters = 0;
     $totalAmount = 0;
 
     foreach ($properties as $prop) {
-        $totalMeters += $prop['meters'];
+        $totalMeters += $prop['meters'] ?? 0;
         $totalAmount += $prop['subtotal'];
     }
 
     return $totalMeters > 0 ? $totalAmount / $totalMeters : 0;
 }
 
-/**
- * Log stock card entry
- */
 function logStockCardEntry(
     $coilId,
     $productionId,
@@ -328,15 +303,15 @@ function logStockCardEntry(
     $balanceMeters,
     $note,
     $createdBy,
+    $stockEntryId = null,
 ) {
     try {
         $db = Database::getInstance()->getConnection();
 
-        // Map to the correct column structure
         $transactionType = 'outflow';
         $outflowMeters = $metersChanged;
-        $inflowMeters = 0.00;
-        
+        $inflowMeters = 0.0;
+
         $sql = "INSERT INTO stock_ledger 
                 (coil_id, stock_entry_id, transaction_type, description, 
                  inflow_meters, outflow_meters, balance_meters, 
@@ -349,7 +324,7 @@ function logStockCardEntry(
         $stmt = $db->prepare($sql);
         $result = $stmt->execute([
             ':coil_id' => $coilId,
-            ':stock_entry_id' => null, // This would be set if it was a stock entry
+            ':stock_entry_id' => $stockEntryId,
             ':transaction_type' => $transactionType,
             ':description' => $note ?: 'Stock drawdown for production',
             ':inflow_meters' => $inflowMeters,
@@ -357,7 +332,7 @@ function logStockCardEntry(
             ':balance_meters' => $balanceMeters,
             ':reference_type' => 'sale',
             ':reference_id' => $saleId,
-            ':created_by' => $createdBy
+            ':created_by' => $createdBy,
         ]);
 
         if (!$result) {

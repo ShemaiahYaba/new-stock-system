@@ -6,6 +6,8 @@
  * Tab 1: Production - Define production requirements
  * Tab 2: Invoice - Financial breakdown
  * Tab 3: Confirm Order - Review and submit (creates immutable records)
+ *
+ * UPDATED: Added KZINC support while preserving Alusteel functionality
  */
 
 require_once __DIR__ . '/../../config/db.php';
@@ -89,7 +91,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
 
 .property-row-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: between;
     align-items: center;
     margin-bottom: 10px;
 }
@@ -335,18 +337,41 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             </div>
                         </div>
                         
-                        <!-- Property Selection (Dynamic - Shows when Alusteel is selected) -->
-                        <div id="property_selection" class="d-none">
+                        <!-- ✅ UPDATED: Property Selection for Alusteel (renamed ID) -->
+                        <div id="property_selection_alusteel" class="d-none">
                             <hr>
-                            <h5 class="mb-3">Property Configuration</h5>
+                            <h5 class="mb-3">Alusteel Property Configuration</h5>
                             <p class="text-muted">Define the properties for this stock</p>
                             
                             <div id="properties_container">
-                                <!-- Property rows will be dynamically added here -->
+                                <!-- Alusteel property rows will be dynamically added here -->
                             </div>
                             
                             <button type="button" class="btn btn-success btn-sm" id="add_property_btn">
                                 <i class="bi bi-plus-circle"></i> Add Another Property
+                            </button>
+                        </div>
+
+                        <!-- ✅ NEW: Property Selection for KZINC -->
+                        <div id="property_selection_kzinc" class="d-none">
+                            <hr>
+                            <h5 class="mb-3">KZINC Property Configuration</h5>
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Fixed Pricing:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Scraps: <strong>₦2,500</strong> per scrap</li>
+                                    <li>Pieces: <strong>₦4,500</strong> per piece</li>
+                                    <li>Bundles: <strong>₦64,000</strong> per bundle (contains 15 pieces)</li>
+                                </ul>
+                            </div>
+                            
+                            <div id="kzinc_properties_container">
+                                <!-- KZINC property rows will be dynamically added here -->
+                            </div>
+                            
+                            <button type="button" class="btn btn-success btn-sm" id="add_kzinc_property_btn">
+                                <i class="bi bi-plus-circle"></i> Add Another Item
                             </button>
                         </div>
                     </div>
@@ -381,7 +406,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <!-- Left Column: Customer Details -->
                         <div class="col-md-6">
                             <div class="card h-100">
-                                <div class="card-header bg-light">
+                                <div class="card-header ">
                                     <h6 class="mb-0">Bill To:</h6>
                                 </div>
                                 <div class="card-body p-3">
@@ -397,8 +422,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <div class="col-md-6">
                             <div class="card h-100">
                                 <div class="card-body p-3">
-                                    <div class="text-center mb-3">
-                                        <img src="/new-stock-system/assets/img/logo.png" alt="Obumek Aluminium" style="max-height: 60px;" class="mb-2">
+                                    <div class="text-end mb-3">
+                                        <img src="/new-stock-system/assets/logo.png" alt="Obumek Aluminium" style="max-height: 60px;" class="mb-2">
                                         <h5 class="mb-1">Obumek Aluminium</h5>
                                         <p class="mb-1 small">123 Business Street, Industrial Area</p>
                                         <p class="mb-1 small">Lagos, Nigeria</p>
@@ -459,7 +484,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     <div class="row justify-content-end mt-4">
                         <div class="col-md-5">
                             <div class="card border-0 shadow-sm">
-                                <div class="card-header bg-light py-2">
+                                <div class="card-header py-2">
                                     <h6 class="mb-0">Order Summary</h6>
                                 </div>
                                 <div class="card-body p-0">
@@ -471,9 +496,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                         <tr>
                                             <td class="border-0">
                                                 <div class="input-group input-group-sm">
-                                                    <span class="input-group-text bg-transparent border-0 p-0 pe-2">Tax</span>
-                                                    <input type="number" class="form-control form-control-sm border-0 px-1" id="tax_value" min="0" step="0.01" value="0" style="max-width: 70px;">
-                                                    <select class="form-select form-select-sm border-0 px-1" id="tax_type" style="max-width: 70px;">
+                                                    <span class="input-group-text bg-transparent border-1 p-0 pe-2">Tax</span>
+                                                    <input type="number" class="form-control form-control-sm border-1 px-1" id="tax_value" min="0" step="0.01" value="0" style="max-width: 70px;">
+                                                    <select class="form-select form-select-sm border-1 px-1" id="tax_type" style="max-width: 70px;">
                                                         <option value="fixed">₦</option>
                                                         <option value="percentage">%</option>
                                                     </select>
@@ -484,9 +509,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                         <tr>
                                             <td class="border-0">
                                                 <div class="input-group input-group-sm">
-                                                    <span class="input-group-text bg-transparent border-0 p-0 pe-2">Discount</span>
-                                                    <input type="number" class="form-control form-control-sm border-0 px-1" id="discount_value" min="0" step="0.01" value="0" style="max-width: 70px;">
-                                                    <select class="form-select form-select-sm border-0 px-1" id="discount_type" style="max-width: 70px;">
+                                                    <span class="input-group-text bg-transparent border-1 p-0 pe-2">Discount</span>
+                                                    <input type="number" class="form-control form-control-sm border-1 px-1" id="discount_value" min="0" step="0.01" value="0" style="max-width: 70px;">
+                                                    <select class="form-select form-select-sm border-1 px-1" id="discount_type" style="max-width: 70px;">
                                                         <option value="fixed">₦</option>
                                                         <option value="percentage">%</option>
                                                     </select>
@@ -497,8 +522,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                         <tr>
                                             <td class="border-0">
                                                 <div class="input-group input-group-sm">
-                                                    <span class="input-group-text bg-transparent border-0 p-0 pe-2">Shipping</span>
-                                                    <input type="number" class="form-control form-control-sm border-0 px-1" id="shipping" min="0" step="0.01" value="0" style="max-width: 140px;">
+                                                    <span class="input-group-text bg-transparent border-1 p-0 pe-2">Shipping</span>
+                                                    <input type="number" class="form-control form-control-sm border-1 px-1" id="shipping" min="0" step="0.01" value="0" style="max-width: 140px;">
                                                 </div>
                                             </td>
                                             <td class="text-end border-0">
@@ -595,27 +620,35 @@ require_once __DIR__ . '/../../layout/sidebar.php';
 </div>
 
 <script>
-    // Define STOCK_CATEGORIES in JavaScript
+// Define STOCK_CATEGORIES in JavaScript
 const STOCK_CATEGORIES = <?php echo json_encode(STOCK_CATEGORIES); ?>;
+
+// ✅ NEW: KZINC Constants
+const KZINC_PRICES = {
+    scraps: 2500,
+    pieces: 4500,
+    bundles: 64000
+};
+const PIECES_PER_BUNDLE = 15;
+
 // ============================================================
 // GLOBAL STATE MANAGEMENT
 // ============================================================
 const workflowState = {
-    // Tax and discount settings
     tax: {
-        type: 'fixed',  // 'fixed' or 'percentage'
+        type: 'fixed',
         value: 0,
         amount: 0
     },
     discount: {
-        type: 'fixed',  // 'fixed' or 'percentage'
+        type: 'fixed',
         value: 0,
         amount: 0
     },
     customer: null,
     warehouse: null,
     coil: null,
-    stockEntry: null,  // Added to track selected stock entry
+    stockEntry: null,
     properties: [],
     productionSummary: {
         totalMeters: 0,
@@ -630,57 +663,11 @@ const workflowState = {
     }
 };
 
-// Property counter for unique IDs
 let propertyCounter = 0;
 
 // ============================================================
-// TAX & DISCOUNT CALCULATIONS
+// HELPER FUNCTIONS
 // ============================================================
-
-function calculateTaxAndDiscount(subtotal) {
-    // Calculate tax amount
-    if (workflowState.tax.type === 'percentage') {
-        workflowState.tax.amount = (subtotal * workflowState.tax.value) / 100;
-    } else {
-        workflowState.tax.amount = parseFloat(workflowState.tax.value) || 0;
-    }
-    
-    // Calculate discount amount
-    if (workflowState.discount.type === 'percentage') {
-        workflowState.discount.amount = (subtotal * workflowState.discount.value) / 100;
-    } else {
-        workflowState.discount.amount = parseFloat(workflowState.discount.value) || 0;
-    }
-    
-    // Ensure discount doesn't exceed subtotal
-    if (workflowState.discount.amount > subtotal) {
-        workflowState.discount.amount = subtotal;
-    }
-    
-    // Calculate total
-    return subtotal + workflowState.tax.amount - workflowState.discount.amount;
-}
-
-function updateInvoiceTotals() {
-    const subtotal = workflowState.productionSummary.totalAmount || 0;
-    const total = calculateTaxAndDiscount(subtotal);
-    
-    // Update UI
-    document.getElementById('subtotal_amount').textContent = formatCurrency(subtotal);
-    document.getElementById('tax_amount').textContent = formatCurrency(workflowState.tax.amount);
-    document.getElementById('discount_amount').textContent = formatCurrency(workflowState.discount.amount);
-    document.getElementById('total_amount').textContent = formatCurrency(total);
-    
-    // Update workflow state
-    workflowState.invoiceData = {
-        subtotal,
-        tax: workflowState.tax,
-        discount: workflowState.discount,
-        total,
-        shipping: workflowState.shipping || 0,
-        other_charges: workflowState.otherCharges || 0
-    };
-}
 
 function formatCurrency(amount) {
     return '₦' + parseFloat(amount || 0).toLocaleString('en-US', {
@@ -689,11 +676,60 @@ function formatCurrency(amount) {
     });
 }
 
+function hideAllPropertyPanes() {
+    const alusteelPane = document.getElementById('property_selection_alusteel');
+    const kzincPane = document.getElementById('property_selection_kzinc');
+    
+    if (alusteelPane) alusteelPane.classList.add('d-none');
+    if (kzincPane) kzincPane.classList.add('d-none');
+    
+    workflowState.properties = [];
+}
+
+function showAlusteelProperties() {
+    const propertyPane = document.getElementById('property_selection_alusteel');
+    if (!propertyPane) return;
+    
+    propertyPane.classList.remove('d-none');
+    
+    if (workflowState.properties.length === 0) {
+        addPropertyRow();
+    }
+}
+
+function showKzincProperties() {
+    const propertyPane = document.getElementById('property_selection_kzinc');
+    if (!propertyPane) {
+        console.error('KZINC property pane not found');
+        return;
+    }
+    
+    propertyPane.classList.remove('d-none');
+    
+    if (workflowState.properties.length === 0) {
+        addKzincPropertyRow();
+    }
+}
+
+function updateSelectionSummary() {
+    const selectionTextEl = document.getElementById('selection_text');
+    const selectionSummaryEl = document.getElementById('selection_summary');
+    
+    if (!selectionTextEl || !selectionSummaryEl) return;
+    
+    if (workflowState.customer && workflowState.warehouse) {
+        const text = `Customer: ${workflowState.customer.name} | Warehouse: ${workflowState.warehouse.name}`;
+        selectionTextEl.textContent = text;
+        selectionSummaryEl.classList.remove('d-none');
+    } else {
+        selectionSummaryEl.classList.add('d-none');
+    }
+}
+
 // ============================================================
-// TAB 1: PRODUCTION - EVENT HANDLERS
+// TAB 1: CUSTOMER & WAREHOUSE SELECTION
 // ============================================================
 
-// Customer Selection
 document.getElementById('customer_id').addEventListener('change', function() {
     const option = this.options[this.selectedIndex];
     if (this.value) {
@@ -704,22 +740,14 @@ document.getElementById('customer_id').addEventListener('change', function() {
             company: option.dataset.company || '',
             address: option.dataset.address || ''
         };
-        console.log('Customer selected:', workflowState.customer);
     } else {
         workflowState.customer = null;
     }
     
-    // Update UI
     updateSelectionSummary();
     validateProductionTab();
-    
-    // If we're on the invoice tab, update the display
-    if (document.querySelector('#invoice-tab').classList.contains('active')) {
-        populateInvoiceTab();
-    }
 });
 
-// Warehouse Selection
 document.getElementById('warehouse_id').addEventListener('change', function() {
     const option = this.options[this.selectedIndex];
     if (this.value) {
@@ -728,22 +756,18 @@ document.getElementById('warehouse_id').addEventListener('change', function() {
             name: option.textContent.trim(),
             code: option.dataset.code || ''
         };
-        console.log('Warehouse selected:', workflowState.warehouse);
     } else {
         workflowState.warehouse = null;
     }
     
-    // Update UI
     updateSelectionSummary();
     validateProductionTab();
-    
-    // If we're on the invoice tab, update the display
-    if (document.querySelector('#invoice-tab').classList.contains('active')) {
-        populateInvoiceTab();
-    }
 });
 
-// Coil Selection
+// ============================================================
+// TAB 1: COIL SELECTION (UPDATED FOR KZINC BYPASS)
+// ============================================================
+
 document.getElementById('coil_id').addEventListener('change', function() {
     const coilId = this.value;
     const stockEntrySelect = document.getElementById('stock_entry_id');
@@ -755,74 +779,120 @@ document.getElementById('coil_id').addEventListener('change', function() {
     workflowState.coil = null;
     workflowState.stockEntry = null;
     
-    // Coil selection changed
+    hideAllPropertyPanes();
     
     if (coilId) {
         const option = this.options[this.selectedIndex];
+        const category = String(option.dataset.category).toLowerCase();
         
-        // Update coil metadata display
+        // Update metadata display
         document.getElementById('coil_code').textContent = option.dataset.code || '-';
         document.getElementById('coil_name').textContent = option.dataset.name || '-';
         document.getElementById('coil_color').textContent = option.dataset.color || '-';
         document.getElementById('coil_weight').textContent = option.dataset.weight || '0.00';
         document.getElementById('coil_category').textContent = STOCK_CATEGORIES[option.dataset.category] || option.dataset.category || '-';
         
-        // Update status with badge
         const status = option.dataset.status || 'unknown';
         const statusBadge = status === 'available' ? 'success' : 'warning';
         document.getElementById('coil_status').innerHTML = 
             `<span class="badge bg-${statusBadge}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
         
-        // Show metadata
         coilMetadata.classList.remove('d-none');
         
-        // Show loading state
-        stockEntrySelect.disabled = true;
-        stockEntrySelect.innerHTML = '<option value="">Loading stock entries...</option>';
-        
-        // Fetch stock entries for this coil
-        fetch(`/new-stock-system/controllers/sales/get_stock_entries.php?coil_id=${coilId}`)
-            .then(response => response.json())
-            .then(data => {
-                stockEntrySelect.innerHTML = '<option value="">-- Select Stock Entry --</option>';
-                
-                if (data.success && data.entries && data.entries.length > 0) {
-                    let totalAvailable = 0;
+        // ✅ KZINC BYPASS LOGIC
+        if (category === 'kzinc') {
+            console.log('✓ KZINC coil detected - bypassing stock entry');
+            
+            // Hide stock entry dropdown
+            const stockEntryCol = stockEntrySelect.closest('.col-md-6');
+            if (stockEntryCol) stockEntryCol.style.display = 'none';
+            
+            document.getElementById('coil_available').textContent = 'N/A';
+            
+            // Set coil state
+            workflowState.coil = {
+                id: coilId,
+                code: option.dataset.code,
+                name: option.dataset.name,
+                category: option.dataset.category,
+                color: option.dataset.color,
+                weight: option.dataset.weight,
+                status: option.dataset.status
+            };
+            
+            // Bypass stock entry
+            workflowState.stockEntry = {
+                id: 'kzinc_bypass',
+                status: 'available',
+                meters_remaining: 0
+            };
+            
+            showKzincProperties();
+            validateProductionTab();
+            
+        } else {
+            // ALUSTEEL: Show stock entry dropdown
+            const stockEntryCol = stockEntrySelect.closest('.col-md-6');
+            if (stockEntryCol) stockEntryCol.style.display = 'block';
+            
+            stockEntrySelect.disabled = true;
+            stockEntrySelect.innerHTML = '<option value="">Loading stock entries...</option>';
+            
+            // Fetch stock entries
+            fetch(`/new-stock-system/controllers/sales/get_stock_entries.php?coil_id=${coilId}`)
+                .then(response => response.json())
+                .then(data => {
+                    stockEntrySelect.innerHTML = '<option value="">-- Select Stock Entry --</option>';
                     
-                    data.entries.forEach(entry => {
-                        const option = document.createElement('option');
-                        option.value = entry.id;
-                        option.textContent = `#${entry.id} - ${parseFloat(entry.meters_remaining).toFixed(2)}m (${entry.status})`;
-                        option.dataset.status = entry.status;
-                        option.dataset.meters = entry.meters_remaining;
-                        stockEntrySelect.appendChild(option);
+                    if (data.success && data.entries && data.entries.length > 0) {
+                        let totalAvailable = 0;
                         
-                        totalAvailable += parseFloat(entry.meters_remaining);
-                    });
+                        const availableEntries = data.entries.filter(entry => 
+                            parseFloat(entry.meters_remaining) > 0
+                        );
+
+                        if (availableEntries.length > 0) {
+                            availableEntries.forEach(entry => {
+                                const opt = document.createElement('option');
+                                opt.value = entry.id;
+                                opt.textContent = `#${entry.id} - ${parseFloat(entry.meters_remaining).toFixed(2)}m`;
+                                opt.dataset.status = entry.status;
+                                opt.dataset.meters = entry.meters_remaining;
+                                stockEntrySelect.appendChild(opt);
+                                
+                                totalAvailable += parseFloat(entry.meters_remaining);
+                            });
+                        } else {
+                            stockEntrySelect.innerHTML = '<option value="">No stock entries with available meters</option>';
+                        }
+                        
+                        document.getElementById('coil_available').textContent = totalAvailable.toFixed(2);
+                    } else {
+                        stockEntrySelect.innerHTML = '<option value="">No available stock entries</option>';
+                        document.getElementById('coil_available').textContent = '0.00';
+                    }
                     
-                    // Update available meters
-                    document.getElementById('coil_available').textContent = totalAvailable.toFixed(2);
-                } else {
-                    // No entries with remaining meters
-                    stockEntrySelect.innerHTML = '<option value="">No available stock entries</option>';
-                    document.getElementById('coil_available').textContent = '0.00';
-                }
-                
-                stockEntrySelect.disabled = false;
-            })
-            .catch(error => {
-                console.error('Error fetching stock entries:', error);
-                stockEntrySelect.innerHTML = '<option value="">Error loading entries</option>';
-                stockEntrySelect.disabled = false;
-            });
+                    stockEntrySelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching stock entries:', error);
+                    stockEntrySelect.innerHTML = '<option value="">Error loading entries</option>';
+                    stockEntrySelect.disabled = false;
+                });
+        }
     } else {
         coilMetadata.classList.add('d-none');
+        const stockEntryCol = stockEntrySelect.closest('.col-md-6');
+        if (stockEntryCol) stockEntryCol.style.display = 'block';
     }
     
     validateProductionTab();
 });
 
-// Stock Entry Selection
+// ============================================================
+// TAB 1: STOCK ENTRY SELECTION (ALUSTEEL ONLY)
+// ============================================================
+
 document.getElementById('stock_entry_id').addEventListener('change', function() {
     const option = this.options[this.selectedIndex];
     
@@ -833,9 +903,6 @@ document.getElementById('stock_entry_id').addEventListener('change', function() 
             meters_remaining: parseFloat(option.dataset.meters || 0)
         };
         
-        // Stock entry selected
-        
-        // Update workflow state with coil data
         const coilSelect = document.getElementById('coil_id');
         const coilOption = coilSelect.options[coilSelect.selectedIndex];
         
@@ -849,25 +916,25 @@ document.getElementById('stock_entry_id').addEventListener('change', function() 
             status: coilOption.dataset.status
         };
         
-        // Show property selection for Alusteel
-        if (workflowState.coil.category === 'alusteel') {
-            document.getElementById('property_selection').classList.remove('d-none');
-            if (workflowState.properties.length === 0) {
-                addPropertyRow();
-            }
-        } else {
-            document.getElementById('property_selection').classList.add('d-none');
-            workflowState.properties = [];
+        const category = String(workflowState.coil.category).toLowerCase();
+        
+        hideAllPropertyPanes();
+        
+        if (category === 'alusteel') {
+            showAlusteelProperties();
         }
     } else {
         workflowState.stockEntry = null;
-        document.getElementById('property_selection').classList.add('d-none');
+        hideAllPropertyPanes();
     }
     
     validateProductionTab();
 });
 
-// Add Property Row
+// ============================================================
+// ALUSTEEL PROPERTY FUNCTIONS
+// ============================================================
+
 document.getElementById('add_property_btn').addEventListener('click', addPropertyRow);
 
 function addPropertyRow() {
@@ -876,7 +943,7 @@ function addPropertyRow() {
     
     const rowHtml = `
         <div class="property-row" id="property_row_${rowId}">
-            <div class="property-row-header">
+            <div class="property-row-header d-flex justify-content-between align-items-center mb-2">
                 <h6 class="mb-0">Property ${rowId + 1}</h6>
                 <button type="button" class="btn btn-sm btn-danger" onclick="removePropertyRow(${rowId})">
                     <i class="bi bi-trash"></i>
@@ -951,11 +1018,9 @@ function calculatePropertyRow(rowId) {
     const meters = sheetQty * sheetMeter;
     const subtotal = meters * unitPrice;
     
-    // Update display
     document.getElementById(`meters_${rowId}`).value = meters.toFixed(2) + 'm';
-    document.getElementById(`subtotal_${rowId}`).textContent = '₦' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2});
+    document.getElementById(`subtotal_${rowId}`).textContent = formatCurrency(subtotal);
     
-    // Update state
     updatePropertyState(rowId, {
         propertyType: row.querySelector('.property-type').value,
         sheetQty: sheetQty,
@@ -965,7 +1030,6 @@ function calculatePropertyRow(rowId) {
         subtotal: subtotal
     });
     
-    // Recalculate totals
     calculateProductionTotals();
 }
 
@@ -981,42 +1045,188 @@ function updatePropertyState(rowId, data) {
 
 function removePropertyRow(rowId) {
     if (confirm('Remove this property row?')) {
-        document.getElementById(`property_row_${rowId}`).remove();
+        document.getElementById(`property_row_${rowId}`)?.remove();
         workflowState.properties = workflowState.properties.filter(p => p.rowId !== rowId);
         calculateProductionTotals();
         validateProductionTab();
     }
 }
 
+// ============================================================
+// KZINC PROPERTY FUNCTIONS
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    const addKzincBtn = document.getElementById('add_kzinc_property_btn');
+    if (addKzincBtn) {
+        addKzincBtn.addEventListener('click', addKzincPropertyRow);
+    }
+});
+
+function addKzincPropertyRow() {
+    const rowId = propertyCounter++;
+    const container = document.getElementById('kzinc_properties_container');
+    
+    if (!container) {
+        console.error('KZINC properties container not found');
+        return;
+    }
+    
+    const rowHtml = `
+        <div class="property-row" id="property_row_${rowId}">
+            <div class="property-row-header d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Item ${rowId + 1}</h6>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removePropertyRow(${rowId})">
+                    <i class="bi bi-trash"></i> Remove
+                </button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Property Type <span class="text-danger">*</span></label>
+                    <select class="form-select kzinc-property-type" data-row-id="${rowId}" required>
+                        <option value="">Select type</option>
+                        <option value="scraps">Scraps (₦2,500)</option>
+                        <option value="pieces">Pieces (₦4,500)</option>
+                        <option value="bundles">Bundles (₦64,000) - 15 pieces</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Quantity <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control kzinc-quantity" data-row-id="${rowId}" 
+                           min="1" step="1" placeholder="e.g., 10" required>
+                </div>
+                
+                <div class="col-md-2 mb-2" id="pieces_display_${rowId}" style="display: none;">
+                    <label class="form-label">Total Pieces</label>
+                    <input type="text" class="form-control bg-light" id="pieces_value_${rowId}" readonly>
+                    <small class="text-muted">Auto-calculated</small>
+                </div>
+                
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Unit Price (₦) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control kzinc-unit-price" id="unit_price_${rowId}" 
+                           data-row-id="${rowId}" min="0" step="0.01" required>
+                    <small class="text-muted">Editable</small>
+                </div>
+                
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Subtotal (₦)</label>
+                    <input type="text" class="form-control bg-light" id="kzinc_subtotal_${rowId}" readonly>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', rowHtml);
+    attachKzincPropertyRowListeners(rowId);
+}
+
+function attachKzincPropertyRowListeners(rowId) {
+    const row = document.getElementById(`property_row_${rowId}`);
+    
+    const propertyTypeSelect = row.querySelector('.kzinc-property-type');
+    propertyTypeSelect.addEventListener('change', function() {
+        const propertyType = this.value;
+        const unitPrice = KZINC_PRICES[propertyType] || 0;
+        
+        const unitPriceInput = document.getElementById(`unit_price_${rowId}`);
+        unitPriceInput.value = unitPrice;
+        
+        const piecesDisplay = document.getElementById(`pieces_display_${rowId}`);
+        if (propertyType === 'bundles') {
+            piecesDisplay.style.display = 'block';
+        } else {
+            piecesDisplay.style.display = 'none';
+        }
+        
+        calculateKzincPropertyRow(rowId);
+    });
+    
+    const quantityInput = row.querySelector('.kzinc-quantity');
+    quantityInput.addEventListener('input', function() {
+        calculateKzincPropertyRow(rowId);
+    });
+    
+    const unitPriceInput = row.querySelector('.kzinc-unit-price');
+    unitPriceInput.addEventListener('input', function() {
+        calculateKzincPropertyRow(rowId);
+    });
+}
+
+function calculateKzincPropertyRow(rowId) {
+    const row = document.getElementById(`property_row_${rowId}`);
+    const propertyType = row.querySelector('.kzinc-property-type').value;
+    const quantity = parseFloat(row.querySelector('.kzinc-quantity').value) || 0;
+    const unitPrice = parseFloat(row.querySelector('.kzinc-unit-price').value) || 0;
+    
+    if (!propertyType || quantity <= 0 || unitPrice <= 0) {
+        return;
+    }
+    
+    const subtotal = quantity * unitPrice;
+    
+    document.getElementById(`kzinc_subtotal_${rowId}`).value = formatCurrency(subtotal);
+    
+    let pieces = 0;
+    if (propertyType === 'bundles') {
+        pieces = quantity * PIECES_PER_BUNDLE;
+        document.getElementById(`pieces_value_${rowId}`).value = pieces + ' pieces';
+    } else if (propertyType === 'pieces') {
+        pieces = quantity;
+    }
+    
+    updateKzincPropertyState(rowId, {
+        propertyType: propertyType,
+        quantity: quantity,
+        unitPrice: unitPrice,
+        subtotal: subtotal,
+        pieces: pieces,
+        meters: 0,
+        sheetQty: quantity,
+        sheetMeter: 0
+    });
+    
+    calculateProductionTotals();
+}
+
+function updateKzincPropertyState(rowId, data) {
+    const existingIndex = workflowState.properties.findIndex(p => p.rowId === rowId);
+    
+    if (existingIndex >= 0) {
+        workflowState.properties[existingIndex] = { rowId, ...data };
+    } else {
+        workflowState.properties.push({ rowId, ...data });
+    }
+}
+
+// ============================================================
+// PRODUCTION TOTALS & VALIDATION
+// ============================================================
+
 function calculateProductionTotals() {
     let totalMeters = 0;
     let totalAmount = 0;
     
-    // Calculate totals
     workflowState.properties.forEach(prop => {
         totalMeters += parseFloat(prop.meters) || 0;
         totalAmount += parseFloat(prop.subtotal) || 0;
     });
     
-    // Update state
-    workflowState.productionSummary = { 
-        totalMeters, 
-        totalAmount 
-    };
+    workflowState.productionSummary = { totalMeters, totalAmount };
     
-    // Update display
     const metersDisplay = document.getElementById('total_meters_display');
     const amountDisplay = document.getElementById('total_amount_display');
     
     if (metersDisplay) {
-        metersDisplay.textContent = totalMeters.toFixed(2) + 'm';
+        metersDisplay.textContent = totalMeters > 0 ? totalMeters.toFixed(2) + 'm' : 'N/A';
     }
     
     if (amountDisplay) {
-        amountDisplay.textContent = '₦' + totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2});
+        amountDisplay.textContent = formatCurrency(totalAmount);
     }
     
-    // Show/hide summary box
     const summaryBox = document.getElementById('production_summary');
     if (summaryBox) {
         if (workflowState.properties.length > 0) {
@@ -1026,26 +1236,7 @@ function calculateProductionTotals() {
         }
     }
     
-    // Always validate after updating totals
     validateProductionTab();
-}
-
-function updateSelectionSummary() {
-    const selectionTextEl = document.getElementById('selection_text');
-    const selectionSummaryEl = document.getElementById('selection_summary');
-    
-    if (!selectionTextEl || !selectionSummaryEl) {
-        console.warn('Selection summary elements not found in the DOM');
-        return;
-    }
-    
-    if (workflowState.customer && workflowState.warehouse) {
-        const text = `Customer: ${workflowState.customer.name} | Warehouse: ${workflowState.warehouse.name}`;
-        selectionTextEl.textContent = text;
-        selectionSummaryEl.classList.remove('d-none');
-    } else {
-        selectionSummaryEl.classList.add('d-none');
-    }
 }
 
 function validateProductionTab() {
@@ -1054,299 +1245,147 @@ function validateProductionTab() {
     const hasCoil = !!workflowState.coil;
     const hasStockEntry = !!workflowState.stockEntry;
     const hasProperties = workflowState.properties.length > 0;
-    const hasValidMeters = workflowState.productionSummary?.totalMeters > 0;
+    const hasValidAmount = workflowState.productionSummary?.totalAmount > 0;
     
-    const isValid = hasCustomer && hasWarehouse && hasCoil && hasStockEntry && hasProperties && hasValidMeters;
+    const isValid = hasCustomer && hasWarehouse && hasCoil && hasStockEntry && hasProperties && hasValidAmount;
     
-    // Debug logging
-    console.log('Validation results:', {
-        hasCustomer,
-        hasWarehouse,
-        hasCoil,
-        hasStockEntry,
-        hasProperties,
-        hasValidMeters,
-        totalMeters: workflowState.productionSummary?.totalMeters,
-        propertiesCount: workflowState.properties.length,
-        workflowState: JSON.parse(JSON.stringify(workflowState)) // Create a safe copy for logging
-    });
+    const btn = document.getElementById('proceed_to_invoice_btn');
+    if (btn) {
+        btn.disabled = !isValid;
+    }
     
-    document.getElementById('proceed_to_invoice_btn').disabled = !isValid;
     return isValid;
 }
 
-// Proceed to Invoice
+// ============================================================
+// PROCEED TO INVOICE
+// ============================================================
+
 document.getElementById('proceed_to_invoice_btn').addEventListener('click', function(e) {
-    console.log('Proceed to Invoice button clicked', e);
+    document.getElementById('production-tab').classList.add('completed');
     
-    // Mark production tab as completed
-    const productionTab = document.getElementById('production-tab');
-    console.log('Production tab element:', productionTab);
-    productionTab.classList.add('completed');
-    
-    // Get and enable invoice tab
     const invoiceTabElement = document.getElementById('invoice-tab');
-    console.log('Invoice tab element:', invoiceTabElement);
-    
-    // Enable the invoice tab
     invoiceTabElement.disabled = false;
     invoiceTabElement.removeAttribute('disabled');
     
-    // Populate invoice tab
     populateInvoiceTab();
     
-    // Use Bootstrap's tab API to show the invoice tab
     const invoiceTab = new bootstrap.Tab(invoiceTabElement);
-    
-    // First, deactivate all tabs and panes
-    document.querySelectorAll('.nav-link').forEach(tab => {
-        tab.classList.remove('active');
-        tab.setAttribute('aria-selected', 'false');
-    });
-    
-    document.querySelectorAll('.tab-pane').forEach(pane => {
-        pane.classList.remove('show', 'active');
-    });
-    
-    // Then activate the invoice tab and its content
-    invoiceTabElement.classList.add('active');
-    invoiceTabElement.setAttribute('aria-selected', 'true');
-    
-    const invoiceContent = document.getElementById('invoice-content');
-    if (invoiceContent) {
-        invoiceContent.classList.add('show', 'active');
-    }
-    
-    // Trigger the tab show event
     invoiceTab.show();
-    
-    // Force a reflow in case the tab doesn't switch
-    setTimeout(() => {
-        if (!invoiceTabElement.classList.contains('active')) {
-            console.log('Fallback tab activation');
-            bootstrap.Tab.getInstance(invoiceTabElement)?.show();
-        }
-    }, 100);
 });
 
 // ============================================================
-// TAB 2: INVOICE - POPULATION & HANDLERS
+// TAB 2: INVOICE
 // ============================================================
 
 function populateInvoiceTab() {
-    console.log('Populating invoice tab...', workflowState);
+    // Populate customer details
+    if (workflowState.customer) {
+        const customerNameEl = document.getElementById('invoice_customer');
+        if (customerNameEl) {
+            customerNameEl.textContent = workflowState.customer.name || 'N/A';
+        }
+        
+        const companyEl = document.getElementById('customer_company');
+        if (companyEl && workflowState.customer.company) {
+            companyEl.textContent = workflowState.customer.company;
+            companyEl.style.display = 'block';
+        }
+        
+        const phoneEl = document.getElementById('customer_phone');
+        if (phoneEl && workflowState.customer.phone) {
+            phoneEl.textContent = `Phone: ${workflowState.customer.phone}`;
+            phoneEl.style.display = 'block';
+        }
+        
+        const addressEl = document.getElementById('customer_address');
+        if (addressEl && workflowState.customer.address) {
+            addressEl.textContent = workflowState.customer.address;
+            addressEl.style.display = 'block';
+        }
+    }
     
-    try {
-        // Populate customer details
-        if (workflowState.customer) {
-            // Customer name
-            const customerNameEl = document.getElementById('invoice_customer');
-            if (customerNameEl) {
-                customerNameEl.textContent = workflowState.customer.name || 'N/A';
-            }
-            
-            // Company
-            const companyEl = document.getElementById('customer_company');
-            if (companyEl) {
-                if (workflowState.customer.company) {
-                    companyEl.textContent = workflowState.customer.company;
-                    companyEl.style.display = 'block';
-                } else {
-                    companyEl.style.display = 'none';
-                }
-            }
-            
-            // Phone
-            const phoneEl = document.getElementById('customer_phone');
-            if (phoneEl) {
-                if (workflowState.customer.phone) {
-                    phoneEl.textContent = `Phone: ${workflowState.customer.phone}`;
-                    phoneEl.style.display = 'block';
-                } else {
-                    phoneEl.style.display = 'none';
-                }
-            }
-            
-            // Address
-            const addressEl = document.getElementById('customer_address');
-            if (addressEl) {
-                if (workflowState.customer.address) {
-                    addressEl.textContent = workflowState.customer.address;
-                    addressEl.style.display = 'block';
-                } else {
-                    addressEl.style.display = 'none';
-                }
-            }
-        } else {
-            console.error('No customer data in workflowState');
-            const customerEl = document.getElementById('invoice_customer');
-            if (customerEl) customerEl.textContent = 'No customer selected';
+    // Populate warehouse
+    if (workflowState.warehouse) {
+        const warehouseEl = document.getElementById('invoice_warehouse');
+        if (warehouseEl) {
+            warehouseEl.textContent = workflowState.warehouse.name || 'N/A';
         }
+    }
+    
+    // Set invoice number
+    const invoiceNumberEl = document.getElementById('invoice_number');
+    if (invoiceNumberEl && invoiceNumberEl.textContent === '-') {
+        const date = new Date();
+        const invoiceNumber = `INV-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+        invoiceNumberEl.textContent = invoiceNumber;
+    }
+    
+    // Populate invoice items
+    const tbody = document.getElementById('invoice_items_body');
+    if (tbody) {
+        tbody.innerHTML = '';
         
-        // Populate warehouse info
-        if (workflowState.warehouse) {
-            const warehouseEl = document.getElementById('invoice_warehouse');
-            if (warehouseEl) {
-                let warehouseText = workflowState.warehouse.name || 'N/A';
+        if (workflowState.properties && workflowState.properties.length > 0) {
+            let itemNumber = 1;
+            workflowState.properties.forEach((prop) => {
+                const lineTotal = parseFloat(prop.subtotal) || 0;
                 
-                // If warehouse has a code, append it
-                if (workflowState.warehouse.code) {
-                    warehouseText += ` (${workflowState.warehouse.code})`;
-                }
-                
-                // If warehouse has an address, append it
-                if (workflowState.warehouse.address) {
-                    warehouseText += ` - ${workflowState.warehouse.address}`;
-                }
-                
-                warehouseEl.textContent = warehouseText;
-            }
-        } else {
-            console.error('No warehouse data in workflowState');
-            const warehouseEl = document.getElementById('invoice_warehouse');
-            if (warehouseEl) warehouseEl.textContent = 'No warehouse selected';
-        }
-        
-        // Set invoice number if not already set
-        const invoiceNumberEl = document.getElementById('invoice_number');
-        if (invoiceNumberEl && invoiceNumberEl.textContent === '-') {
-            // Generate a simple invoice number (you might want to generate a proper one from your backend)
-            const date = new Date();
-            const invoiceNumber = `INV-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
-            invoiceNumberEl.textContent = invoiceNumber;
-        }
-        
-        // Populate invoice items
-        const tbody = document.getElementById('invoice_items_body');
-        if (tbody) {
-            tbody.innerHTML = '';
-            
-            if (workflowState.properties && workflowState.properties.length > 0) {
-                let itemNumber = 1;
-                workflowState.properties.forEach((prop, index) => {
-                    if (!workflowState.coil) {
-                        console.error('Coil data not found in workflowState');
-                        return;
+                let qtyDisplay = '';
+                if (prop.meters > 0) {
+                    qtyDisplay = `${prop.sheetQty || 0} sheets × ${prop.sheetMeter || 0}m`;
+                } else {
+                    qtyDisplay = `${prop.quantity || prop.sheetQty || 0} ${prop.propertyType}`;
+                    if (prop.pieces > 0) {
+                        qtyDisplay += ` (${prop.pieces} pcs)`;
                     }
-                    
-                    // Calculate line total
-                    const lineTotal = parseFloat(prop.subtotal) || 0;
-                    
-                    const row = `
-                        <tr>
-                            <td>${itemNumber++}</td>
-                            <td>
-                                <strong>${workflowState.coil.name || 'N/A'}</strong><br>
-                                <small class="text-muted">${prop.propertyType || 'N/A'} (${prop.sheetQty || 0} sheets × ${prop.sheetMeter || 0}m)</small>
-                            </td>
-                            <td class="text-end">₦${(prop.unitPrice || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                            <td class="text-center">${(prop.meters || 0).toFixed(2)}m</td>
-                            <td class="text-end">₦${lineTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                        </tr>
-                    `;
-                    tbody.insertAdjacentHTML('beforeend', row);
-                });
-            } else {
-                tbody.innerHTML = `
+                }
+                
+                const row = `
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">
-                            <i class="bi bi-inbox"></i> No items added yet
+                        <td>${itemNumber++}</td>
+                        <td>
+                            <strong>${workflowState.coil.name || 'N/A'}</strong><br>
+                            <small class="text-muted">${prop.propertyType || 'N/A'} - ${qtyDisplay}</small>
                         </td>
+                        <td class="text-end">${formatCurrency(prop.unitPrice)}</td>
+                        <td class="text-center">${prop.meters > 0 ? (prop.meters.toFixed(2) + 'm') : (prop.quantity || prop.sheetQty || 0)}</td>
+                        <td class="text-end">${formatCurrency(lineTotal)}</td>
                     </tr>
                 `;
-            }
-        } else {
-            console.error('Invoice items table body not found');
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
         }
-        
-        // Calculate initial grand total
-        calculateInvoiceGrandTotal();
-    } catch (error) {
-        console.error('Error populating invoice tab:', error);
-        // Show error to user
-        alert('Error loading invoice details. Please check the console for more information.');
     }
-}
-
-// Initialize tax and discount state in workflowState
-if (!workflowState.tax) {
-    workflowState.tax = {
-        type: 'fixed',
-        value: 0,
-        amount: 0
-    };
-}
-
-if (!workflowState.discount) {
-    workflowState.discount = {
-        type: 'fixed',
-        value: 0,
-        amount: 0
-    };
-}
-
-if (workflowState.shipping === undefined) {
-    workflowState.shipping = 0;
-}
-
-// Initialize event listeners only once
-function initializeInvoiceListeners() {
-    // Remove any existing listeners first
-    const taxTypeEl = document.getElementById('tax_type');
-    const taxValueEl = document.getElementById('tax_value');
-    const discountTypeEl = document.getElementById('discount_type');
-    const discountValueEl = document.getElementById('discount_value');
-    const shippingEl = document.getElementById('shipping');
     
-    // Clone and replace elements to remove existing event listeners
-    const replaceWithClone = (el) => {
+    calculateInvoiceGrandTotal();
+}
+
+// Initialize invoice listeners
+if (!workflowState.tax) workflowState.tax = { type: 'fixed', value: 0, amount: 0 };
+if (!workflowState.discount) workflowState.discount = { type: 'fixed', value: 0, amount: 0 };
+if (workflowState.shipping === undefined) workflowState.shipping = 0;
+
+function initializeInvoiceListeners() {
+    ['tax_type', 'tax_value', 'discount_type', 'discount_value', 'shipping'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        
         const clone = el.cloneNode(true);
         el.parentNode.replaceChild(clone, el);
-        return clone;
-    };
-    
-    // Tax type
-    const newTaxTypeEl = replaceWithClone(taxTypeEl);
-    newTaxTypeEl.value = workflowState.tax.type;
-    newTaxTypeEl.addEventListener('change', function() {
-        workflowState.tax.type = this.value;
-        calculateInvoiceGrandTotal();
-    });
-    
-    // Tax value
-    const newTaxValueEl = replaceWithClone(taxValueEl);
-    newTaxValueEl.value = workflowState.tax.value;
-    newTaxValueEl.addEventListener('input', function() {
-        workflowState.tax.value = parseFloat(this.value) || 0;
-        calculateInvoiceGrandTotal();
-    });
-    
-    // Discount type
-    const newDiscountTypeEl = replaceWithClone(discountTypeEl);
-    newDiscountTypeEl.value = workflowState.discount.type;
-    newDiscountTypeEl.addEventListener('change', function() {
-        workflowState.discount.type = this.value;
-        calculateInvoiceGrandTotal();
-    });
-    
-    // Discount value
-    const newDiscountValueEl = replaceWithClone(discountValueEl);
-    newDiscountValueEl.value = workflowState.discount.value;
-    newDiscountValueEl.addEventListener('input', function() {
-        workflowState.discount.value = parseFloat(this.value) || 0;
-        calculateInvoiceGrandTotal();
-    });
-    
-    // Shipping
-    const newShippingEl = replaceWithClone(shippingEl);
-    newShippingEl.value = workflowState.shipping;
-    newShippingEl.addEventListener('input', function() {
-        workflowState.shipping = parseFloat(this.value) || 0;
-        calculateInvoiceGrandTotal();
+        
+        clone.addEventListener(id.includes('type') ? 'change' : 'input', function() {
+            if (id === 'tax_type') workflowState.tax.type = this.value;
+            else if (id === 'tax_value') workflowState.tax.value = parseFloat(this.value) || 0;
+            else if (id === 'discount_type') workflowState.discount.type = this.value;
+            else if (id === 'discount_value') workflowState.discount.value = parseFloat(this.value) || 0;
+            else if (id === 'shipping') workflowState.shipping = parseFloat(this.value) || 0;
+            
+            calculateInvoiceGrandTotal();
+        });
     });
 }
 
-// Initialize listeners when the document is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeInvoiceListeners);
 } else {
@@ -1356,7 +1395,6 @@ if (document.readyState === 'loading') {
 function calculateInvoiceGrandTotal() {
     const subtotal = workflowState.productionSummary.totalAmount;
     
-    // Calculate tax amount based on type
     let taxAmount = 0;
     if (workflowState.tax.type === 'percentage') {
         taxAmount = (subtotal * workflowState.tax.value) / 100;
@@ -1364,7 +1402,6 @@ function calculateInvoiceGrandTotal() {
         taxAmount = workflowState.tax.value;
     }
     
-    // Calculate discount amount based on type
     let discountAmount = 0;
     if (workflowState.discount.type === 'percentage') {
         discountAmount = (subtotal * workflowState.discount.value) / 100;
@@ -1372,24 +1409,19 @@ function calculateInvoiceGrandTotal() {
         discountAmount = workflowState.discount.value;
     }
     
-    // Ensure discount doesn't exceed subtotal + tax
     const maxDiscount = subtotal + taxAmount;
     if (discountAmount > maxDiscount) {
         discountAmount = maxDiscount;
-        document.getElementById('discount_value').value = workflowState.discount.type === 'percentage' ? 
-            ((maxDiscount / subtotal) * 100).toFixed(2) : maxDiscount.toFixed(2);
     }
     
     const shipping = workflowState.shipping || 0;
     const grandTotal = subtotal + taxAmount - discountAmount + shipping;
     
-    // Update UI
-    document.getElementById('subtotal_amount').textContent = '₦' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2});
-    document.getElementById('tax_amount').textContent = '₦' + taxAmount.toLocaleString('en-US', {minimumFractionDigits: 2});
-    document.getElementById('discount_amount').textContent = '-₦' + discountAmount.toLocaleString('en-US', {minimumFractionDigits: 2});
-    document.getElementById('total_amount').textContent = '₦' + grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2});
+    document.getElementById('subtotal_amount').textContent = formatCurrency(subtotal);
+    document.getElementById('tax_amount').textContent = formatCurrency(taxAmount);
+    document.getElementById('discount_amount').textContent = '-' + formatCurrency(discountAmount);
+    document.getElementById('total_amount').textContent = formatCurrency(grandTotal);
     
-    // Update workflow state
     workflowState.invoiceData = {
         tax: taxAmount,
         tax_type: workflowState.tax.type,
@@ -1401,41 +1433,26 @@ function calculateInvoiceGrandTotal() {
         grandTotal: grandTotal,
         notes: document.getElementById('invoice_notes')?.value || ''
     };
-    
-    // Update the preview if it exists
-    if (document.getElementById('invoice_grand_total')) {
-        document.getElementById('invoice_grand_total').textContent = '₦' + grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2});
-    }
 }
 
-// Back to Production
 document.getElementById('back_to_production_btn').addEventListener('click', function() {
     const productionTab = new bootstrap.Tab(document.getElementById('production-tab'));
     productionTab.show();
 });
 
-// Proceed to Confirm
 document.getElementById('proceed_to_confirm_btn').addEventListener('click', function() {
-    // Mark invoice tab as completed
     document.getElementById('invoice-tab').classList.add('completed');
-    
-    // Enable confirm tab
     document.getElementById('confirm-tab').disabled = false;
-    
-    // Populate confirm tab
     populateConfirmTab();
-    
-    // Switch to confirm tab
     const confirmTab = new bootstrap.Tab(document.getElementById('confirm-tab'));
     confirmTab.show();
 });
 
 // ============================================================
-// TAB 3: CONFIRM ORDER - POPULATION & SUBMISSION
+// TAB 3: CONFIRM ORDER
 // ============================================================
 
 function populateConfirmTab() {
-    // Populate Production Paper Preview
     const productionPaperHtml = `
         <h6 class="text-primary">Customer & Warehouse</h6>
         <p class="mb-1"><strong>Customer:</strong> ${workflowState.customer.name} (${workflowState.customer.phone})</p>
@@ -1447,60 +1464,60 @@ function populateConfirmTab() {
         <p class="mb-2"><strong>Category:</strong> ${workflowState.coil.category}</p>
         
         <h6 class="text-primary mt-3">Properties</h6>
-        ${workflowState.properties.map((prop, index) => `
+        ${workflowState.properties.map((prop, index) => {
+            let displayText = '';
+            if (prop.meters > 0) {
+                displayText = `${prop.sheetQty} sheets × ${prop.sheetMeter}m = ${prop.meters.toFixed(2)}m`;
+            } else {
+                displayText = `${prop.quantity} ${prop.propertyType}`;
+                if (prop.pieces > 0) {
+                    displayText += ` (${prop.pieces} pieces)`;
+                }
+            }
+            return `
             <div class="mb-2 p-2 bg-light border rounded">
                 <strong>${index + 1}. ${prop.propertyType}</strong><br>
                 <small>
-                    ${prop.sheetQty} sheets × ${prop.sheetMeter}m = ${prop.meters.toFixed(2)}m<br>
-                    Unit Price: ₦${prop.unitPrice.toLocaleString()} | Subtotal: ₦${prop.subtotal.toLocaleString('en-US', {minimumFractionDigits: 2})}
+                    ${displayText}<br>
+                    Unit Price: ${formatCurrency(prop.unitPrice)} | Subtotal: ${formatCurrency(prop.subtotal)}
                 </small>
             </div>
-        `).join('')}
+        `}).join('')}
         
         <h6 class="text-primary mt-3">Summary</h6>
-        <p class="mb-1"><strong>Total Meters:</strong> ${workflowState.productionSummary.totalMeters.toFixed(2)}m</p>
-        <p class="mb-0"><strong>Total Amount:</strong> ₦${workflowState.productionSummary.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+        ${workflowState.productionSummary.totalMeters > 0 ? `<p class="mb-1"><strong>Total Meters:</strong> ${workflowState.productionSummary.totalMeters.toFixed(2)}m</p>` : ''}
+        <p class="mb-0"><strong>Total Amount:</strong> ${formatCurrency(workflowState.productionSummary.totalAmount)}</p>
     `;
     document.getElementById('production_paper_preview').innerHTML = productionPaperHtml;
     
-    // Populate Invoice Preview
     const invoicePreviewHtml = `
         <h6 class="text-primary">Invoice Summary</h6>
         <table class="table table-sm">
             <tr>
                 <td>Subtotal:</td>
-                <td class="text-end">₦${workflowState.productionSummary.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td class="text-end">${formatCurrency(workflowState.productionSummary.totalAmount)}</td>
             </tr>
             <tr>
-                <td>
-                    Tax (${workflowState.invoiceData.tax_type === 'percentage' ? workflowState.invoiceData.tax_value + '%' : '₦' + workflowState.invoiceData.tax_value}):
-                </td>
-                <td class="text-end">₦${workflowState.invoiceData.tax.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td>Tax (${workflowState.invoiceData.tax_type === 'percentage' ? workflowState.invoiceData.tax_value + '%' : formatCurrency(workflowState.invoiceData.tax_value)}):</td>
+                <td class="text-end">${formatCurrency(workflowState.invoiceData.tax)}</td>
             </tr>
             <tr>
-                <td>
-                    Discount (${workflowState.invoiceData.discount_type === 'percentage' ? workflowState.invoiceData.discount_value + '%' : '₦' + workflowState.invoiceData.discount_value}):
-                </td>
-                <td class="text-end">-₦${workflowState.invoiceData.discount.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td>Discount (${workflowState.invoiceData.discount_type === 'percentage' ? workflowState.invoiceData.discount_value + '%' : formatCurrency(workflowState.invoiceData.discount_value)}):</td>
+                <td class="text-end">-${formatCurrency(workflowState.invoiceData.discount)}</td>
             </tr>
             <tr>
                 <td>Shipping:</td>
-                <td class="text-end">₦${(workflowState.invoiceData.shipping || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td class="text-end">${formatCurrency(workflowState.invoiceData.shipping || 0)}</td>
             </tr>
             <tr class="table-primary">
                 <td><strong>Grand Total:</strong></td>
-                <td class="text-end"><strong>₦${workflowState.invoiceData.grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td class="text-end"><strong>${formatCurrency(workflowState.invoiceData.grandTotal)}</strong></td>
             </tr>
         </table>
-        
-        ${workflowState.invoiceData.notes ? `
-            <h6 class="text-primary mt-3">Notes</h6>
-            <p class="small">${workflowState.invoiceData.notes}</p>
-        ` : ''}
+        ${workflowState.invoiceData.notes ? `<h6 class="text-primary mt-3">Notes</h6><p class="small">${workflowState.invoiceData.notes}</p>` : ''}
     `;
     document.getElementById('invoice_shape_preview').innerHTML = invoicePreviewHtml;
     
-    // Prepare hidden form data
     prepareFormData();
 }
 
@@ -1509,6 +1526,7 @@ function prepareFormData() {
         customer_id: workflowState.customer.id,
         warehouse_id: workflowState.warehouse.id,
         coil_id: workflowState.coil.id,
+        stock_entry_id: workflowState.stockEntry.id,
         production_paper: {
             customer: workflowState.customer,
             warehouse: workflowState.warehouse,
@@ -1524,7 +1542,7 @@ function prepareFormData() {
             product_code: workflowState.coil.code,
             description: `${workflowState.coil.name} - ${prop.propertyType}`,
             unit_price: prop.unitPrice,
-            quantity: prop.meters,
+            quantity: prop.meters > 0 ? prop.meters : prop.quantity,
             subtotal: prop.subtotal
         })),
         tax: workflowState.invoiceData.tax,
@@ -1538,18 +1556,15 @@ function prepareFormData() {
     document.getElementById('invoice_data_input').value = JSON.stringify(invoiceData);
 }
 
-// Back to Invoice
 document.getElementById('back_to_invoice_btn').addEventListener('click', function() {
     const invoiceTab = new bootstrap.Tab(document.getElementById('invoice-tab'));
     invoiceTab.show();
 });
 
-// Enable submit button when checkbox is checked
 document.getElementById('confirm_immutable').addEventListener('change', function() {
     document.getElementById('submit_order_btn').disabled = !this.checked;
 });
 
-// Form Submission
 document.getElementById('confirm_order_form').addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -1557,12 +1572,10 @@ document.getElementById('confirm_order_form').addEventListener('submit', functio
         return;
     }
     
-    // Disable submit button to prevent double submission
     const submitBtn = document.getElementById('submit_order_btn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
     
-    // Submit form
     const formData = new FormData(this);
     
     fetch('/new-stock-system/controllers/sales/create_workflow/index.php', {
@@ -1588,5 +1601,4 @@ document.getElementById('confirm_order_form').addEventListener('submit', functio
     });
 });
 </script>
-
 <?php require_once __DIR__ . '/../../layout/footer.php'; ?>

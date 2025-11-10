@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 07, 2025 at 04:17 PM
+-- Generation Time: Nov 10, 2025 at 05:50 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -64,30 +64,30 @@ CREATE TABLE `coils` (
 --
 
 INSERT INTO `coils` (`id`, `code`, `name`, `color`, `net_weight`, `category`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(4, 'j169', 'Kzinc coil', 'red', 1214.00, 'kzinc', 'available', 2, '2025-11-05 17:34:42', '2025-11-06 06:42:44', NULL),
-(27, 'C157', 'Aluminum Coil', 'custom', 2035.00, 'aluminum', 'available', 2, '2025-10-30 10:56:08', '2025-11-06 06:57:44', NULL),
-(28, 'C175', 'Aluminum Coil', 'orange', 2035.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:56:10', NULL),
-(29, 'C176', 'Aluminum Coil', 'custom', 1972.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(30, 'C180', 'Aluminum Coil', 'silver', 1993.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(31, 'C184', 'Aluminum Coil', 'silver', 1666.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(32, 'C188', 'Aluminum Coil', 'custom', 2042.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(33, 'C191', 'Aluminum Coil', 'silver', 2040.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(34, 'C192', 'Aluminum Coil', 'silver', 2032.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(35, 'C177', 'Aluminum Coil', 'custom', 1972.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-10-31 12:34:14', NULL),
-(36, 'C182', 'Aluminum Coil', 'blue', 2015.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-10-31 12:34:14', NULL),
-(37, 'C187', 'Aluminum Coil', 'custom', 2046.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-10-31 12:34:14', NULL),
-(38, 'C194', 'Aluminum Coil', 'silver', 1999.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-10-31 12:34:14', NULL),
-(39, 'C178', 'Aluminum Coil', 'custom', 1959.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(40, 'C179', 'Aluminum Coil', 'silver', 2084.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(41, 'C181', 'Aluminum Coil', 'silver', 1348.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(42, 'C183', 'Aluminum Coil', 'blue', 2018.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(43, 'C185', 'Aluminum Coil', 'custom', 1648.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(44, 'C186', 'Aluminum Coil', 'custom', 1648.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(45, 'C189', 'Aluminum Coil', 'custom', 2020.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(46, 'C190', 'Aluminum Coil', 'silver', 2024.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(47, 'C193', 'Aluminum Coil', 'silver', 2032.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(48, 'C195', 'Aluminum Coil', 'silver', 1968.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-06 06:57:44', NULL),
-(49, 'B197', 'Premium steel coil', 'blue', 1289.00, 'alusteel', 'available', 2, '2025-11-06 20:47:08', '2025-11-07 11:56:10', NULL);
+(4, 'j169', 'Kzinc coil', 'IBeige', 1214.00, 'kzinc', 'available', 2, '2025-11-05 17:34:42', '2025-11-09 19:55:59', NULL),
+(27, 'C157', 'Aluminum Coil', 'T/Black', 2035.00, 'aluminum', 'available', 2, '2025-10-30 10:56:08', '2025-11-09 01:06:01', NULL),
+(28, 'C175', 'Aluminum Coil', 'P/Green', 2035.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(29, 'C176', 'Aluminum Coil', 'T/Black', 1972.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(30, 'C180', 'Aluminum Coil', 'I/White', 1993.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(31, 'C184', 'Aluminum Coil', 'I/White', 1666.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(32, 'C188', 'Aluminum Coil', 'T/Black', 2042.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(33, 'C191', 'Aluminum Coil', 'I/White', 2040.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(34, 'C192', 'Aluminum Coil', 'I/White', 2032.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(35, 'C177', 'Aluminum Coil', 'T/Black', 1972.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(36, 'C182', 'Aluminum Coil', 'S/Blue', 2015.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(37, 'C187', 'Aluminum Coil', 'T/Black', 2046.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(38, 'C194', 'Aluminum Coil', 'I/White', 1999.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(39, 'C178', 'Aluminum Coil', 'T/Black', 1959.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(40, 'C179', 'Aluminum Coil', 'I/White', 2084.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(41, 'C181', 'Aluminum Coil', 'I/White', 1348.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(42, 'C183', 'Aluminum Coil', 'S/Blue', 2018.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(43, 'C185', 'Aluminum Coil', 'T/Black', 1648.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(44, 'C186', 'Aluminum Coil', 'T/Black', 1648.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(45, 'C189', 'Aluminum Coil', 'T/Black', 2020.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(46, 'C190', 'Aluminum Coil', 'I/White', 2024.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(47, 'C193', 'Aluminum Coil', 'I/White', 2032.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(48, 'C195', 'Aluminum Coil', 'I/White', 1968.00, 'aluminum', 'available', 2, '2025-10-31 12:34:14', '2025-11-09 01:06:01', NULL),
+(49, 'B197', 'Premium steel coil', 'S/Blue', 1289.00, 'alusteel', 'available', 2, '2025-11-06 20:47:08', '2025-11-09 01:06:01', NULL);
 
 -- --------------------------------------------------------
 
@@ -147,6 +147,19 @@ CREATE TABLE `invoices` (
   `immutable_hash` varchar(64) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `invoices`
+--
+
+INSERT INTO `invoices` (`id`, `sale_id`, `production_id`, `invoice_number`, `invoice_shape`, `subtotal`, `tax_type`, `tax_value`, `tax_amount`, `discount_type`, `discount_value`, `discount_amount`, `total`, `tax`, `other_charges`, `paid_amount`, `shipping`, `status`, `created_at`, `updated_at`, `immutable_hash`) VALUES
+(23, 37, NULL, 'INV-2025-000001', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Mr Lawal\\\",\\\"company\\\":\\\"HEXA\\\",\\\"email\\\":\\\"customer1@example.com\\\",\\\"phone\\\":\\\"09039988198\\\",\\\"address\\\":\\\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-09 02:51:16\\\",\\\"ref\\\":\\\"#SO-20251109-000037\\\",\\\"sale_id\\\":\\\"37\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"B197 - Premium steel coil\\\",\\\"quantity\\\":1000,\\\"unit_price\\\":1000,\\\"total\\\":1000000}],\\\"subtotal\\\":1000000,\\\"order_tax\\\":0,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":1000000,\\\"paid\\\":0,\\\"due\\\":1000000,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 1000000.00, 0.00, 0.00, 0.00, 0.00, 'unpaid', '2025-11-09 01:51:16', NULL, '437c569b3bfb48317f9eba7025cb45b5cbd6e347979f017d15fea48f37ac53bc'),
+(24, 38, NULL, 'INV-2025-000002', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Mr Lawal\\\",\\\"company\\\":\\\"HEXA\\\",\\\"email\\\":\\\"customer1@example.com\\\",\\\"phone\\\":\\\"09039988198\\\",\\\"address\\\":\\\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-09 02:57:09\\\",\\\"ref\\\":\\\"#SO-20251109-000038\\\",\\\"sale_id\\\":\\\"38\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"C175 - Aluminum Coil\\\",\\\"quantity\\\":1298,\\\"unit_price\\\":999.99,\\\"total\\\":1297987.02}],\\\"subtotal\\\":1297987.02,\\\"order_tax\\\":12979.8702,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":1310966.8902,\\\"paid\\\":0,\\\"due\\\":1310966.8902,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 1310966.89, 12979.87, 0.00, 0.00, 0.00, 'unpaid', '2025-11-09 01:57:09', NULL, '8a121f27ab3ad8a471d31045fbf38d91bfe984a1f2f09ad8511a01dba9e9dc16'),
+(25, 39, NULL, 'INV-2025-000003', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Mr Lawal\\\",\\\"company\\\":\\\"HEXA\\\",\\\"email\\\":\\\"customer1@example.com\\\",\\\"phone\\\":\\\"09039988198\\\",\\\"address\\\":\\\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-09 03:02:34\\\",\\\"ref\\\":\\\"#SO-20251109-000039\\\",\\\"sale_id\\\":\\\"39\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"C184 - Aluminum Coil\\\",\\\"quantity\\\":182,\\\"unit_price\\\":100,\\\"total\\\":18200}],\\\"subtotal\\\":18200,\\\"order_tax\\\":910,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":19110,\\\"paid\\\":0,\\\"due\\\":19110,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 19110.00, 910.00, 0.00, 0.00, 0.00, 'unpaid', '2025-11-09 02:02:34', NULL, '5b85d62c9803c0fb0e6b1b5dceb19993cb0f98dbe4c325920102ef7ef611db81'),
+(26, 40, NULL, 'INV-2025-000004', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Mr Lawal\\\",\\\"company\\\":\\\"HEXA\\\",\\\"email\\\":\\\"customer1@example.com\\\",\\\"phone\\\":\\\"09039988198\\\",\\\"address\\\":\\\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-09 03:37:19\\\",\\\"ref\\\":\\\"#SO-20251109-000040\\\",\\\"sale_id\\\":\\\"40\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"C184 - Aluminum Coil\\\",\\\"quantity\\\":1000,\\\"qty_text\\\":\\\"1,000.00 meters\\\",\\\"unit_price\\\":1000,\\\"subtotal\\\":1000000}],\\\"subtotal\\\":1000000,\\\"order_tax\\\":75000,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":1075000,\\\"paid\\\":0,\\\"due\\\":1075000,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 1075000.00, 75000.00, 0.00, 0.00, 0.00, 'unpaid', '2025-11-09 02:37:19', NULL, '32e61c7596c3a8adee89ddf3233dc7e16050c953272a42b9a59de7e6df7e3a2e'),
+(27, 41, 14, 'INV-2025-000005', '{\"company\":{\"name\":\"Obumek Alluminium Company Ltd.\",\"address\":\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"phone\":\"+2348065336645\",\"email\":\"info@obumekalluminium.com\"},\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"meta\":{\"date\":\"2025-11-09 04:29:03\",\"ref\":\"#SO-20251109-000041\",\"payment_status\":\"Unpaid\"},\"items\":[{\"product_code\":\"B197\",\"description\":\"Premium steel coil - mainsheet\",\"unit_price\":1000,\"quantity\":100,\"subtotal\":100000}],\"order_tax\":1000,\"discount\":1000,\"shipping\":1000.01,\"grand_total\":101000.01,\"paid\":0,\"due\":101000.01,\"notes\":{\"receipt_statement\":\"Received the above goods in good condition.\",\"refund_policy\":\"No refund of money after payment\",\"custom_notes\":\"\"},\"signatures\":{\"customer\":null,\"for_company\":\"Obumek Alluminium Company Ltd.\"}}', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 101000.01, 1000.00, 0.00, 0.00, 1000.01, 'unpaid', '2025-11-09 03:29:03', NULL, 'aa67d7f57addc2b5e01931750c86a6c43275e9e1b0f0c5ff33836d5a69c0d4cb'),
+(28, 42, 15, 'INV-2025-000006', '{\"company\":{\"name\":\"Obumek Alluminium Company Ltd.\",\"address\":\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"phone\":\"+2348065336645\",\"email\":\"info@obumekalluminium.com\"},\"customer\":{\"id\":\"3\",\"name\":\"Mr. Danjuma - 0909880012\",\"phone\":\"0909880012\",\"company\":\"ABC INDUSTRIES\",\"address\":\"\"},\"meta\":{\"date\":\"2025-11-09 19:25:35\",\"ref\":\"#SO-20251109-000042\",\"payment_status\":\"Unpaid\"},\"items\":[{\"product_code\":\"j169\",\"description\":\"Kzinc coil - scraps\",\"unit_price\":2500,\"quantity\":10,\"subtotal\":25000},{\"product_code\":\"j169\",\"description\":\"Kzinc coil - pieces\",\"unit_price\":4500,\"quantity\":10,\"subtotal\":45000},{\"product_code\":\"j169\",\"description\":\"Kzinc coil - bundles\",\"unit_price\":64000,\"quantity\":6,\"subtotal\":384000}],\"order_tax\":45400,\"discount\":45400,\"shipping\":100000,\"grand_total\":554000,\"paid\":0,\"due\":554000,\"notes\":{\"receipt_statement\":\"Received the above goods in good condition.\",\"refund_policy\":\"No refund of money after payment\",\"custom_notes\":\"\"},\"signatures\":{\"customer\":null,\"for_company\":\"Obumek Alluminium Company Ltd.\"}}', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 554000.00, 45400.00, 0.00, 0.00, 100000.00, 'unpaid', '2025-11-09 18:25:35', NULL, 'c739c7a641bac9bbb37a49e78f8493a36b4dc507e1b183d22dc8e99315624115'),
+(29, 43, 16, 'INV-2025-000007', '{\"company\":{\"name\":\"Obumek Alluminium Company Ltd.\",\"address\":\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"phone\":\"+2348065336645\",\"email\":\"info@obumekalluminium.com\"},\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"meta\":{\"date\":\"2025-11-10 05:50:10\",\"ref\":\"#SO-20251110-000043\",\"payment_status\":\"Unpaid\"},\"items\":[{\"product_code\":\"j169\",\"description\":\"Kzinc coil - bundles\",\"unit_price\":60000,\"quantity\":9,\"subtotal\":540000}],\"order_tax\":54000,\"discount\":4000,\"shipping\":10000,\"grand_total\":600000,\"paid\":0,\"due\":600000,\"notes\":{\"receipt_statement\":\"Received the above goods in good condition.\",\"refund_policy\":\"No refund of money after payment\",\"custom_notes\":\"\"},\"signatures\":{\"customer\":null,\"for_company\":\"Obumek Alluminium Company Ltd.\"}}', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 600000.00, 54000.00, 0.00, 0.00, 10000.00, 'unpaid', '2025-11-10 04:50:10', NULL, '0a4f5d6488ba8d4f62b266af98c5837ed248c68ee21d4a0e405d5e8ab4b85abc');
+
 -- --------------------------------------------------------
 
 --
@@ -164,6 +177,15 @@ CREATE TABLE `production` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   `immutable_hash` varchar(64) NOT NULL COMMENT 'SHA256 hash for immutability verification'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `production`
+--
+
+INSERT INTO `production` (`id`, `sale_id`, `warehouse_id`, `production_paper`, `status`, `created_by`, `created_at`, `updated_at`, `immutable_hash`) VALUES
+(14, 41, 1, '{\"production_reference\":\"PR-20251109-0041\",\"sale_id\":\"41\",\"warehouse_id\":\"1\",\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"warehouse\":{\"id\":\"1\",\"name\":\"Head Office                                                                                - Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"code\":\"\"},\"coil_id\":\"49\",\"coil\":{\"id\":\"49\",\"code\":\"B197\",\"name\":\"Premium steel coil\",\"category\":\"alusteel\",\"color\":\"S\\/Blue\",\"weight\":\"1289.00\",\"status\":\"available\"},\"properties\":[{\"property_id\":\"mainsheet\",\"label\":\"Mainsheet\",\"sheet_qty\":1,\"sheet_meter\":100,\"meters\":100,\"unit_price\":1000,\"row_subtotal\":100000}],\"total_meters\":100,\"total_amount\":100000,\"created_at\":\"2025-11-09 04:29:03\"}', 'completed', 2, '2025-11-09 03:29:03', NULL, 'de8231992522d31acbce1ab6b038874011d07af2c27acac44fddede8a103cb82'),
+(15, 42, 3, '{\"production_reference\":\"PR-20251109-0042\",\"sale_id\":\"42\",\"warehouse_id\":\"3\",\"customer\":{\"id\":\"3\",\"name\":\"Mr. Danjuma - 0909880012\",\"phone\":\"0909880012\",\"company\":\"ABC INDUSTRIES\",\"address\":\"\"},\"warehouse\":{\"id\":\"3\",\"name\":\"Branch Office                                                                                - BRANCH\",\"code\":\"\"},\"coil_id\":\"4\",\"coil\":{\"id\":\"4\",\"code\":\"j169\",\"name\":\"Kzinc coil\",\"category\":\"kzinc\",\"color\":\"TC\\/Red\",\"weight\":\"1214.00\",\"status\":\"available\"},\"properties\":[{\"property_id\":\"scraps\",\"label\":\"Scraps\",\"sheet_qty\":10,\"sheet_meter\":0,\"meters\":0,\"unit_price\":2500,\"row_subtotal\":25000},{\"property_id\":\"pieces\",\"label\":\"Pieces\",\"sheet_qty\":10,\"sheet_meter\":0,\"meters\":0,\"unit_price\":4500,\"row_subtotal\":45000},{\"property_id\":\"bundles\",\"label\":\"Bundles\",\"sheet_qty\":6,\"sheet_meter\":0,\"meters\":0,\"unit_price\":64000,\"row_subtotal\":384000}],\"total_meters\":0,\"total_amount\":454000,\"created_at\":\"2025-11-09 19:25:35\"}', 'completed', 2, '2025-11-09 18:25:35', NULL, 'a69fe6db03993c0ecbddb14fe04c621e2c6db4835f07d84249910097a8e80662'),
+(16, 43, 1, '{\"production_reference\":\"PR-20251110-0043\",\"sale_id\":\"43\",\"warehouse_id\":\"1\",\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"warehouse\":{\"id\":\"1\",\"name\":\"Head Office                                                                                - Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"code\":\"\"},\"coil_id\":\"4\",\"coil\":{\"id\":\"4\",\"code\":\"j169\",\"name\":\"Kzinc coil\",\"category\":\"kzinc\",\"color\":\"IBeige\",\"weight\":\"1214.00\",\"status\":\"available\"},\"properties\":[{\"property_id\":\"bundles\",\"label\":\"Bundles\",\"sheet_qty\":9,\"sheet_meter\":0,\"meters\":0,\"quantity\":9,\"pieces\":135,\"unit_price\":60000,\"row_subtotal\":540000}],\"total_meters\":0,\"total_amount\":540000,\"created_at\":\"2025-11-10 05:50:10\"}', 'completed', 2, '2025-11-10 04:50:10', NULL, '993906d5e226cdb1a939a6a40e18a11ffc0a676fd715e52a0bda0f1734b244e9');
 
 -- --------------------------------------------------------
 
@@ -203,6 +225,19 @@ CREATE TABLE `sales` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `sales`
+--
+
+INSERT INTO `sales` (`id`, `customer_id`, `coil_id`, `stock_entry_id`, `sale_type`, `meters`, `price_per_meter`, `total_amount`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(37, 1, 49, 26, 'available_stock', 1000.00, 1000.00, 1000000.00, 'completed', 2, '2025-11-09 01:51:16', NULL, NULL),
+(38, 1, 28, 27, 'available_stock', 1298.00, 999.99, 1297987.02, 'completed', 2, '2025-11-09 01:57:09', NULL, NULL),
+(39, 1, 31, 28, 'available_stock', 182.00, 100.00, 18200.00, 'completed', 2, '2025-11-09 02:02:34', NULL, NULL),
+(40, 1, 31, 29, 'available_stock', 1000.00, 1000.00, 1000000.00, 'completed', 2, '2025-11-09 02:37:19', NULL, NULL),
+(41, 1, 49, NULL, 'retail', 100.00, 1000.00, 100000.00, 'completed', 2, '2025-11-09 03:29:03', NULL, NULL),
+(42, 3, 4, NULL, 'retail', 0.00, 0.00, 454000.00, 'completed', 2, '2025-11-09 18:25:35', NULL, NULL),
+(43, 1, 4, NULL, 'retail', 0.00, 0.00, 540000.00, 'completed', 2, '2025-11-10 04:50:10', NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -214,7 +249,8 @@ CREATE TABLE `stock_entries` (
   `coil_id` int(11) NOT NULL,
   `meters` decimal(10,2) NOT NULL,
   `meters_remaining` decimal(10,2) NOT NULL,
-  `status` varchar(50) NOT NULL DEFAULT 'available',
+  `meters_used` decimal(10,2) DEFAULT 0.00,
+  `status` enum('available','factory_use','sold') NOT NULL DEFAULT 'available' COMMENT 'Stock entry status: available for direct sale or factory use',
   `created_by` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
@@ -225,9 +261,14 @@ CREATE TABLE `stock_entries` (
 -- Dumping data for table `stock_entries`
 --
 
-INSERT INTO `stock_entries` (`id`, `coil_id`, `meters`, `meters_remaining`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(12, 49, 10000.00, 10000.00, 'factory_use', 2, '2025-11-07 11:57:09', '2025-11-07 12:11:03', NULL),
-(13, 49, 1000.00, 1000.00, 'available', 2, '2025-11-07 15:04:56', NULL, NULL);
+INSERT INTO `stock_entries` (`id`, `coil_id`, `meters`, `meters_remaining`, `meters_used`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(24, 49, 1000.00, 900.00, 0.00, 'factory_use', 2, '2025-11-09 01:11:23', '2025-11-09 03:29:03', NULL),
+(25, 4, 182.00, 182.00, 0.00, 'factory_use', 2, '2025-11-09 01:38:03', '2025-11-09 19:55:35', '2025-11-09 19:55:35'),
+(26, 49, 1000.00, 0.00, 1000.00, 'sold', 2, '2025-11-09 01:50:08', '2025-11-09 02:01:25', NULL),
+(27, 28, 1298.00, 0.00, 1298.00, 'sold', 2, '2025-11-09 01:55:50', '2025-11-09 02:01:33', NULL),
+(28, 31, 182.00, 0.00, 182.00, 'sold', 2, '2025-11-09 02:02:00', '2025-11-09 02:02:34', NULL),
+(29, 31, 1000.00, 0.00, 1000.00, 'sold', 2, '2025-11-09 02:36:57', '2025-11-09 02:37:19', NULL),
+(30, 29, 1000.00, 1000.00, 0.00, 'factory_use', 2, '2025-11-09 02:43:37', '2025-11-09 02:43:41', NULL);
 
 -- --------------------------------------------------------
 
@@ -255,7 +296,12 @@ CREATE TABLE `stock_ledger` (
 --
 
 INSERT INTO `stock_ledger` (`id`, `coil_id`, `stock_entry_id`, `transaction_type`, `description`, `inflow_meters`, `outflow_meters`, `balance_meters`, `reference_type`, `reference_id`, `created_by`, `created_at`) VALUES
-(17, 49, 12, 'inflow', 'Stock moved to factory use - Entry #12 (10000.00m available)', 10000.00, 0.00, 10000.00, 'stock_entry', 12, 2, '2025-11-07 12:11:03');
+(31, 49, 24, 'inflow', 'Stock moved to factory use - Entry #24 (1000.00m available)', 1000.00, 0.00, 1000.00, 'stock_entry', 24, 2, '2025-11-09 01:25:55'),
+(34, 49, 24, 'outflow', 'Stock moved back to available - Entry #24 (removing 1000m from factory tracking)', 0.00, 1000.00, 0.00, 'status_change', 24, 2, '2025-11-09 01:35:10'),
+(35, 49, 24, 'inflow', 'Stock moved to factory use - Entry #24 (1000.00m available)', 1000.00, 0.00, 1000.00, 'stock_entry', 24, 2, '2025-11-09 01:35:20'),
+(36, 4, 25, 'inflow', 'Stock moved to factory use - Entry #25 (182.00m available)', 182.00, 0.00, 182.00, 'stock_entry', 25, 2, '2025-11-09 01:38:06'),
+(37, 29, 30, 'inflow', 'Stock moved to factory use - Entry #30 (1000.00m available)', 1000.00, 0.00, 1000.00, 'stock_entry', 30, 2, '2025-11-09 02:43:41'),
+(38, 49, 24, 'outflow', 'Production drawdown for sale #41', 0.00, 100.00, 900.00, 'sale', 41, 2, '2025-11-09 03:29:03');
 
 -- --------------------------------------------------------
 
@@ -361,7 +407,8 @@ CREATE TABLE `warehouses` (
 
 INSERT INTO `warehouses` (`id`, `name`, `location`, `contact`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 'Head Office', 'Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja', '+2348065336645', 1, '2025-11-07 07:51:17', NULL, NULL),
-(2, 'Branch', 'BRANCH ADDRESS', '192019101912', 0, '2025-11-07 12:28:24', '2025-11-07 12:28:35', '2025-11-07 12:28:35');
+(2, 'Branch', 'BRANCH ADDRESS', '192019101912', 1, '2025-11-07 12:28:24', '2025-11-09 13:35:57', '2025-11-07 12:28:35'),
+(3, 'Branch Office', 'BRANCH', '09012345678', 1, '2025-11-09 13:36:50', NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -532,13 +579,13 @@ ALTER TABLE `customers`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `production`
 --
 ALTER TABLE `production`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `receipts`
@@ -550,19 +597,19 @@ ALTER TABLE `receipts`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `stock_entries`
 --
 ALTER TABLE `stock_entries`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `stock_ledger`
 --
 ALTER TABLE `stock_ledger`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `supply_delivery`
@@ -586,7 +633,7 @@ ALTER TABLE `user_permissions`
 -- AUTO_INCREMENT for table `warehouses`
 --
 ALTER TABLE `warehouses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Constraints for dumped tables

@@ -11,6 +11,7 @@ require_once __DIR__ . '/../config/constants.php';
 class Sale {
     private $db;
     private $table = 'sales';
+    private $invoiceTable = 'invoices';
     
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
@@ -90,11 +91,18 @@ class Sale {
             $sql = "SELECT s.*, 
                            c.name as customer_name,
                            co.code as coil_code, co.name as coil_name,
-                           u.name as created_by_name
+                           u.name as created_by_name,
+                           i.id as invoice_id, i.status as invoice_status,
+                           i.invoice_number, i.paid_amount, i.total as invoice_total
                     FROM {$this->table} s
                     LEFT JOIN customers c ON s.customer_id = c.id
                     LEFT JOIN coils co ON s.coil_id = co.id
                     LEFT JOIN users u ON s.created_by = u.id
+                    LEFT JOIN (
+                        SELECT id, sale_id, status, invoice_number, paid_amount, total,
+                               ROW_NUMBER() OVER (PARTITION BY sale_id ORDER BY created_at DESC) as rn
+                        FROM {$this->invoiceTable}
+                    ) i ON s.id = i.sale_id AND i.rn = 1
                     WHERE s.deleted_at IS NULL
                     ORDER BY s.created_at DESC
                     LIMIT :limit OFFSET :offset";
@@ -104,7 +112,25 @@ class Sale {
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
             
-            return $stmt->fetchAll();
+            $sales = $stmt->fetchAll();
+            
+            // Format the results to match the expected structure
+            return array_map(function($sale) {
+                $sale['has_invoice'] = !empty($sale['invoice_id']);
+                $sale['invoice'] = $sale['invoice_id'] ? [
+                    'id' => $sale['invoice_id'],
+                    'status' => $sale['invoice_status'],
+                    'invoice_number' => $sale['invoice_number'],
+                    'paid_amount' => $sale['paid_amount'],
+                    'total' => $sale['invoice_total']
+                ] : null;
+                
+                // Remove the raw fields to avoid confusion
+                unset($sale['invoice_id'], $sale['invoice_status'], 
+                      $sale['invoice_number'], $sale['paid_amount'], $sale['invoice_total']);
+                
+                return $sale;
+            }, $sales);
         } catch (PDOException $e) {
             error_log("Sale fetch error: " . $e->getMessage());
             return [];
@@ -126,6 +152,51 @@ class Sale {
         } catch (PDOException $e) {
             error_log("Sale count error: " . $e->getMessage());
             return 0;
+        }
+    }
+    
+    /**
+     * Get invoice for sale
+     * 
+     * @param int $saleId
+     * @return array|false
+     */
+    public function getInvoice($saleId) {
+        try {
+            $sql = "SELECT * FROM {$this->invoiceTable} WHERE sale_id = :sale_id ORDER BY created_at DESC LIMIT 1";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':sale_id' => $saleId]);
+            
+            $invoice = $stmt->fetch();
+            
+            if ($invoice && isset($invoice['invoice_shape'])) {
+                $invoice['invoice_shape'] = json_decode($invoice['invoice_shape'], true);
+            }
+            
+            return $invoice;
+        } catch (PDOException $e) {
+            error_log("Error getting sale invoice: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check if sale has an invoice
+     * 
+     * @param int $saleId
+     * @return bool
+     */
+    public function hasInvoice($saleId) {
+        try {
+            $sql = "SELECT COUNT(*) as count FROM {$this->invoiceTable} WHERE sale_id = :sale_id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':sale_id' => $saleId]);
+            $result = $stmt->fetch();
+            
+            return ($result['count'] ?? 0) > 0;
+        } catch (PDOException $e) {
+            error_log("Error checking sale invoice: " . $e->getMessage());
+            return false;
         }
     }
     

@@ -7,24 +7,61 @@ require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../models/invoice.php';
 require_once __DIR__ . '/../../utils/helpers.php';
 
+// Ensure APP_NAME is defined
+if (!defined('APP_NAME')) {
+    define('APP_NAME', 'Stock Taking System');
+}
+
 $pageTitle = 'Invoices - ' . APP_NAME;
 
-// Pagination setup
-$currentPage = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-$statusFilter = $_GET['status'] ?? '';
+// Ensure RECORDS_PER_PAGE is defined at the top
+if (!defined('RECORDS_PER_PAGE')) {
+    define('RECORDS_PER_PAGE', 10);
+}
 
-$invoiceModel = new Invoice();
-$limit = RECORDS_PER_PAGE;
-$offset = ($currentPage - 1) * $limit;
+// Initialize variables
+$currentPage = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
+$statusFilter = isset($_GET['status']) ? trim($_GET['status']) : '';
 
-// Get invoices with pagination and status filter
-$invoices = $invoiceModel->getAll($limit, $offset, $statusFilter);
-$totalInvoices = $invoiceModel->count($statusFilter);
+// Initialize invoice model
+try {
+    $invoiceModel = new Invoice();
+    $limit = RECORDS_PER_PAGE;
+    $offset = ($currentPage - 1) * $limit;
 
-$paginationData = getPaginationData($totalInvoices, $currentPage);
+    // Get invoices with pagination and status filter
+    $invoices = $invoiceModel->getAll($limit, $offset, $statusFilter);
+    $totalInvoices = $invoiceModel->count($statusFilter);
 
+    if (!is_array($invoices)) {
+        $invoices = [];
+        error_log('Error: $invoices is not an array');
+    }
+} catch (Exception $e) {
+    error_log('Error initializing invoice data: ' . $e->getMessage());
+    $invoices = [];
+    $totalInvoices = 0;
+}
+
+// Calculate pagination data
+$totalPages = ceil($totalInvoices / $limit);
+$paginationData = [
+    'currentPage' => $currentPage,
+    'totalPages' => $totalPages,
+    'hasPrevious' => $currentPage > 1,
+    'hasNext' => $currentPage < $totalPages,
+    'previousPage' => $currentPage > 1 ? $currentPage - 1 : 1,
+    'nextPage' => $currentPage < $totalPages ? $currentPage + 1 : $totalPages,
+];
+
+// Include layout files
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';
+
+// Ensure RECORDS_PER_PAGE is defined
+if (!defined('RECORDS_PER_PAGE')) {
+    define('RECORDS_PER_PAGE', 10);
+}
 ?>
 
 <style>
@@ -97,7 +134,25 @@ require_once __DIR__ . '/../../layout/sidebar.php';
             <div class="alert alert-info m-3">
                 <i class="bi bi-info-circle"></i> No invoices found.
             </div>
-            <?php else: ?>
+            <?php
+
+                // Handle both array and JSON string for invoice_shape
+
+                // Ensure we have an array
+
+                // Safely get values with null coalescing
+                // Handle both array and JSON string for invoice_shape
+                // Ensure we have an array
+                // Safely get values with null coalescing
+                // Handle both array and JSON string for invoice_shape
+
+                // Ensure we have an array
+
+                // Safely get values with null coalescing
+                // Handle both array and JSON string for invoice_shape
+                // Ensure we have an array
+                // Safely get values with null coalescing
+                else: ?>
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
@@ -115,10 +170,25 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     <tbody>
                         <?php foreach ($invoices as $invoice):
 
-                            $invoiceData = json_decode($invoice['invoice_shape'], true);
-                            $balance = $invoice['total_amount'] - $invoice['paid_amount'];
+                            $invoiceData = is_array($invoice['invoice_shape'])
+                                ? $invoice['invoice_shape']
+                                : (is_string($invoice['invoice_shape'])
+                                    ? json_decode($invoice['invoice_shape'], true)
+                                    : []);
+
+                            if (!is_array($invoiceData)) {
+                                $invoiceData = [];
+                                error_log(
+                                    'Warning: invoice_shape could not be decoded to array for invoice ' .
+                                        ($invoice['id'] ?? 'unknown'),
+                                );
+                            }
+
+                            $totalAmount = $invoice['total'] ?? ($invoice['total_amount'] ?? 0);
+                            $paidAmount = $invoice['paid_amount'] ?? 0;
+                            $balance = $totalAmount - $paidAmount;
                             $isPaid = $balance <= 0;
-                            $isPartial = !$isPaid && $invoice['paid_amount'] > 0;
+                            $isPartial = !$isPaid && $paidAmount > 0;
                             $statusClass = $isPaid
                                 ? 'success'
                                 : ($isPartial
@@ -144,7 +214,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 $invoiceData['customer']['name'] ?? 'N/A',
                             ) ?></td>
                             <td><?= date('M d, Y', strtotime($invoice['created_at'])) ?></td>
-                            <td>₦<?= number_format($invoice['total_amount'], 2) ?></td>
+                            <td>₦<?= number_format($totalAmount, 2) ?></td>
                             <td>₦<?= number_format($invoice['paid_amount'], 2) ?></td>
                             <td>₦<?= number_format($balance, 2) ?></td>
                             <td>
@@ -169,7 +239,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                         <i class="bi bi-cash-coin"></i>
                                     </button>
                                     <?php endif; ?>
-                                    <a href="/new-stock-system/index.php?page=invoice_print&id=<?= $invoice[
+                                    <a href="/new-stock-system/views/invoices/print_view.php?page=invoice_print&id=<?= $invoice[
                                         'id'
                                     ] ?>" 
                                        class="btn btn-sm btn-outline-secondary" 
@@ -193,10 +263,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     <ul class="pagination justify-content-center mb-0">
                         <?php if ($paginationData['currentPage'] > 1): ?>
                         <li class="page-item">
-                            <a class="page-link" href="?page=invoices&page_num=<?=
-                            ($paginationData['currentPage'] - 1) . 
-                            ($statusFilter ? '&status=' . urlencode($statusFilter) : '')
-                            ?>" aria-label="Previous">
+                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData[
+                                'currentPage'
+                            ] -
+                                1 .
+                                ($statusFilter
+                                    ? '&status=' . urlencode($statusFilter)
+                                    : '') ?>" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
@@ -206,10 +279,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <li class="page-item <?= $i === $paginationData['currentPage']
                             ? 'active'
                             : '' ?>">
-                            <a class="page-link" href="?page=invoices&page_num=<?=
-                            $i . 
-                            ($statusFilter ? '&status=' . urlencode($statusFilter) : '')
-                            ?>">
+                            <a class="page-link" href="?page=invoices&page_num=<?= $i .
+                                ($statusFilter ? '&status=' . urlencode($statusFilter) : '') ?>">
                                 <?= $i ?>
                             </a>
                         </li>
@@ -219,10 +290,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             $paginationData['currentPage'] < $paginationData['totalPages']
                         ): ?>
                         <li class="page-item">
-                            <a class="page-link" href="?page=invoices&page_num=<?=
-                            ($paginationData['currentPage'] + 1) . 
-                            ($statusFilter ? '&status=' . urlencode($statusFilter) : '')
-                            ?>" aria-label="Next">
+                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData[
+                                'currentPage'
+                            ] +
+                                1 .
+                                ($statusFilter
+                                    ? '&status=' . urlencode($statusFilter)
+                                    : '') ?>" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>

@@ -26,7 +26,7 @@ try {
     $stockEntryModel = new StockEntry();
 
     // Get available entries (already filtered by the model)
-    $entries = $stockEntryModel->getByCoil($coilId, 1000, 0, true);
+    $entries = $stockEntryModel->getByCoilId($coilId, 1000, 0);
 
     // Return the entries array directly since that's what the frontend expects
     echo json_encode([

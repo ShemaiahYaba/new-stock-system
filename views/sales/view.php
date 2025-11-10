@@ -69,10 +69,11 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <tr>
                             <th>Status:</th>
                             <td>
-                                <span class="badge <?php 
-                                    echo $sale['status'] === 'completed' ? 'bg-success' : 
-                                         ($sale['status'] === 'cancelled' ? 'bg-danger' : 'bg-warning'); 
-                                ?>">
+                                <span class="badge <?php echo $sale['status'] === 'completed'
+                                    ? 'bg-success'
+                                    : ($sale['status'] === 'cancelled'
+                                        ? 'bg-danger'
+                                        : 'bg-warning'); ?>">
                                     <?php echo ucfirst($sale['status']); ?>
                                 </span>
                             </td>
@@ -81,6 +82,26 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <th>Sale Type:</th>
                             <td><?php echo ucfirst($sale['sale_type']); ?></td>
                         </tr>
+                        <?php
+                        // Get invoice information
+                        $invoice = $saleModel->getInvoice($sale['id']);
+                        if ($invoice): ?>
+                        <tr>
+                            <th>Invoice:</th>
+                            <td>
+                                <a href="/new-stock-system/index.php?page=invoice_view&id=<?php echo $invoice[
+                                    'id'
+                                ]; ?>" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    View Invoice #<?php echo $invoice['invoice_number']; ?>
+                                </a>
+                                <span class="ms-2 text-muted">
+                                    (<?php echo ucfirst($invoice['status']); ?>)
+                                </span>
+                            </td>
+                        </tr>
+                        <?php endif;
+                        ?>
                     </table>
                 </div>
                 <div class="col-md-6">
@@ -93,15 +114,21 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             </tr>
                             <tr>
                                 <th>Company:</th>
-                                <td><?php echo htmlspecialchars($customer['company'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars(
+                                    $customer['company'] ?? 'N/A',
+                                ); ?></td>
                             </tr>
                             <tr>
                                 <th>Email:</th>
-                                <td><?php echo htmlspecialchars($customer['email'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars(
+                                    $customer['email'] ?? 'N/A',
+                                ); ?></td>
                             </tr>
                             <tr>
                                 <th>Phone:</th>
-                                <td><?php echo htmlspecialchars($customer['phone'] ?? 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars(
+                                    $customer['phone'] ?? 'N/A',
+                                ); ?></td>
                             </tr>
                         </table>
                     <?php else: ?>
@@ -131,8 +158,11 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <td><?php echo htmlspecialchars($coil['name'] ?? 'N/A'); ?></td>
                                     <td>#<?php echo $stockEntry ? $stockEntry['id'] : 'N/A'; ?></td>
                                     <td><?php echo number_format($sale['meters'], 2); ?> m</td>
-                                    <td>$<?php echo number_format($sale['price_per_meter'], 2); ?></td>
-                                    <td>$<?php echo number_format($sale['total_amount'], 2); ?></td>
+                                    <td>₦<?php echo number_format(
+                                        $sale['price_per_meter'],
+                                        2,
+                                    ); ?></td>
+                                    <td>₦<?php echo number_format($sale['total_amount'], 2); ?></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -140,7 +170,72 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 </div>
             </div>
 
-            <div class="row">
+            <?php if ($invoice): ?>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Invoice Information</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th style="width: 40%;">Invoice Number:</th>
+                                            <td><?php echo $invoice['invoice_number']; ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Date:</th>
+                                            <td><?php echo formatDate(
+                                                $invoice['created_at'],
+                                            ); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Status:</th>
+                                            <td>
+                                                <span class="badge <?php echo $invoice['status'] ===
+                                                'paid'
+                                                    ? 'bg-success'
+                                                    : ($invoice['status'] === 'cancelled'
+                                                        ? 'bg-danger'
+                                                        : 'bg-warning'); ?>">
+                                                    <?php echo ucfirst($invoice['status']); ?>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th style="width: 40%;">Total Amount:</th>
+                                            <td><?php echo formatCurrency(
+                                                $invoice['total'],
+                                            ); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Paid Amount:</th>
+                                            <td><?php echo formatCurrency(
+                                                $invoice['paid_amount'],
+                                            ); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Balance Due:</th>
+                                            <td><?php echo formatCurrency(
+                                                $invoice['total'] - $invoice['paid_amount'],
+                                            ); ?></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <div class="row mt-4">
                 <div class="col-12">
                     <div class="d-flex justify-content-between">
                         <a href="/new-stock-system/index.php?page=sales" class="btn btn-secondary">
@@ -148,13 +243,17 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         </a>
                         <div>
                             <?php if (hasPermission(MODULE_SALES, ACTION_EDIT)): ?>
-                                <a href="/new-stock-system/index.php?page=sales_edit&id=<?php echo $sale['id']; ?>" 
+                                <a href="/new-stock-system/index.php?page=sales_edit&id=<?php echo $sale[
+                                    'id'
+                                ]; ?>" 
                                    class="btn btn-primary">
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>
                             <?php endif; ?>
                             
-                            <a href="/new-stock-system/controllers/sales/export_invoice.php?id=<?php echo $sale['id']; ?>" 
+                            <a href="/new-stock-system/controllers/sales/export_invoice.php?id=<?php echo $sale[
+                                'id'
+                            ]; ?>" 
                                class="btn btn-success" target="_blank">
                                 <i class="bi bi-file-pdf"></i> Export Invoice
                             </a>

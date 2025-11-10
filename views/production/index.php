@@ -127,7 +127,16 @@ require_once __DIR__ . '/../../layout/sidebar.php';
             <div class="alert alert-info m-3">
                 <i class="bi bi-info-circle"></i> No production records found.
             </div>
-            <?php else: ?>
+            <?php
+                // Ensure production_paper is an array
+                // Ensure production_paper is an array
+                // Ensure production_paper is an array
+                // Ensure production_paper is an array
+                // Ensure production_paper is an array
+                // Ensure production_paper is an array
+                // Ensure production_paper is an array
+                // Ensure production_paper is an array
+                else: ?>
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
@@ -145,7 +154,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     </thead>
                     <tbody>
                         <?php foreach ($productions as $prod):
-                            // Ensure production_paper is an array
+
                             $prodPaper = [];
                             if (isset($prod['production_paper'])) {
                                 if (is_array($prod['production_paper'])) {
@@ -154,7 +163,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     $prodPaper = json_decode($prod['production_paper'], true) ?: [];
                                 }
                             }
-                            
+
                             $totalMeters = $prodPaper['total_meters'] ?? 0;
                             $totalAmount = $prodPaper['total_amount'] ?? 0;
                             ?>
@@ -205,7 +214,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 'M d, Y H:i',
                                 strtotime($prod['created_at']),
                             ); ?></td>
-                            <td><?php echo isset($prod['created_by_name']) ? htmlspecialchars($prod['created_by_name']) : 'System'; ?></td>
+                            <td><?php echo isset($prod['created_by_name'])
+                                ? htmlspecialchars($prod['created_by_name'])
+                                : 'System'; ?></td>
                             <td>
                                 <div class="btn-group" role="group">
                                     <a href="/new-stock-system/index.php?page=production_view&id=<?php echo $prod[
