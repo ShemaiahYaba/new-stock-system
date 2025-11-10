@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 10, 2025 at 05:50 AM
+-- Generation Time: Nov 10, 2025 at 06:35 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -158,7 +158,9 @@ INSERT INTO `invoices` (`id`, `sale_id`, `production_id`, `invoice_number`, `inv
 (26, 40, NULL, 'INV-2025-000004', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Mr Lawal\\\",\\\"company\\\":\\\"HEXA\\\",\\\"email\\\":\\\"customer1@example.com\\\",\\\"phone\\\":\\\"09039988198\\\",\\\"address\\\":\\\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-09 03:37:19\\\",\\\"ref\\\":\\\"#SO-20251109-000040\\\",\\\"sale_id\\\":\\\"40\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"C184 - Aluminum Coil\\\",\\\"quantity\\\":1000,\\\"qty_text\\\":\\\"1,000.00 meters\\\",\\\"unit_price\\\":1000,\\\"subtotal\\\":1000000}],\\\"subtotal\\\":1000000,\\\"order_tax\\\":75000,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":1075000,\\\"paid\\\":0,\\\"due\\\":1075000,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 1075000.00, 75000.00, 0.00, 0.00, 0.00, 'unpaid', '2025-11-09 02:37:19', NULL, '32e61c7596c3a8adee89ddf3233dc7e16050c953272a42b9a59de7e6df7e3a2e'),
 (27, 41, 14, 'INV-2025-000005', '{\"company\":{\"name\":\"Obumek Alluminium Company Ltd.\",\"address\":\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"phone\":\"+2348065336645\",\"email\":\"info@obumekalluminium.com\"},\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"meta\":{\"date\":\"2025-11-09 04:29:03\",\"ref\":\"#SO-20251109-000041\",\"payment_status\":\"Unpaid\"},\"items\":[{\"product_code\":\"B197\",\"description\":\"Premium steel coil - mainsheet\",\"unit_price\":1000,\"quantity\":100,\"subtotal\":100000}],\"order_tax\":1000,\"discount\":1000,\"shipping\":1000.01,\"grand_total\":101000.01,\"paid\":0,\"due\":101000.01,\"notes\":{\"receipt_statement\":\"Received the above goods in good condition.\",\"refund_policy\":\"No refund of money after payment\",\"custom_notes\":\"\"},\"signatures\":{\"customer\":null,\"for_company\":\"Obumek Alluminium Company Ltd.\"}}', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 101000.01, 1000.00, 0.00, 0.00, 1000.01, 'unpaid', '2025-11-09 03:29:03', NULL, 'aa67d7f57addc2b5e01931750c86a6c43275e9e1b0f0c5ff33836d5a69c0d4cb'),
 (28, 42, 15, 'INV-2025-000006', '{\"company\":{\"name\":\"Obumek Alluminium Company Ltd.\",\"address\":\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"phone\":\"+2348065336645\",\"email\":\"info@obumekalluminium.com\"},\"customer\":{\"id\":\"3\",\"name\":\"Mr. Danjuma - 0909880012\",\"phone\":\"0909880012\",\"company\":\"ABC INDUSTRIES\",\"address\":\"\"},\"meta\":{\"date\":\"2025-11-09 19:25:35\",\"ref\":\"#SO-20251109-000042\",\"payment_status\":\"Unpaid\"},\"items\":[{\"product_code\":\"j169\",\"description\":\"Kzinc coil - scraps\",\"unit_price\":2500,\"quantity\":10,\"subtotal\":25000},{\"product_code\":\"j169\",\"description\":\"Kzinc coil - pieces\",\"unit_price\":4500,\"quantity\":10,\"subtotal\":45000},{\"product_code\":\"j169\",\"description\":\"Kzinc coil - bundles\",\"unit_price\":64000,\"quantity\":6,\"subtotal\":384000}],\"order_tax\":45400,\"discount\":45400,\"shipping\":100000,\"grand_total\":554000,\"paid\":0,\"due\":554000,\"notes\":{\"receipt_statement\":\"Received the above goods in good condition.\",\"refund_policy\":\"No refund of money after payment\",\"custom_notes\":\"\"},\"signatures\":{\"customer\":null,\"for_company\":\"Obumek Alluminium Company Ltd.\"}}', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 554000.00, 45400.00, 0.00, 0.00, 100000.00, 'unpaid', '2025-11-09 18:25:35', NULL, 'c739c7a641bac9bbb37a49e78f8493a36b4dc507e1b183d22dc8e99315624115'),
-(29, 43, 16, 'INV-2025-000007', '{\"company\":{\"name\":\"Obumek Alluminium Company Ltd.\",\"address\":\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"phone\":\"+2348065336645\",\"email\":\"info@obumekalluminium.com\"},\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"meta\":{\"date\":\"2025-11-10 05:50:10\",\"ref\":\"#SO-20251110-000043\",\"payment_status\":\"Unpaid\"},\"items\":[{\"product_code\":\"j169\",\"description\":\"Kzinc coil - bundles\",\"unit_price\":60000,\"quantity\":9,\"subtotal\":540000}],\"order_tax\":54000,\"discount\":4000,\"shipping\":10000,\"grand_total\":600000,\"paid\":0,\"due\":600000,\"notes\":{\"receipt_statement\":\"Received the above goods in good condition.\",\"refund_policy\":\"No refund of money after payment\",\"custom_notes\":\"\"},\"signatures\":{\"customer\":null,\"for_company\":\"Obumek Alluminium Company Ltd.\"}}', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 600000.00, 54000.00, 0.00, 0.00, 10000.00, 'unpaid', '2025-11-10 04:50:10', NULL, '0a4f5d6488ba8d4f62b266af98c5837ed248c68ee21d4a0e405d5e8ab4b85abc');
+(29, 43, 16, 'INV-2025-000007', '{\"company\":{\"name\":\"Obumek Alluminium Company Ltd.\",\"address\":\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"phone\":\"+2348065336645\",\"email\":\"info@obumekalluminium.com\"},\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"meta\":{\"date\":\"2025-11-10 05:50:10\",\"ref\":\"#SO-20251110-000043\",\"payment_status\":\"Unpaid\"},\"items\":[{\"product_code\":\"j169\",\"description\":\"Kzinc coil - bundles\",\"unit_price\":60000,\"quantity\":9,\"subtotal\":540000}],\"order_tax\":54000,\"discount\":4000,\"shipping\":10000,\"grand_total\":600000,\"paid\":0,\"due\":600000,\"notes\":{\"receipt_statement\":\"Received the above goods in good condition.\",\"refund_policy\":\"No refund of money after payment\",\"custom_notes\":\"\"},\"signatures\":{\"customer\":null,\"for_company\":\"Obumek Alluminium Company Ltd.\"}}', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 600000.00, 54000.00, 0.00, 100000.00, 10000.00, 'partial', '2025-11-10 04:50:10', '2025-11-10 05:12:31', '0a4f5d6488ba8d4f62b266af98c5837ed248c68ee21d4a0e405d5e8ab4b85abc'),
+(30, 44, 17, 'INV-2025-000008', '{\"company\":{\"name\":\"Obumek Alluminium Company Ltd.\",\"address\":\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"phone\":\"+2348065336645\",\"email\":\"info@obumekalluminium.com\"},\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"meta\":{\"date\":\"2025-11-10 06:29:20\",\"ref\":\"#SO-20251110-000044\",\"payment_status\":\"Unpaid\"},\"items\":[{\"product_code\":\"B197\",\"description\":\"Premium steel coil - flatsheet\",\"unit_price\":5000,\"quantity\":200,\"subtotal\":1000000},{\"product_code\":\"B197\",\"description\":\"Premium steel coil - mainsheet\",\"unit_price\":5000,\"quantity\":180,\"subtotal\":900000},{\"product_code\":\"B197\",\"description\":\"Premium steel coil - cladding\",\"unit_price\":5000,\"quantity\":27,\"subtotal\":135000}],\"order_tax\":203500,\"discount\":3500,\"shipping\":0,\"grand_total\":2235000,\"paid\":0,\"due\":2235000,\"notes\":{\"receipt_statement\":\"Received the above goods in good condition.\",\"refund_policy\":\"No refund of money after payment\",\"custom_notes\":\"\"},\"signatures\":{\"customer\":null,\"for_company\":\"Obumek Alluminium Company Ltd.\"}}', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 2235000.00, 203500.00, 0.00, 235000.00, 0.00, 'partial', '2025-11-10 05:29:20', '2025-11-10 05:30:16', '3cdf84d346b76e0743edea54a251724f6812d649508ebac41c4953ac5f6f1aa1'),
+(31, 45, 18, 'INV-2025-000009', '{\"company\":{\"name\":\"Obumek Alluminium Company Ltd.\",\"address\":\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"phone\":\"+2348065336645\",\"email\":\"info@obumekalluminium.com\"},\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"meta\":{\"date\":\"2025-11-10 06:32:13\",\"ref\":\"#SO-20251110-000045\",\"payment_status\":\"Unpaid\"},\"items\":[{\"product_code\":\"j169\",\"description\":\"Kzinc coil - bundles\",\"unit_price\":63000,\"quantity\":2,\"subtotal\":126000}],\"order_tax\":0,\"discount\":0,\"shipping\":0,\"grand_total\":126000,\"paid\":0,\"due\":126000,\"notes\":{\"receipt_statement\":\"Received the above goods in good condition.\",\"refund_policy\":\"No refund of money after payment\",\"custom_notes\":\"\"},\"signatures\":{\"customer\":null,\"for_company\":\"Obumek Alluminium Company Ltd.\"}}', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 126000.00, 0.00, 0.00, 126000.00, 0.00, 'paid', '2025-11-10 05:32:13', '2025-11-10 05:32:30', 'f38d5094f482315778f1f41a5fd4e914ff6b94ebd9d3c7311b27ac2308589c32');
 
 -- --------------------------------------------------------
 
@@ -185,7 +187,9 @@ CREATE TABLE `production` (
 INSERT INTO `production` (`id`, `sale_id`, `warehouse_id`, `production_paper`, `status`, `created_by`, `created_at`, `updated_at`, `immutable_hash`) VALUES
 (14, 41, 1, '{\"production_reference\":\"PR-20251109-0041\",\"sale_id\":\"41\",\"warehouse_id\":\"1\",\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"warehouse\":{\"id\":\"1\",\"name\":\"Head Office                                                                                - Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"code\":\"\"},\"coil_id\":\"49\",\"coil\":{\"id\":\"49\",\"code\":\"B197\",\"name\":\"Premium steel coil\",\"category\":\"alusteel\",\"color\":\"S\\/Blue\",\"weight\":\"1289.00\",\"status\":\"available\"},\"properties\":[{\"property_id\":\"mainsheet\",\"label\":\"Mainsheet\",\"sheet_qty\":1,\"sheet_meter\":100,\"meters\":100,\"unit_price\":1000,\"row_subtotal\":100000}],\"total_meters\":100,\"total_amount\":100000,\"created_at\":\"2025-11-09 04:29:03\"}', 'completed', 2, '2025-11-09 03:29:03', NULL, 'de8231992522d31acbce1ab6b038874011d07af2c27acac44fddede8a103cb82'),
 (15, 42, 3, '{\"production_reference\":\"PR-20251109-0042\",\"sale_id\":\"42\",\"warehouse_id\":\"3\",\"customer\":{\"id\":\"3\",\"name\":\"Mr. Danjuma - 0909880012\",\"phone\":\"0909880012\",\"company\":\"ABC INDUSTRIES\",\"address\":\"\"},\"warehouse\":{\"id\":\"3\",\"name\":\"Branch Office                                                                                - BRANCH\",\"code\":\"\"},\"coil_id\":\"4\",\"coil\":{\"id\":\"4\",\"code\":\"j169\",\"name\":\"Kzinc coil\",\"category\":\"kzinc\",\"color\":\"TC\\/Red\",\"weight\":\"1214.00\",\"status\":\"available\"},\"properties\":[{\"property_id\":\"scraps\",\"label\":\"Scraps\",\"sheet_qty\":10,\"sheet_meter\":0,\"meters\":0,\"unit_price\":2500,\"row_subtotal\":25000},{\"property_id\":\"pieces\",\"label\":\"Pieces\",\"sheet_qty\":10,\"sheet_meter\":0,\"meters\":0,\"unit_price\":4500,\"row_subtotal\":45000},{\"property_id\":\"bundles\",\"label\":\"Bundles\",\"sheet_qty\":6,\"sheet_meter\":0,\"meters\":0,\"unit_price\":64000,\"row_subtotal\":384000}],\"total_meters\":0,\"total_amount\":454000,\"created_at\":\"2025-11-09 19:25:35\"}', 'completed', 2, '2025-11-09 18:25:35', NULL, 'a69fe6db03993c0ecbddb14fe04c621e2c6db4835f07d84249910097a8e80662'),
-(16, 43, 1, '{\"production_reference\":\"PR-20251110-0043\",\"sale_id\":\"43\",\"warehouse_id\":\"1\",\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"warehouse\":{\"id\":\"1\",\"name\":\"Head Office                                                                                - Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"code\":\"\"},\"coil_id\":\"4\",\"coil\":{\"id\":\"4\",\"code\":\"j169\",\"name\":\"Kzinc coil\",\"category\":\"kzinc\",\"color\":\"IBeige\",\"weight\":\"1214.00\",\"status\":\"available\"},\"properties\":[{\"property_id\":\"bundles\",\"label\":\"Bundles\",\"sheet_qty\":9,\"sheet_meter\":0,\"meters\":0,\"quantity\":9,\"pieces\":135,\"unit_price\":60000,\"row_subtotal\":540000}],\"total_meters\":0,\"total_amount\":540000,\"created_at\":\"2025-11-10 05:50:10\"}', 'completed', 2, '2025-11-10 04:50:10', NULL, '993906d5e226cdb1a939a6a40e18a11ffc0a676fd715e52a0bda0f1734b244e9');
+(16, 43, 1, '{\"production_reference\":\"PR-20251110-0043\",\"sale_id\":\"43\",\"warehouse_id\":\"1\",\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"warehouse\":{\"id\":\"1\",\"name\":\"Head Office                                                                                - Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"code\":\"\"},\"coil_id\":\"4\",\"coil\":{\"id\":\"4\",\"code\":\"j169\",\"name\":\"Kzinc coil\",\"category\":\"kzinc\",\"color\":\"IBeige\",\"weight\":\"1214.00\",\"status\":\"available\"},\"properties\":[{\"property_id\":\"bundles\",\"label\":\"Bundles\",\"sheet_qty\":9,\"sheet_meter\":0,\"meters\":0,\"quantity\":9,\"pieces\":135,\"unit_price\":60000,\"row_subtotal\":540000}],\"total_meters\":0,\"total_amount\":540000,\"created_at\":\"2025-11-10 05:50:10\"}', 'completed', 2, '2025-11-10 04:50:10', NULL, '993906d5e226cdb1a939a6a40e18a11ffc0a676fd715e52a0bda0f1734b244e9'),
+(17, 44, 1, '{\"production_reference\":\"PR-20251110-0044\",\"sale_id\":\"44\",\"warehouse_id\":\"1\",\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"warehouse\":{\"id\":\"1\",\"name\":\"Head Office                                                                                - Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"code\":\"\"},\"coil_id\":\"49\",\"coil\":{\"id\":\"49\",\"code\":\"B197\",\"name\":\"Premium steel coil\",\"category\":\"alusteel\",\"color\":\"S\\/Blue\",\"weight\":\"1289.00\",\"status\":\"available\"},\"properties\":[{\"property_id\":\"flatsheet\",\"label\":\"Flatsheet\",\"sheet_qty\":20,\"sheet_meter\":10,\"meters\":200,\"quantity\":0,\"pieces\":0,\"unit_price\":5000,\"row_subtotal\":1000000},{\"property_id\":\"mainsheet\",\"label\":\"Mainsheet\",\"sheet_qty\":24,\"sheet_meter\":7.5,\"meters\":180,\"quantity\":0,\"pieces\":0,\"unit_price\":5000,\"row_subtotal\":900000},{\"property_id\":\"cladding\",\"label\":\"Cladding\",\"sheet_qty\":54,\"sheet_meter\":0.5,\"meters\":27,\"quantity\":0,\"pieces\":0,\"unit_price\":5000,\"row_subtotal\":135000}],\"total_meters\":407,\"total_amount\":2035000,\"created_at\":\"2025-11-10 06:29:20\"}', 'completed', 2, '2025-11-10 05:29:20', NULL, '69953348608ae59e11cc3070bdb1237cba17bdc8dd2e794e24a6d0b1417ec45e'),
+(18, 45, 1, '{\"production_reference\":\"PR-20251110-0045\",\"sale_id\":\"45\",\"warehouse_id\":\"1\",\"customer\":{\"id\":\"1\",\"name\":\"Mr Lawal - 09039988198\",\"phone\":\"09039988198\",\"company\":\"HEXA\",\"address\":\"NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA\"},\"warehouse\":{\"id\":\"1\",\"name\":\"Head Office                                                                                - Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\",\"code\":\"\"},\"coil_id\":\"4\",\"coil\":{\"id\":\"4\",\"code\":\"j169\",\"name\":\"Kzinc coil\",\"category\":\"kzinc\",\"color\":\"IBeige\",\"weight\":\"1214.00\",\"status\":\"available\"},\"properties\":[{\"property_id\":\"bundles\",\"label\":\"Bundles\",\"sheet_qty\":2,\"sheet_meter\":0,\"meters\":0,\"quantity\":2,\"pieces\":30,\"unit_price\":63000,\"row_subtotal\":126000}],\"total_meters\":0,\"total_amount\":126000,\"created_at\":\"2025-11-10 06:32:13\"}', 'completed', 2, '2025-11-10 05:32:13', NULL, '6867a4aa5fa4f8c72c9400255fe1b4ece7ff9f2767706dbb97398065d53672b6');
 
 -- --------------------------------------------------------
 
@@ -202,6 +206,15 @@ CREATE TABLE `receipts` (
   `created_by` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `receipts`
+--
+
+INSERT INTO `receipts` (`id`, `invoice_id`, `amount_paid`, `reference`, `payment_method`, `created_by`, `created_at`) VALUES
+(1, 29, 100000.00, 'Bank transfer to company', 'bank_transfer', 2, '2025-11-10 05:12:31'),
+(2, 30, 235000.00, 'transfer to company account', 'bank_transfer', 2, '2025-11-10 05:30:16'),
+(3, 31, 126000.00, 'cash at factory', 'cash', 2, '2025-11-10 05:32:30');
 
 -- --------------------------------------------------------
 
@@ -236,7 +249,9 @@ INSERT INTO `sales` (`id`, `customer_id`, `coil_id`, `stock_entry_id`, `sale_typ
 (40, 1, 31, 29, 'available_stock', 1000.00, 1000.00, 1000000.00, 'completed', 2, '2025-11-09 02:37:19', NULL, NULL),
 (41, 1, 49, NULL, 'retail', 100.00, 1000.00, 100000.00, 'completed', 2, '2025-11-09 03:29:03', NULL, NULL),
 (42, 3, 4, NULL, 'retail', 0.00, 0.00, 454000.00, 'completed', 2, '2025-11-09 18:25:35', NULL, NULL),
-(43, 1, 4, NULL, 'retail', 0.00, 0.00, 540000.00, 'completed', 2, '2025-11-10 04:50:10', NULL, NULL);
+(43, 1, 4, NULL, 'retail', 0.00, 0.00, 540000.00, 'completed', 2, '2025-11-10 04:50:10', NULL, NULL),
+(44, 1, 49, NULL, 'retail', 407.00, 5000.00, 2035000.00, 'completed', 2, '2025-11-10 05:29:20', NULL, NULL),
+(45, 1, 4, NULL, 'retail', 0.00, 0.00, 126000.00, 'completed', 2, '2025-11-10 05:32:13', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -262,7 +277,7 @@ CREATE TABLE `stock_entries` (
 --
 
 INSERT INTO `stock_entries` (`id`, `coil_id`, `meters`, `meters_remaining`, `meters_used`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(24, 49, 1000.00, 900.00, 0.00, 'factory_use', 2, '2025-11-09 01:11:23', '2025-11-09 03:29:03', NULL),
+(24, 49, 1000.00, 493.00, 0.00, 'factory_use', 2, '2025-11-09 01:11:23', '2025-11-10 05:29:20', NULL),
 (25, 4, 182.00, 182.00, 0.00, 'factory_use', 2, '2025-11-09 01:38:03', '2025-11-09 19:55:35', '2025-11-09 19:55:35'),
 (26, 49, 1000.00, 0.00, 1000.00, 'sold', 2, '2025-11-09 01:50:08', '2025-11-09 02:01:25', NULL),
 (27, 28, 1298.00, 0.00, 1298.00, 'sold', 2, '2025-11-09 01:55:50', '2025-11-09 02:01:33', NULL),
@@ -301,7 +316,8 @@ INSERT INTO `stock_ledger` (`id`, `coil_id`, `stock_entry_id`, `transaction_type
 (35, 49, 24, 'inflow', 'Stock moved to factory use - Entry #24 (1000.00m available)', 1000.00, 0.00, 1000.00, 'stock_entry', 24, 2, '2025-11-09 01:35:20'),
 (36, 4, 25, 'inflow', 'Stock moved to factory use - Entry #25 (182.00m available)', 182.00, 0.00, 182.00, 'stock_entry', 25, 2, '2025-11-09 01:38:06'),
 (37, 29, 30, 'inflow', 'Stock moved to factory use - Entry #30 (1000.00m available)', 1000.00, 0.00, 1000.00, 'stock_entry', 30, 2, '2025-11-09 02:43:41'),
-(38, 49, 24, 'outflow', 'Production drawdown for sale #41', 0.00, 100.00, 900.00, 'sale', 41, 2, '2025-11-09 03:29:03');
+(38, 49, 24, 'outflow', 'Production drawdown for sale #41', 0.00, 100.00, 900.00, 'sale', 41, 2, '2025-11-09 03:29:03'),
+(39, 49, 24, 'outflow', 'Production drawdown for sale #44', 0.00, 407.00, 493.00, 'sale', 44, 2, '2025-11-10 05:29:20');
 
 -- --------------------------------------------------------
 
@@ -579,25 +595,25 @@ ALTER TABLE `customers`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `production`
 --
 ALTER TABLE `production`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `receipts`
 --
 ALTER TABLE `receipts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `stock_entries`
@@ -609,7 +625,7 @@ ALTER TABLE `stock_entries`
 -- AUTO_INCREMENT for table `stock_ledger`
 --
 ALTER TABLE `stock_ledger`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `supply_delivery`
