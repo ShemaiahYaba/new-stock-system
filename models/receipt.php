@@ -12,6 +12,27 @@ class Receipt
     }
 
     /**
+     * Create a new receipt
+     */
+    public function create($data)
+    {
+        $sql = "INSERT INTO {$this->table} 
+                (invoice_id, amount_paid, payment_method, reference, created_by) 
+                VALUES (:invoice_id, :amount_paid, :payment_method, :reference, :created_by)";
+
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->execute([
+            ':invoice_id' => $data['invoice_id'],
+            ':amount_paid' => $data['amount_paid'],
+            ':payment_method' => $data['payment_method'] ?? 'cash',
+            ':reference' => $data['reference'] ?? null,
+            ':created_by' => $data['created_by'],
+        ]);
+
+        return $result ? $this->db->lastInsertId() : false;
+    }
+
+    /**
      * Get all receipts with optional filters
      */
     public function getAll($limit = 10, $offset = 0, $status = '', $invoiceId = '')
@@ -19,19 +40,17 @@ class Receipt
         $sql = "SELECT 
                     r.*, 
                     i.invoice_number, 
+                    i.total as invoice_total,
                     i.status as invoice_status,
                     JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.customer.name')) as customer_name,
-                    JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.customer.phone')) as customer_phone
+                    JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.customer.phone')) as customer_phone,
+                    u.name as created_by_name
                 FROM {$this->table} r
                 INNER JOIN invoices i ON r.invoice_id = i.id
+                LEFT JOIN users u ON r.created_by = u.id
                 WHERE 1=1";
 
         $params = [];
-
-        if (!empty($status)) {
-            $sql .= ' AND r.status = :status';
-            $params[':status'] = $status;
-        }
 
         if (!empty($invoiceId)) {
             $sql .= ' AND r.invoice_id = :invoice_id';
@@ -65,11 +84,6 @@ class Receipt
 
         $params = [];
 
-        if (!empty($status)) {
-            $sql .= ' AND r.status = :status';
-            $params[':status'] = $status;
-        }
-
         if (!empty($invoiceId)) {
             $sql .= ' AND r.invoice_id = :invoice_id';
             $params[':invoice_id'] = $invoiceId;
@@ -87,7 +101,8 @@ class Receipt
      */
     public function getInvoicesForFilter()
     {
-        $sql = "SELECT DISTINCT i.id, i.invoice_number 
+        $sql = "SELECT DISTINCT i.id, i.invoice_number,
+                JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.customer.name')) as customer_name
                 FROM invoices i
                 INNER JOIN {$this->table} r ON r.invoice_id = i.id
                 ORDER BY i.invoice_number DESC";
@@ -104,10 +119,11 @@ class Receipt
     {
         $sql = "SELECT 
                 r.*, 
-                i.invoice_number, 
+                i.invoice_number,
+                i.total as invoice_total,
+                i.paid_amount as invoice_paid,
                 i.status as invoice_status,
-                i.invoice_shape->>'$.customer.name' as customer_name,
-                i.invoice_shape->>'$.customer.phone' as customer_phone,
+                i.invoice_shape,
                 u.name as created_by_name
             FROM {$this->table} r
             INNER JOIN invoices i ON r.invoice_id = i.id
@@ -123,18 +139,29 @@ class Receipt
             $invoiceShape = json_decode($receipt['invoice_shape'], true);
             $receipt['customer_name'] = $invoiceShape['customer']['name'] ?? null;
             $receipt['customer_phone'] = $invoiceShape['customer']['phone'] ?? null;
-            unset($receipt['invoice_shape']);
         }
 
         return $receipt ?: null;
     }
 
     /**
+     * Get all receipts for a specific invoice
+     */
+    public function findByInvoiceId($invoiceId)
+    {
+        $sql = "SELECT r.*, u.name as created_by_name
+                FROM {$this->table} r
+                LEFT JOIN users u ON r.created_by = u.id
+                WHERE r.invoice_id = :invoice_id
+                ORDER BY r.created_at DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':invoice_id' => $invoiceId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Format a date string to a more readable format
-     *
-     * @param string $dateTime The date string to format
-     * @param string $format The format to use (default: 'M j, Y h:i A')
-     * @return string Formatted date string
      */
     public function formatDateTime($dateTime, $format = 'M j, Y h:i A')
     {
@@ -145,5 +172,4 @@ class Receipt
         $date = new DateTime($dateTime);
         return $date->format($format);
     }
-    // Add other methods like findById, create, update, delete as needed
 }

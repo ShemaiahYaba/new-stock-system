@@ -11,7 +11,6 @@ $pageTitle = 'Payment Receipts - ' . APP_NAME;
 
 // Pagination setup
 $currentPage = isset($_GET['page_num']) ? (int) $_GET['page_num'] : 1;
-$statusFilter = $_GET['status'] ?? '';
 $invoiceFilter = $_GET['invoice_id'] ?? '';
 
 $receiptModel = new Receipt();
@@ -19,8 +18,8 @@ $limit = RECORDS_PER_PAGE;
 $offset = ($currentPage - 1) * $limit;
 
 // Get receipts with pagination and filters
-$receipts = $receiptModel->getAll($limit, $offset, $statusFilter, $invoiceFilter);
-$totalReceipts = $receiptModel->count($statusFilter, $invoiceFilter);
+$receipts = $receiptModel->getAll($limit, $offset, '', $invoiceFilter);
+$totalReceipts = $receiptModel->count('', $invoiceFilter);
 $paginationData = getPaginationData($totalReceipts, $currentPage);
 
 // Get unique invoices for filter dropdown
@@ -39,8 +38,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         display: inline-block;
     }
     .status-paid { background-color: #d1e7dd; color: #0f5132; }
-    .status-pending { background-color: #fff3cd; color: #856404; }
-    .status-cancelled { background-color: #f8d7da; color: #842029; }
+    .status-partial { background-color: #fff3cd; color: #856404; }
+    .status-unpaid { background-color: #f8d7da; color: #842029; }
     .receipt-amount { font-weight: 600; }
     .invoice-group {
         border-left: 3px solid #0d6efd;
@@ -63,11 +62,6 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 </h1>
                 <p class="text-muted">View and manage payment receipts</p>
             </div>
-            <div>
-                <a href="/new-stock-system/index.php?page=receipt_create" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> New Receipt
-                </a>
-            </div>
         </div>
     </div>
     
@@ -77,33 +71,17 @@ require_once __DIR__ . '/../../layout/sidebar.php';
             <form method="GET" action="/new-stock-system/index.php" class="row g-3">
                 <input type="hidden" name="page" value="receipts">
                 
-                <div class="col-md-4">
-                    <label class="form-label">Invoice</label>
+                <div class="col-md-6">
+                    <label class="form-label">Filter by Invoice</label>
                     <select name="invoice_id" class="form-select" onchange="this.form.submit()">
                         <option value="">All Invoices</option>
                         <?php foreach ($invoices as $invoice): ?>
                         <option value="<?= $invoice['id'] ?>" 
                             <?= $invoiceFilter == $invoice['id'] ? 'selected' : '' ?>>
                             <?= htmlspecialchars($invoice['invoice_number']) ?> - 
-                            <?= htmlspecialchars($invoice['customer_name']) ?>
+                            <?= htmlspecialchars($invoice['customer_name'] ?? 'N/A') ?>
                         </option>
                         <?php endforeach; ?>
-                    </select>
-                </div>
-                
-                <div class="col-md-3">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select" onchange="this.form.submit()">
-                        <option value="">All Statuses</option>
-                        <option value="paid" <?= $statusFilter === 'paid'
-                            ? 'selected'
-                            : '' ?>>Paid</option>
-                        <option value="pending" <?= $statusFilter === 'pending'
-                            ? 'selected'
-                            : '' ?>>Pending</option>
-                        <option value="cancelled" <?= $statusFilter === 'cancelled'
-                            ? 'selected'
-                            : '' ?>>Cancelled</option>
                     </select>
                 </div>
                 
@@ -132,13 +110,10 @@ require_once __DIR__ . '/../../layout/sidebar.php';
             </div>
             <?php
                 // Group receipts by invoice
+
+                // Determine status badge class
                 // Group receipts by invoice
-                // Group receipts by invoice
-                // Group receipts by invoice
-                // Group receipts by invoice
-                // Group receipts by invoice
-                // Group receipts by invoice
-                // Group receipts by invoice
+                // Determine status badge class
                 else: ?>
                 <?php
                 $groupedReceipts = [];
@@ -149,9 +124,10 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             'invoice' => [
                                 'id' => $receipt['invoice_id'],
                                 'number' => $receipt['invoice_number'],
-                                'customer' => $receipt['customer_name'],
-                                'total' => $receipt['invoice_total'],
+                                'customer' => $receipt['customer_name'] ?? 'N/A',
+                                'total' => $receipt['invoice_total'] ?? 0,
                                 'paid' => 0,
+                                'status' => $receipt['invoice_status'] ?? 'unpaid',
                             ],
                             'receipts' => [],
                         ];
@@ -165,6 +141,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
 
                     $invoice = $invoiceData['invoice'];
                     $balance = $invoice['total'] - $invoice['paid'];
+
+                    $statusClass = 'status-unpaid';
+                    if ($invoice['status'] === 'paid') {
+                        $statusClass = 'status-paid';
+                    } elseif ($invoice['status'] === 'partial') {
+                        $statusClass = 'status-partial';
+                    }
                     ?>
                 <div class="invoice-group mb-4">
                     <!-- Invoice Header -->
@@ -172,7 +155,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-1">
-                                    <a href="/new-stock-system/index.php?page=invoices&action=view&id=<?= $invoice[
+                                    <a href="/new-stock-system/index.php?page=invoice_view&id=<?= $invoice[
                                         'id'
                                     ] ?>">
                                         <?= htmlspecialchars($invoice['number']) ?>
@@ -183,11 +166,16 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 </p>
                             </div>
                             <div class="text-end">
-                                <div>Total: <span class="fw-bold"><?= number_format(
+                                <div>
+                                    <span class="status-badge <?= $statusClass ?>">
+                                        <?= strtoupper($invoice['status']) ?>
+                                    </span>
+                                </div>
+                                <div class="mt-2">Total: <span class="fw-bold">₦<?= number_format(
                                     $invoice['total'],
                                     2,
                                 ) ?></span></div>
-                                <div>Paid: <span class="text-success"><?= number_format(
+                                <div>Paid: <span class="text-success">₦<?= number_format(
                                     $invoice['paid'],
                                     2,
                                 ) ?></span></div>
@@ -195,7 +183,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <span class="fw-bold <?= $balance > 0
                                         ? 'text-danger'
                                         : 'text-success' ?>">
-                                        <?= number_format($balance, 2) ?>
+                                        ₦<?= number_format($balance, 2) ?>
                                     </span>
                                 </div>
                             </div>
@@ -210,114 +198,156 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <th>Receipt #</th>
                                     <th>Date</th>
                                     <th>Payment Method</th>
+                                    <th>Reference</th>
                                     <th class="text-end">Amount</th>
-                                    <th>Status</th>
                                     <th>Received By</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($invoiceData['receipts'] as $receipt):
-                                    $statusClass = 'status-' . $receipt['status']; ?>
+                                <?php foreach ($invoiceData['receipts'] as $receipt): ?>
                                 <tr>
-                                    <td>RCPT-<?= str_pad(
-                                        $receipt['id'],
-                                        5,
-                                        '0',
-                                        STR_PAD_LEFT,
-                                    ) ?></td>
+                                    <td>
+                                        <strong>RCPT-<?= str_pad(
+                                            $receipt['id'],
+                                            5,
+                                            '0',
+                                            STR_PAD_LEFT,
+                                        ) ?></strong>
+                                    </td>
                                     <td><?= date(
-                                        'M d, Y',
+                                        'M d, Y h:i A',
                                         strtotime($receipt['created_at']),
                                     ) ?></td>
-                                    <td><?= ucfirst($receipt['payment_method']) ?></td>
-                                    <td class="text-end receipt-amount"><?= number_format(
-                                        $receipt['amount_paid'],
-                                        2,
-                                    ) ?></td>
-                                    <td><span class="status-badge <?= $statusClass ?>"><?= ucfirst(
-    $receipt['status'],
-) ?></span></td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            <?= ucwords(
+                                                str_replace('_', ' ', $receipt['payment_method']),
+                                            ) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php if (!empty($receipt['reference'])): ?>
+                                            <small class="text-muted"><?= htmlspecialchars(
+                                                $receipt['reference'],
+                                            ) ?></small>
+                                        <?php else: ?>
+                                            <small class="text-muted">-</small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-end receipt-amount text-success">
+                                        ₦<?= number_format($receipt['amount_paid'], 2) ?>
+                                    </td>
                                     <td><?= htmlspecialchars(
                                         $receipt['created_by_name'] ?? 'System',
                                     ) ?></td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="/new-stock-system/index.php?page=receipts&action=view&id=<?= $receipt[
+                                            <a href="/new-stock-system/index.php?page=invoice_view&id=<?= $invoice[
                                                 'id'
                                             ] ?>" 
-                                               class="btn btn-sm btn-outline-primary" title="View">
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="View Invoice">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <?php if ($receipt['status'] !== 'cancelled'): ?>
-                                            <a href="/new-stock-system/index.php?page=receipts&action=print&id=<?= $receipt[
-                                                'id'
-                                            ] ?>" 
-                                               class="btn btn-sm btn-outline-secondary" title="Print" target="_blank">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary" 
+                                                    title="Print Receipt"
+                                                    onclick="printReceipt(<?= $receipt['id'] ?>)">
                                                 <i class="bi bi-printer"></i>
-                                            </a>
-                                            <?php endif; ?>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
-                                <?php
-                                endforeach; ?>
+                                <?php endforeach; ?>
                             </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Total Payments:</strong></td>
+                                    <td class="text-end"><strong>₦<?= number_format(
+                                        $invoice['paid'],
+                                        2,
+                                    ) ?></strong></td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
                 <?php
                 endforeach; ?>
 
-               <!-- Pagination -->
-<?php if ($paginationData['totalPages'] > 1): ?>
-<div class="p-3 border-top">
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center mb-0">
-            <?php if ($paginationData['currentPage'] > 1): ?>
-            <li class="page-item">
-                <a class="page-link" 
-                   href="?page=receipts&page_num=<?= $paginationData['currentPage'] -
-                       1 .
-                       ($statusFilter ? '&status=' . urlencode($statusFilter) : '') .
-                       ($invoiceFilter ? '&invoice_id=' . urlencode($invoiceFilter) : '') ?>" 
-                   aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
-            </li>
-            <?php endif; ?>
-            
-            <?php for ($i = 1; $i <= $paginationData['totalPages']; $i++): ?>
-            <li class="page-item <?= $i === $paginationData['currentPage'] ? 'active' : '' ?>">
-                <a class="page-link" 
-                   href="?page=receipts&page_num=<?= $i .
-                       ($statusFilter ? '&status=' . urlencode($statusFilter) : '') .
-                       ($invoiceFilter ? '&invoice_id=' . urlencode($invoiceFilter) : '') ?>">
-                    <?= $i ?>
-                </a>
-            </li>
-            <?php endfor; ?>
-            
-            <?php if ($paginationData['currentPage'] < $paginationData['totalPages']): ?>
-            <li class="page-item">
-                <a class="page-link" 
-                   href="?page=receipts&page_num=<?= $paginationData['currentPage'] +
-                       1 .
-                       ($statusFilter ? '&status=' . urlencode($statusFilter) : '') .
-                       ($invoiceFilter ? '&invoice_id=' . urlencode($invoiceFilter) : '') ?>" 
-                   aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
-            </li>
-            <?php endif; ?>
-        </ul>
-    </nav>
-</div>
-<?php endif; ?>
+                <!-- Pagination -->
+                <?php if ($paginationData['total_pages'] > 1): ?>
+                <div class="p-3 border-top">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mb-0">
+                            <?php if ($paginationData['currentPage'] > 1): ?>
+                            <li class="page-item">
+                                <a class="page-link" 
+                                   href="?page=receipts&page_num=<?= $paginationData[
+                                       'currentPage'
+                                   ] -
+                                       1 .
+                                       ($invoiceFilter
+                                           ? '&invoice_id=' . urlencode($invoiceFilter)
+                                           : '') ?>" 
+                                   aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            <?php endif; ?>
+                            
+                            <?php for ($i = 1; $i <= $paginationData['totalPages']; $i++): ?>
+                            <li class="page-item <?= $i === $paginationData['currentPage']
+                                ? 'active'
+                                : '' ?>">
+                                <a class="page-link" 
+                                   href="?page=receipts&page_num=<?= $i .
+                                       ($invoiceFilter
+                                           ? '&invoice_id=' . urlencode($invoiceFilter)
+                                           : '') ?>">
+                                    <?= $i ?>
+                                </a>
+                            </li>
+                            <?php endfor; ?>
+                            
+                            <?php if (
+                                $paginationData['currentPage'] < $paginationData['totalPages']
+                            ): ?>
+                            <li class="page-item">
+                                <a class="page-link" 
+                                   href="?page=receipts&page_num=<?= $paginationData[
+                                       'currentPage'
+                                   ] +
+                                       1 .
+                                       ($invoiceFilter
+                                           ? '&invoice_id=' . urlencode($invoiceFilter)
+                                           : '') ?>" 
+                                   aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <?php endif; ?>
+                        </ul>
+                    </nav>
+                </div>
+                <?php endif; ?>
                 
             <?php endif; ?>
         </div>
     </div>
 </div>
+
+<script>
+function printReceipt(receiptId) {
+    // Open receipt in new window for printing
+    window.open(
+        '/new-stock-system/views/receipts/print.php?id=' + receiptId, 
+        'PrintReceipt',
+        'width=800,height=600'
+    );
+}
+</script>
 
 <?php require_once __DIR__ . '/../../layout/footer.php'; ?>

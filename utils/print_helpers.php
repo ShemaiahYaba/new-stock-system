@@ -7,7 +7,8 @@
 /**
  * Get the base URL for the application
  */
-function getBaseUrl() {
+function getBaseUrl()
+{
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
     $script = dirname($_SERVER['SCRIPT_NAME']);
@@ -17,32 +18,38 @@ function getBaseUrl() {
 /**
  * Generate print view URL for an invoice
  */
-function getPrintUrl($invoiceId) {
-    return getBaseUrl() . "/index.php?page=invoice_print&id=" . urlencode($invoiceId) . "&_t=" . time();
+function getPrintUrl($invoiceId)
+{
+    return getBaseUrl() .
+        '/index.php?page=invoice_print&id=' .
+        urlencode($invoiceId) .
+        '&_t=' .
+        time();
 }
 
 /**
  * Generate print button HTML with modern styling
  */
-function printButton($invoiceId, $options = []) {
+function printButton($invoiceId, $options = [])
+{
     $defaults = [
         'label' => 'Print Invoice',
         'icon' => 'bi-printer',
         'class' => 'btn btn-outline-primary',
         'target' => '_blank',
         'showIcon' => true,
-        'data' => []
+        'data' => [],
     ];
-    
+
     $options = array_merge($defaults, $options);
     $dataAttrs = '';
-    
+
     foreach ($options['data'] as $key => $value) {
         $dataAttrs .= sprintf(' data-%s="%s"', htmlspecialchars($key), htmlspecialchars($value));
     }
-    
+
     $icon = $options['showIcon'] ? sprintf('<i class="bi %s me-1"></i>', $options['icon']) : '';
-    
+
     return sprintf(
         '<a href="%s" class="%s" target="%s"%s>%s%s</a>',
         htmlspecialchars(getPrintUrl($invoiceId)),
@@ -50,14 +57,15 @@ function printButton($invoiceId, $options = []) {
         htmlspecialchars($options['target']),
         $dataAttrs,
         $icon,
-        htmlspecialchars($options['label'])
+        htmlspecialchars($options['label']),
     );
 }
 
 /**
  * Get print styles
  */
-function getPrintStyles() {
+function getPrintStyles()
+{
     return '<style>
         @media print {
             body * {
@@ -160,25 +168,38 @@ function getPrintStyles() {
 /**
  * Get print header HTML
  */
-function getPrintHeader($title = 'INVOICE', $subtitle = '') {
+function getPrintHeader($title = 'INVOICE', $subtitle = '')
+{
     return '
     <div class="print-header">
         <div>
-            <h1 class="print-title">' . htmlspecialchars($title) . '</h1>
-            ' . (!empty($subtitle) ? '<p class="print-subtitle">' . htmlspecialchars($subtitle) . '</p>' : '') . '
+            <h1 class="print-title">' .
+        htmlspecialchars($title) .
+        '</h1>
+            ' .
+        (!empty($subtitle)
+            ? '<p class="print-subtitle">' . htmlspecialchars($subtitle) . '</p>'
+            : '') .
+        '
         </div>
-        <img src="' . getBaseUrl() . '/assets/logo.png" alt="Company Logo" class="print-logo">
+        <img src="' .
+        getBaseUrl() .
+        '/assets/logo.png" alt="Company Logo" class="print-logo">
     </div>';
 }
 
 /**
  * Get print footer HTML
  */
-function getPrintFooter() {
+function getPrintFooter()
+{
     return '
     <div class="print-footer mt-4 text-center text-muted" style="font-size: 12px;">
         <p>Thank you for your business!</p>
-        <p>Generated on ' . date('F j, Y \a\t g:i A') . '</p>
+        <p>Generated on ' .
+        date('F j, Y \a\t g:i A') .
+        '</p>
     </div>';
 }
+
 ?>
