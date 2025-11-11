@@ -134,6 +134,8 @@ define('MODULE_CUSTOMER_MANAGEMENT', 'customer_management');
 define('MODULE_STOCK_MANAGEMENT', 'stock_management');
 define('MODULE_SALES_MANAGEMENT', 'sales_management');
 define('MODULE_WAREHOUSE_MANAGEMENT', 'warehouse_management');
+// Add Color Management Module
+define('MODULE_COLOR_MANAGEMENT', 'color_management');
 define('MODULE_PRODUCTION_MANAGEMENT', 'production_management'); // NEW
 define('MODULE_INVOICE_MANAGEMENT', 'invoice_management'); // NEW
 define('MODULE_SUPPLY_MANAGEMENT', 'supply_management'); // NEW
@@ -147,6 +149,7 @@ const PERMISSION_MODULES = [
     MODULE_STOCK_MANAGEMENT => 'Stock Management',
     MODULE_SALES_MANAGEMENT => 'Sales Management',
     MODULE_WAREHOUSE_MANAGEMENT => 'Warehouse Management',
+    MODULE_COLOR_MANAGEMENT => 'Color Management', // NEW
     MODULE_PRODUCTION_MANAGEMENT => 'Production Management', // NEW
     MODULE_INVOICE_MANAGEMENT => 'Invoice Management', // NEW
     MODULE_SUPPLY_MANAGEMENT => 'Supply Management', // NEW
@@ -181,6 +184,7 @@ const DEFAULT_PERMISSIONS = [
         MODULE_SUPPLY_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE], // NEW
         MODULE_REPORTS => [ACTION_VIEW],
         MODULE_DASHBOARD => [ACTION_VIEW],
+        MODULE_COLOR_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE], // NEW  
     ],
     ROLE_STOCK_MANAGER => [
         MODULE_STOCK_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
@@ -188,6 +192,7 @@ const DEFAULT_PERMISSIONS = [
         MODULE_PRODUCTION_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
         MODULE_REPORTS => [ACTION_VIEW],
         MODULE_DASHBOARD => [ACTION_VIEW],
+        MODULE_COLOR_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT], // NEW
     ],
     ROLE_HR_DIRECTOR => [
         MODULE_USER_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
@@ -249,6 +254,9 @@ if (!defined('MODULE_CUSTOMERS')) {
 }
 if (!defined('MODULE_USERS')) {
     define('MODULE_USERS', 'users');
+}
+if (!defined('MODULE_COLORS')) {
+    define('MODULE_COLORS', 'colors');
 }
 
 // Action Permissions

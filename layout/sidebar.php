@@ -134,6 +134,16 @@ $currentPage = $_GET['page'] ?? 'dashboard';
             </a>
         </li>
         <?php endif; ?>
+
+        <!-- Color Management -->
+        <?php if (hasPermission(MODULE_COLOR_MANAGEMENT)): ?>
+        <li class="nav-item">
+            <a href="/new-stock-system/index.php?page=colors" class="nav-link <?php echo $currentPage === 'colors' ? 'active' : ''; ?>">
+                <i class="bi bi-palette"></i>
+                <span>Color Management</span>
+            </a>
+        </li>
+        <?php endif; ?>
         
         <!-- Stock Management -->
         <?php if (hasPermission(MODULE_STOCK_MANAGEMENT)): ?>

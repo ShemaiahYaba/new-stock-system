@@ -29,99 +29,249 @@ $pageTitle = 'Login - ' . APP_NAME;
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8f9fa;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .login-container {
-            max-width: 450px;
-            width: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             padding: 20px;
         }
         
+        .login-wrapper {
+            width: 100%;
+            max-width: 480px;
+        }
+        
         .login-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.04);
             overflow: hidden;
+            border: 1px solid #e5e7eb;
         }
         
         .login-header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            padding: 30px;
+            padding: 48px 40px 32px;
             text-align: center;
+            background: #ffffff;
+            border-bottom: 1px solid #f3f4f6;
         }
         
-        .login-header i {
-            font-size: 48px;
-            margin-bottom: 10px;
+        .logo-container {
+            margin-bottom: 24px;
+        }
+        
+        .logo-container img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+        
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        
+        .logo-icon i {
+            font-size: 40px;
+            color: white;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+        
+        .app-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            letter-spacing: 0.3px;
         }
         
         .login-body {
-            padding: 40px;
+            padding: 32px 40px 48px;
+        }
+        
+        .login-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        
+        .form-label i {
+            font-size: 14px;
+            margin-right: 6px;
+            color: #6b7280;
+        }
+        
+        .form-control {
+            height: 48px;
+            padding: 12px 16px;
+            font-size: 15px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            background: #ffffff;
+        }
+        
+        .form-control:hover {
+            border-color: #d1d5db;
         }
         
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: #ffffff;
+        }
+        
+        .form-control::placeholder {
+            color: #9ca3af;
         }
         
         .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 48px;
+            background: #3b82f6;
             border: none;
-            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
             font-weight: 600;
-            transition: transform 0.2s;
+            color: white;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
         }
         
         .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+            padding: 12px 16px;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .alert-success {
+            background: #ecfdf5;
+            color: #065f46;
+            border-left: 3px solid #10b981;
+        }
+        
+        .alert-danger {
+            background: #fef2f2;
+            color: #991b1b;
+            border-left: 3px solid #ef4444;
+        }
+        
+        .alert-warning {
+            background: #fffbeb;
+            color: #92400e;
+            border-left: 3px solid #f59e0b;
+        }
+        
+        .alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        .btn-close {
+            font-size: 12px;
+        }
+        
+        .invalid-feedback {
+            font-size: 13px;
+            margin-top: 6px;
+        }
+        
+        .footer-text {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        
+        @media (max-width: 576px) {
+            .login-header {
+                padding: 36px 24px 24px;
+            }
+            
+            .login-body {
+                padding: 24px 24px 36px;
+            }
+            
+            .company-name {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="login-wrapper">
         <div class="login-card">
-            <div class="login-header text-center mb-4">
-                <?php if (file_exists('assets/logo.png')): ?>
-                <div class="d-flex flex-column align-items-center">
-                    <img src="/new-stock-system/assets/logo.png" alt="<?php echo htmlspecialchars(
-                        COMPANY_NAME,
-                    ); ?>" 
-                         width="200" height="200" class="img-fluid mb-3" style="object-fit: contain;">
-                    <h1 class="h5 mb-1"><?php echo COMPANY_NAME; ?></h1>
-                    <h2 class="h6 mb-1"><?php echo APP_NAME; ?></h2>
+            <div class="login-header">
+                <div class="logo-container">
+                    <?php if (file_exists('assets/logo.png')): ?>
+                        <img src="/new-stock-system/assets/logo.png" alt="<?php echo htmlspecialchars(COMPANY_NAME); ?>">
+                    <?php else: ?>
+                        <div class="logo-icon">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <?php else: ?>
-                <div class="d-flex flex-column align-items-center">
-                    <i class="bi bi-box-seam display-4 mb-2"></i>
-                    <h1 class="h5 mb-1"><?php echo COMPANY_NAME; ?></h1>
-                    <h2 class="h6 mb-1"><?php echo APP_NAME; ?></h2>
-                </div>
-                <?php endif; ?>
+                <h1 class="company-name"><?php echo COMPANY_NAME; ?></h1>
+                <p class="app-name"><?php echo APP_NAME; ?></p>
             </div>
             
             <div class="login-body">
                 <?php
                 // Display flash messages
                 if (hasFlashMessage()) {
-
                     $flash = getFlashMessage();
-                    $alertClass =
-                        [
-                            'success' => 'alert-success',
-                            'error' => 'alert-danger',
-                            'warning' => 'alert-warning',
-                            'info' => 'alert-info',
-                        ][$flash['type']] ?? 'alert-info';
+                    $alertClass = [
+                        'success' => 'alert-success',
+                        'error' => 'alert-danger',
+                        'warning' => 'alert-warning',
+                        'info' => 'alert-info',
+                    ][$flash['type']] ?? 'alert-info';
                     ?>
                     <div class="alert <?php echo $alertClass; ?> alert-dismissible fade show" role="alert">
                         <?php echo htmlspecialchars($flash['message']); ?>
@@ -139,56 +289,54 @@ $pageTitle = 'Login - ' . APP_NAME;
                     <?php }
                 ?>
                 
-                <h4 class="mb-4 text-center">Sign In</h4>
+                <h2 class="login-title">Sign In</h2>
                 
                 <form action="/new-stock-system/controllers/auth/login/index.php" method="POST" class="needs-validation" novalidate>
                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
                     
                     <div class="mb-3">
                         <label for="email" class="form-label">
-                            <i class="bi bi-envelope"></i> Email Address
+                            <i class="bi bi-envelope"></i>Email Address
                         </label>
                         <input type="email" 
                                class="form-control" 
                                id="email" 
                                name="email" 
-                               placeholder="Enter your email"
-                               required>
+                               placeholder="name@company.com"
+                               required
+                               autocomplete="email">
                         <div class="invalid-feedback">
                             Please provide a valid email address.
                         </div>
                     </div>
                     
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="password" class="form-label">
-                            <i class="bi bi-lock"></i> Password
+                            <i class="bi bi-lock"></i>Password
                         </label>
                         <input type="password" 
                                class="form-control" 
                                id="password" 
                                name="password" 
                                placeholder="Enter your password"
-                               required>
+                               required
+                               autocomplete="current-password">
                         <div class="invalid-feedback">
                             Please provide your password.
                         </div>
                     </div>
                     
-                    <div class="d-grid mb-3">
+                    <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-login">
-                            <i class="bi bi-box-arrow-in-right"></i> Sign In
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
                         </button>
                     </div>
-                    
-                    <!-- Registration has been disabled -->
                 </form>
             </div>
         </div>
         
-        <div class="text-center mt-3 text-white">
-            <small>&copy; <?php echo date(
-                'Y',
-            ); ?> <?php echo COMPANY_NAME; ?>. All rights reserved.</small>
+        <div class="footer-text">
+            &copy; <?php echo date('Y'); ?> <?php echo COMPANY_NAME; ?>. All rights reserved.
         </div>
     </div>
     

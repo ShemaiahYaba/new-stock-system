@@ -28,14 +28,14 @@ class Coil
     {
         try {
             $sql = "INSERT INTO {$this->table} 
-                    (code, name, color, net_weight, category, status, created_by, created_at) 
-                    VALUES (:code, :name, :color, :net_weight, :category, :status, :created_by, NOW())";
+                    (code, name, color_id, net_weight, category, status, created_by, created_at) 
+                    VALUES (:code, :name, :color_id, :net_weight, :category, :status, :created_by, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
                 ':code' => $data['code'],
                 ':name' => $data['name'],
-                ':color' => $data['color'],
+                ':color_id' => $data['color_id'],
                 ':net_weight' => $data['net_weight'],
                 ':category' => $data['category'],
                 ':status' => $data['status'] ?? STOCK_STATUS_AVAILABLE,
@@ -128,10 +128,11 @@ class Coil
     public function getAll($category = null, $limit = RECORDS_PER_PAGE, $offset = 0)
     {
         try {
-            $sql = "SELECT c.*, u.name as created_by_name 
-                    FROM {$this->table} c
-                    LEFT JOIN users u ON c.created_by = u.id
-                    WHERE c.deleted_at IS NULL";
+            $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code
+                FROM {$this->table} c
+                LEFT JOIN users u ON c.created_by = u.id
+                LEFT JOIN colors col ON c.color_id = col.id
+                WHERE c.deleted_at IS NULL";
 
             if ($category) {
                 $sql .= ' AND c.category = :category';
@@ -466,4 +467,14 @@ class Coil
             return [];
         }
     }
+
+    /**
+     * New✅
+     * Get all colors for dropdown - NEW METHOD
+     */
+    public function getColorsForDropdown() {
+    require_once __DIR__ . '/color.php';
+    $colorModel = new Color();
+    return $colorModel->getActive();
+}
 }

@@ -105,6 +105,32 @@ $routes = [
         'module' => MODULE_STOCK_MANAGEMENT,
         'action' => ACTION_VIEW,
     ],
+    // Color Management
+'colors' => [
+    'view' => 'views/colors/index.php',
+    'module' => MODULE_COLOR_MANAGEMENT,
+    'action' => ACTION_VIEW,
+],
+'colors_create' => [
+    'view' => 'views/colors/create.php',
+    'module' => MODULE_COLOR_MANAGEMENT,
+    'action' => ACTION_CREATE,
+],
+'colors_edit' => [
+    'view' => 'views/colors/edit.php',
+    'module' => MODULE_COLOR_MANAGEMENT,
+    'action' => ACTION_EDIT,
+],
+'colors_view' => [
+    'view' => 'views/colors/view.php',
+    'module' => MODULE_COLOR_MANAGEMENT,
+    'action' => ACTION_VIEW,
+],
+'colors_delete' => [
+    'view' => 'views/colors/delete.php',
+    'module' => MODULE_COLOR_MANAGEMENT,
+    'action' => ACTION_DELETE,
+],
 
     // Stock Management - Coils
     'coils' => [
