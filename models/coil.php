@@ -24,8 +24,8 @@ class Coil
     {
         try {
             $sql = "INSERT INTO {$this->table} 
-                    (code, name, color_id, net_weight, category, status, created_by, created_at) 
-                    VALUES (:code, :name, :color_id, :net_weight, :category, :status, :created_by, NOW())";
+                    (code, name, color_id, net_weight, meters, gauge, category, status, created_by, created_at) 
+                    VALUES (:code, :name, :color_id, :net_weight, :meters, :gauge, :category, :status, :created_by, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
@@ -33,6 +33,8 @@ class Coil
                 ':name' => $data['name'],
                 ':color_id' => $data['color_id'],
                 ':net_weight' => $data['net_weight'],
+                ':meters' => $data['meters'] ?? null,
+                ':gauge' => $data['gauge'] ?? null,
                 ':category' => $data['category'],
                 ':status' => $data['status'] ?? STOCK_STATUS_AVAILABLE,
                 ':created_by' => $data['created_by'],
@@ -199,6 +201,16 @@ class Coil
                 $params[':net_weight'] = $data['net_weight'];
             }
 
+            if (isset($data['meters'])) {
+                $fields[] = 'meters = :meters';
+                $params[':meters'] = $data['meters'];
+            }
+
+            if (isset($data['gauge'])) {
+                $fields[] = 'gauge = :gauge';
+                $params[':gauge'] = $data['gauge'];
+            }
+
             if (isset($data['status'])) {
                 $fields[] = 'status = :status';
                 $params[':status'] = $data['status'];
@@ -359,7 +371,7 @@ class Coil
     public function getForDropdown()
     {
         try {
-            $sql = "SELECT id, code, name, category, status, color_id, net_weight 
+            $sql = "SELECT id, code, name, category, status, color_id, net_weight, meters, gauge 
                     FROM {$this->table} 
                     WHERE deleted_at IS NULL 
                     ORDER BY code ASC";

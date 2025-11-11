@@ -26,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $colorId = (int)($_POST['color_id'] ?? 0); // CHANGED
     $netWeight = floatval($_POST['net_weight'] ?? 0);
     $category = sanitize($_POST['category'] ?? '');
+    $meters = floatval($_POST['meters'] ?? 0);
+    $gauge = sanitize($_POST['gauge'] ?? '');
     
     $errors = [];
     
@@ -68,6 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'color_id' => $colorId, // CHANGED
         'net_weight' => $netWeight,
         'category' => $category,
+        'meters' => $meters,
+        'gauge' => $gauge,
         'status' => STOCK_STATUS_AVAILABLE,
         'created_by' => $currentUser['id']
     ];

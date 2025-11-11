@@ -44,7 +44,12 @@ class Color {
     /**
      * Find color by ID
      */
-    public function findById($id) {
+    /**
+     * Find color by ID
+     * @param int $id Color ID to find
+     * @return array|false Returns color data as array or false if not found/error
+     */
+    public function findById($id): array|false {
         try {
             $sql = "SELECT * FROM {$this->table} WHERE id = :id AND deleted_at IS NULL";
             $stmt = $this->db->prepare($sql);

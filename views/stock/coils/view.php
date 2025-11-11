@@ -1,6 +1,6 @@
 <?php
 /**
- * Coil View Details
+ * Coil View Details - Updated with Meters and Gauge display
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -28,9 +28,13 @@ $coil = $coilModel->findById($coilId);
 
 // Get color name
 $colorName = 'Unknown';
+$colorHex = null;
 if (!empty($coil['color_id'])) {
     $color = $colorModel->findById($coil['color_id']);
-    $colorName = $color ? $color['name'] : 'Unknown';
+    if ($color) {
+        $colorName = $color['name'];
+        $colorHex = $color['hex_code'] ?? null;
+    }
 }
 
 if (!$coil) {
@@ -83,11 +87,36 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         </tr>
                         <tr>
                             <th>Color:</th>
-                            <td><?php echo COIL_COLORS[$coil['color']] ?? $coil['color']; ?></td>
+                            <td>
+                                <?php if ($colorHex): ?>
+                                    <span style="display: inline-block; width: 15px; height: 15px; background-color: <?php echo htmlspecialchars($colorHex); ?>; border: 1px solid #ddd; border-radius: 3px; margin-right: 5px; vertical-align: middle;"></span>
+                                <?php endif; ?>
+                                <?php echo htmlspecialchars($colorName); ?>
+                            </td>
                         </tr>
                         <tr>
                             <th>Net Weight:</th>
                             <td><?php echo number_format($coil['net_weight'], 2); ?> kg</td>
+                        </tr>
+                        <tr>
+                            <th>Meters:</th>
+                            <td>
+                                <?php if (!empty($coil['meters']) && $coil['meters'] > 0): ?>
+                                    <strong><?php echo number_format($coil['meters'], 2); ?>m</strong>
+                                <?php else: ?>
+                                    <span class="text-muted">Not specified</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Gauge:</th>
+                            <td>
+                                <?php if (!empty($coil['gauge'])): ?>
+                                    <span class="badge bg-secondary"><?php echo htmlspecialchars($coil['gauge']); ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">Not specified</span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                         <tr>
                             <th>Created:</th>
@@ -100,6 +129,20 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     </table>
                 </div>
             </div>
+            
+            <?php if (!empty($coil['meters']) || !empty($coil['gauge'])): ?>
+            <div class="card mt-3">
+                <div class="card-header bg-light">
+                    <i class="bi bi-rulers"></i> Specifications
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-0 small">
+                        <i class="bi bi-info-circle"></i> 
+                        These values are for reference only and do not affect stock transactions.
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
             
             <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT)): ?>
             <div class="card mt-3">
@@ -136,6 +179,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     <th>ID</th>
                                     <th>Meters</th>
                                     <th>Remaining</th>
+                                    <th>Status</th>
                                     <th>Created By</th>
                                     <th>Date</th>
                                 </tr>
@@ -148,6 +192,18 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     <td>
                                         <span class="badge <?php echo $entry['meters_remaining'] > 0 ? 'bg-success' : 'bg-secondary'; ?>">
                                             <?php echo number_format($entry['meters_remaining'], 2); ?>m
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        $entryStatus = $entry['status'] ?? 'available';
+                                        $statusBadge = 'bg-secondary';
+                                        if ($entryStatus === 'available') $statusBadge = 'bg-success';
+                                        elseif ($entryStatus === 'factory_use') $statusBadge = 'bg-warning';
+                                        elseif ($entryStatus === 'sold') $statusBadge = 'bg-danger';
+                                        ?>
+                                        <span class="badge <?php echo $statusBadge; ?>">
+                                            <?php echo ucfirst(str_replace('_', ' ', $entryStatus)); ?>
                                         </span>
                                     </td>
                                     <td><?php echo htmlspecialchars($entry['created_by_name']); ?></td>

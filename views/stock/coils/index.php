@@ -1,7 +1,6 @@
 <?php
 /**
- * Coils List View - FINAL WORKING VERSION
- * Replace views/stock/coils/index.php with this file
+ * Coils List View - Updated with Meters and Gauge columns
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -11,7 +10,7 @@ require_once __DIR__ . '/../../../utils/helpers.php';
 
 $pageTitle = 'Coils - ' . APP_NAME;
 
-// Get filter parameters - SIMPLIFIED
+// Get filter parameters
 $category = isset($_GET['category']) ? $_GET['category'] : null;
 $currentPage = isset($_GET['page_num']) ? (int)$_GET['page_num'] : 1;
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -21,7 +20,6 @@ $coilModel = new Coil();
 // Perform search or regular listing
 if ($searchQuery !== '') {
     $coils = $coilModel->search($searchQuery, $category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    // For search results, count them properly
     $allSearchResults = $coilModel->search($searchQuery, $category, 10000, 0);
     $totalCoils = count($allSearchResults);
 } else {
@@ -128,10 +126,11 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>Code</th>
                             <th>Name</th>
                             <th>Color</th>
-                            <th>Net Weight</th>
+                            <th>Weight (kg)</th>
+                            <th>Meters</th>
+                            <th>Gauge</th>
                             <th>Category</th>
                             <th>Status</th>
-                            <th>Created At</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -148,7 +147,21 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     <span class="text-muted">N/A</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo number_format($coil['net_weight'], 2); ?> kg</td>
+                            <td><?php echo number_format($coil['net_weight'], 2); ?></td>
+                            <td>
+                                <?php if (!empty($coil['meters']) && $coil['meters'] > 0): ?>
+                                    <?php echo number_format($coil['meters'], 2); ?>m
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if (!empty($coil['gauge'])): ?>
+                                    <span class="badge bg-secondary"><?php echo htmlspecialchars($coil['gauge']); ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <span class="badge bg-info">
                                     <?php echo STOCK_CATEGORIES[$coil['category']] ?? $coil['category']; ?>
@@ -170,15 +183,6 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 <span class="badge <?php echo $badgeClass; ?>">
                                     <?php echo $statusText; ?>
                                 </span>
-                            </td>
-                            <td>
-                                <?php 
-                                if (isset($coil['created_at']) && !empty($coil['created_at'])) {
-                                    echo formatDate($coil['created_at']);
-                                } else {
-                                    echo '<span class="text-muted">N/A</span>';
-                                }
-                                ?>
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
@@ -222,7 +226,6 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         <?php if (!empty($coils) && $totalCoils > RECORDS_PER_PAGE): ?>
         <div class="card-footer">
             <?php 
-            // Build query params for pagination
             $queryParams = [];
             $queryParams['page'] = 'coils';
             if ($category) $queryParams['category'] = $category;

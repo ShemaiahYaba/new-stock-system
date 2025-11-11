@@ -1,6 +1,6 @@
 <?php
 /**
- * Edit Coil Form
+ * Edit Coil Form - Updated with Meters and Gauge fields
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -90,15 +90,6 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label for="net_weight" class="form-label">Net Weight (kg) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="net_weight" name="net_weight" 
-                                       step="0.01" min="0" value="<?php echo $coil['net_weight']; ?>" required>
-                                <div class="invalid-feedback">Please provide net weight.</div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
                                 <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
                                 <select class="form-select" id="category" name="category" required>
                                     <?php foreach (STOCK_CATEGORIES as $catKey => $catName): ?>
@@ -109,18 +100,43 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 </select>
                                 <div class="invalid-feedback">Please select a category.</div>
                             </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                                <select class="form-select" id="status" name="status" required>
-                                    <?php foreach (STOCK_STATUSES as $statusKey => $statusName): ?>
-                                    <option value="<?php echo $statusKey; ?>" <?php echo $coil['status'] === $statusKey ? 'selected' : ''; ?>>
-                                        <?php echo $statusName; ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="invalid-feedback">Please select a status.</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="net_weight" class="form-label">Net Weight (kg) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="net_weight" name="net_weight" 
+                                       step="0.01" min="0" value="<?php echo $coil['net_weight']; ?>" required>
+                                <div class="invalid-feedback">Please provide net weight.</div>
                             </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="meters" class="form-label">Meters</label>
+                                <input type="number" class="form-control" id="meters" name="meters" 
+                                       step="0.01" min="0" placeholder="e.g., 500.00"
+                                       value="<?php echo isset($coil['meters']) ? $coil['meters'] : ''; ?>">
+                                <small class="text-muted">Approximate meters per coil</small>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="gauge" class="form-label">Gauge</label>
+                                <input type="text" class="form-control" id="gauge" name="gauge" 
+                                       placeholder="e.g., 0.45mm"
+                                       value="<?php echo isset($coil['gauge']) ? htmlspecialchars($coil['gauge']) : ''; ?>">
+                                <small class="text-muted">Material thickness</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" id="status" name="status" required>
+                                <?php foreach (STOCK_STATUSES as $statusKey => $statusName): ?>
+                                <option value="<?php echo $statusKey; ?>" <?php echo $coil['status'] === $statusKey ? 'selected' : ''; ?>>
+                                    <?php echo $statusName; ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="invalid-feedback">Please select a status.</div>
                         </div>
                         
                         <div class="alert alert-warning">
