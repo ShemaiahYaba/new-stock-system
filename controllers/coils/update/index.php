@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verify color exists and is active
     $colorModel = new Color();
     $color = $colorModel->findById($colorId);
-    if (!$color || !$color['is_active']) {
+    if ($color === false || !$color || !$color['is_active']) {
         setFlashMessage('error', 'Selected color is not valid or inactive.');
         header("Location: /new-stock-system/index.php?page=coils_edit&id=$coilId");
         exit();
