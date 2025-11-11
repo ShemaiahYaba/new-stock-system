@@ -1,44 +1,29 @@
 <?php
 /**
- * Coils List View - COMPLETELY FIXED VERSION
- * Replace views/stock/coils/index.php with this EXACT file
- * 
- * This version eliminates ALL potential issues:
- * - No external includes for action buttons
- * - Explicit null checks
- * - Inline rendering
- * - Clear debugging
+ * Coils List View - FINAL WORKING VERSION
+ * Replace views/stock/coils/index.php with this file
  */
 
 require_once __DIR__ . '/../../../config/db.php';
 require_once __DIR__ . '/../../../config/constants.php';
 require_once __DIR__ . '/../../../models/coil.php';
-require_once __DIR__ . '/../../../models/color.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 
 $pageTitle = 'Coils - ' . APP_NAME;
 
-$category = $_GET['category'] ?? null;
+// Get filter parameters - SIMPLIFIED
+$category = isset($_GET['category']) ? $_GET['category'] : null;
 $currentPage = isset($_GET['page_num']) ? (int)$_GET['page_num'] : 1;
-$searchQuery = $_GET['search'] ?? '';
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 $coilModel = new Coil();
-$colorModel = new Color();
-$colors = [];
 
-// Fetch all colors and create a map by ID for quick lookup
-try {
-    $colorList = $colorModel->getActive();
-    foreach ($colorList as $color) {
-        $colors[$color['id']] = $color['name'];
-    }
-} catch (Exception $e) {
-    error_log("Error fetching colors: " . $e->getMessage());
-}
-
-if (!empty($searchQuery)) {
+// Perform search or regular listing
+if ($searchQuery !== '') {
     $coils = $coilModel->search($searchQuery, $category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalCoils = count($coils);
+    // For search results, count them properly
+    $allSearchResults = $coilModel->search($searchQuery, $category, 10000, 0);
+    $totalCoils = count($allSearchResults);
 } else {
     $coils = $coilModel->getAll($category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
     $totalCoils = $coilModel->count($category);
@@ -57,7 +42,15 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 <h1 class="page-title">
                     <?php echo $category ? STOCK_CATEGORIES[$category] . ' ' : ''; ?>Coils
                 </h1>
-                <p class="text-muted">Manage coil inventory (<?php echo $totalCoils; ?> total)</p>
+                <p class="text-muted">
+                    Manage coil inventory 
+                    <?php if ($searchQuery !== ''): ?>
+                        <span class="badge bg-info">Search: "<?php echo htmlspecialchars($searchQuery); ?>"</span>
+                        (<?php echo $totalCoils; ?> results)
+                    <?php else: ?>
+                        (<?php echo $totalCoils; ?> total)
+                    <?php endif; ?>
+                </p>
             </div>
             <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_CREATE)): ?>
             <a href="/new-stock-system/index.php?page=coils_create" class="btn btn-primary">
@@ -71,12 +64,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     <div class="card mb-3">
         <div class="card-body">
             <div class="btn-group" role="group">
-                <a href="/new-stock-system/index.php?page=coils" 
+                <a href="/new-stock-system/index.php?page=coils<?php echo $searchQuery !== '' ? '&search=' . urlencode($searchQuery) : ''; ?>" 
                    class="btn btn-sm <?php echo !$category ? 'btn-primary' : 'btn-outline-primary'; ?>">
                     All Categories
                 </a>
                 <?php foreach (STOCK_CATEGORIES as $catKey => $catName): ?>
-                <a href="/new-stock-system/index.php?page=coils&category=<?php echo $catKey; ?>" 
+                <a href="/new-stock-system/index.php?page=coils&category=<?php echo $catKey; ?><?php echo $searchQuery !== '' ? '&search=' . urlencode($searchQuery) : ''; ?>" 
                    class="btn btn-sm <?php echo $category === $catKey ? 'btn-primary' : 'btn-outline-primary'; ?>">
                     <?php echo $catName; ?>
                 </a>
@@ -85,7 +78,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         </div>
     </div>
     
-    <!-- Coils Table -->
+    <!-- Search and Coils Table -->
     <div class="card">
         <div class="card-header">
             <div class="row align-items-center">
@@ -96,14 +89,20 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     <form method="GET" action="/new-stock-system/index.php" class="d-flex">
                         <input type="hidden" name="page" value="coils">
                         <?php if ($category): ?>
-                        <input type="hidden" name="category" value="<?php echo $category; ?>">
+                        <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>">
                         <?php endif; ?>
-                        <input type="text" name="search" class="form-control form-control-sm me-2" 
-                               placeholder="Search coils..." value="<?php echo htmlspecialchars($searchQuery); ?>">
-                        <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search"></i></button>
-                        <?php if (!empty($searchQuery)): ?>
+                        <input type="text" 
+                               name="search" 
+                               class="form-control form-control-sm me-2" 
+                               placeholder="Search by code or name..." 
+                               value="<?php echo htmlspecialchars($searchQuery); ?>"
+                               autocomplete="off">
+                        <button type="submit" class="btn btn-sm btn-primary" title="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <?php if ($searchQuery !== ''): ?>
                         <a href="/new-stock-system/index.php?page=coils<?php echo $category ? '&category='.$category : ''; ?>" 
-                           class="btn btn-sm btn-secondary ms-2">
+                           class="btn btn-sm btn-secondary ms-2" title="Clear search">
                             <i class="bi bi-x"></i>
                         </a>
                         <?php endif; ?>
@@ -114,7 +113,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         <div class="card-body p-0">
             <?php if (empty($coils)): ?>
             <div class="alert alert-info m-3">
-                <i class="bi bi-info-circle"></i> No coils found.
+                <i class="bi bi-info-circle"></i> 
+                <?php if ($searchQuery !== ''): ?>
+                    No coils found matching "<?php echo htmlspecialchars($searchQuery); ?>".
+                <?php else: ?>
+                    No coils found.
+                <?php endif; ?>
             </div>
             <?php else: ?>
             <div class="table-responsive">
@@ -134,39 +138,26 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     <tbody>
                         <?php foreach ($coils as $coil): ?>
                         <tr>
-                            <!-- Code Column -->
                             <td><strong><?php echo htmlspecialchars($coil['code']); ?></strong></td>
-                            
-                            <!-- Name Column -->
                             <td><?php echo htmlspecialchars($coil['name']); ?></td>
-                            
-                            <!-- Color Column -->
                             <td>
-                                <?php 
-                                $colorId = $coil['color_id'] ?? 0;
-                                $colorName = $colors[$colorId] ?? 'Unknown';
-                                echo htmlspecialchars($colorName); 
-                                ?>
+                                <?php if (!empty($coil['color_name'])): ?>
+                                    <span style="display: inline-block; width: 15px; height: 15px; background-color: <?php echo htmlspecialchars($coil['color_hex'] ?? '#cccccc'); ?>; border: 1px solid #ddd; border-radius: 3px; margin-right: 5px; vertical-align: middle;"></span>
+                                    <?php echo htmlspecialchars($coil['color_name']); ?>
+                                <?php else: ?>
+                                    <span class="text-muted">N/A</span>
+                                <?php endif; ?>
                             </td>
-                            
-                            <!-- Net Weight Column -->
                             <td><?php echo number_format($coil['net_weight'], 2); ?> kg</td>
-                            
-                            <!-- Category Column -->
                             <td>
                                 <span class="badge bg-info">
                                     <?php echo STOCK_CATEGORIES[$coil['category']] ?? $coil['category']; ?>
                                 </span>
                             </td>
-                            
-                            <!-- STATUS Column - FIXED -->
                             <td>
                                 <?php
-                                // Get status value with fallback
                                 $status = $coil['status'] ?? 'available';
-                                
-                                // Get badge class
-                                $badgeClass = 'badge-secondary'; // Default
+                                $badgeClass = 'badge-secondary';
                                 if ($status === 'available') {
                                     $badgeClass = 'bg-success';
                                 } elseif ($status === 'factory_use') {
@@ -174,16 +165,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 } elseif ($status === 'sold') {
                                     $badgeClass = 'bg-danger';
                                 }
-                                
-                                // Get display text
                                 $statusText = STOCK_STATUSES[$status] ?? ucfirst(str_replace('_', ' ', $status));
                                 ?>
                                 <span class="badge <?php echo $badgeClass; ?>">
                                     <?php echo $statusText; ?>
                                 </span>
                             </td>
-                            
-                            <!-- CREATED AT Column - FIXED -->
                             <td>
                                 <?php 
                                 if (isset($coil['created_at']) && !empty($coil['created_at'])) {
@@ -193,11 +180,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 }
                                 ?>
                             </td>
-                            
-                            <!-- ACTIONS Column - FIXED -->
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <!-- View Button -->
                                     <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_VIEW)): ?>
                                     <a href="/new-stock-system/index.php?page=coils_view&id=<?php echo $coil['id']; ?>" 
                                        class="btn btn-info btn-sm" 
@@ -206,7 +190,6 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     </a>
                                     <?php endif; ?>
                                     
-                                    <!-- Edit Button -->
                                     <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT)): ?>
                                     <a href="/new-stock-system/index.php?page=coils_edit&id=<?php echo $coil['id']; ?>" 
                                        class="btn btn-warning btn-sm" 
@@ -215,7 +198,6 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     </a>
                                     <?php endif; ?>
                                     
-                                    <!-- Delete Button -->
                                     <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_DELETE)): ?>
                                     <form method="POST" 
                                           action="/new-stock-system/controllers/coils/delete/index.php" 
@@ -237,9 +219,16 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             </div>
             <?php endif; ?>
         </div>
-        <?php if (!empty($coils)): ?>
+        <?php if (!empty($coils) && $totalCoils > RECORDS_PER_PAGE): ?>
         <div class="card-footer">
-            <?php $queryParams = $_GET; include __DIR__ . '/../../../layout/pagination.php'; ?>
+            <?php 
+            // Build query params for pagination
+            $queryParams = [];
+            $queryParams['page'] = 'coils';
+            if ($category) $queryParams['category'] = $category;
+            if ($searchQuery !== '') $queryParams['search'] = $searchQuery;
+            include __DIR__ . '/../../../layout/pagination.php'; 
+            ?>
         </div>
         <?php endif; ?>
     </div>

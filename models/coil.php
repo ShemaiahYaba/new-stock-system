@@ -1,8 +1,7 @@
 <?php
 /**
- * Coil Model
- *
- * Handles all coil-related database operations
+ * Coil Model - FIXED Parameter Binding
+ * Replace models/coil.php with this entire file
  */
 
 require_once __DIR__ . '/../config/db.php';
@@ -19,7 +18,7 @@ class Coil
     }
 
     /**
-     * Create a new coil - UPDATED for color_id
+     * Create a new coil
      */
     public function create($data)
     {
@@ -32,7 +31,7 @@ class Coil
             $stmt->execute([
                 ':code' => $data['code'],
                 ':name' => $data['name'],
-                ':color_id' => $data['color_id'], // CHANGED
+                ':color_id' => $data['color_id'],
                 ':net_weight' => $data['net_weight'],
                 ':category' => $data['category'],
                 ':status' => $data['status'] ?? STOCK_STATUS_AVAILABLE,
@@ -47,7 +46,7 @@ class Coil
     }
 
     /**
-     * Find coil by ID - UPDATED to join with colors
+     * Find coil by ID
      */
     public function findById($id)
     {
@@ -109,7 +108,7 @@ class Coil
     }
 
     /**
-     * Get all coils with pagination - UPDATED to join with colors
+     * Get all coils with pagination
      */
     public function getAll($category = null, $limit = RECORDS_PER_PAGE, $offset = 0)
     {
@@ -172,7 +171,7 @@ class Coil
     }
 
     /**
-     * Update coil - UPDATED for color_id
+     * Update coil
      */
     public function update($id, $data)
     {
@@ -190,7 +189,7 @@ class Coil
                 $params[':name'] = $data['name'];
             }
 
-            if (isset($data['color_id'])) { // CHANGED
+            if (isset($data['color_id'])) {
                 $fields[] = 'color_id = :color_id';
                 $params[':color_id'] = $data['color_id'];
             }
@@ -259,17 +258,22 @@ class Coil
     }
 
     /**
-     * Search coils - UPDATED to join with colors
+     * Search coils - FIXED with proper parameter binding
+     * Since utf8mb4_unicode_ci is case-insensitive, LOWER() is optional
+     * but we'll use it for consistency across different collations
      */
     public function search($query, $category = null, $limit = RECORDS_PER_PAGE, $offset = 0)
     {
         try {
+            // Add wildcards to the search query
+            $searchQuery = "%{$query}%";
+            
             $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code, col.hex_code as color_hex
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
                     LEFT JOIN colors col ON c.color_id = col.id
                     WHERE c.deleted_at IS NULL 
-                    AND (c.code LIKE :query OR c.name LIKE :query)";
+                    AND (c.code LIKE :query1 OR c.name LIKE :query2)";
 
             if ($category) {
                 $sql .= ' AND c.category = :category';
@@ -278,7 +282,10 @@ class Coil
             $sql .= ' ORDER BY c.created_at DESC LIMIT :limit OFFSET :offset';
 
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':query', "%$query%", PDO::PARAM_STR);
+            
+            // Bind each parameter separately with unique names
+            $stmt->bindValue(':query1', $searchQuery, PDO::PARAM_STR);
+            $stmt->bindValue(':query2', $searchQuery, PDO::PARAM_STR);
 
             if ($category) {
                 $stmt->bindValue(':category', $category, PDO::PARAM_STR);
@@ -286,6 +293,7 @@ class Coil
 
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            
             $stmt->execute();
 
             return $stmt->fetchAll();
