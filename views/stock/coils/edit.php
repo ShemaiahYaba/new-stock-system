@@ -6,6 +6,7 @@
 require_once __DIR__ . '/../../../config/db.php';
 require_once __DIR__ . '/../../../config/constants.php';
 require_once __DIR__ . '/../../../models/coil.php';
+require_once __DIR__ . '/../../../models/color.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 
 $pageTitle = 'Edit Coil - ' . APP_NAME;
@@ -19,7 +20,9 @@ if ($coilId <= 0) {
 }
 
 $coilModel = new Coil();
+$colorModel = new Color();
 $coil = $coilModel->findById($coilId);
+$colors = $colorModel->getActive();
 
 if (!$coil) {
     setFlashMessage('error', 'Coil not found.');
@@ -73,11 +76,13 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="color" class="form-label">Color <span class="text-danger">*</span></label>
-                                <select class="form-select" id="color" name="color" required>
-                                    <?php foreach (COIL_COLORS as $colorKey => $colorName): ?>
-                                    <option value="<?php echo $colorKey; ?>" <?php echo $coil['color'] === $colorKey ? 'selected' : ''; ?>>
-                                        <?php echo $colorName; ?>
+                                <label for="color_id" class="form-label">Color <span class="text-danger">*</span></label>
+                                <select class="form-select" id="color_id" name="color_id" required>
+                                    <option value="">-- Select Color --</option>
+                                    <?php foreach ($colors as $color): ?>
+                                    <option value="<?php echo $color['id']; ?>" 
+                                        <?php echo $coil['color_id'] == $color['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($color['name']); ?>
                                     </option>
                                     <?php endforeach; ?>
                                 </select>

@@ -4,9 +4,15 @@
  */
 
 require_once __DIR__ . '/../../../config/constants.php';
+require_once __DIR__ . '/../../../config/db.php';
+require_once __DIR__ . '/../../../models/color.php'; // ADD THIS
 require_once __DIR__ . '/../../../utils/helpers.php';
 
 $pageTitle = 'Create Coil - ' . APP_NAME;
+
+// Get active colors from database
+$colorModel = new Color();
+$colors = $colorModel->getActive();
 
 require_once __DIR__ . '/../../../layout/header.php';
 require_once __DIR__ . '/../../../layout/sidebar.php';
@@ -53,14 +59,25 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="color" class="form-label">Color <span class="text-danger">*</span></label>
-                                <select class="form-select" id="color" name="color" required>
+                                <label for="color_id" class="form-label">Color <span class="text-danger">*</span></label>
+                                <select class="form-select" id="color_id" name="color_id" required>
                                     <option value="">Select color</option>
-                                    <?php foreach (COIL_COLORS as $colorKey => $colorName): ?>
-                                    <option value="<?php echo $colorKey; ?>"><?php echo $colorName; ?></option>
+                                    <?php foreach ($colors as $color): ?>
+                                    <option value="<?php echo $color['id']; ?>">
+                                        <?php echo htmlspecialchars($color['name']); ?>
+                                        <?php if (!empty($color['hex_code'])): ?>
+                                            <span style="background-color: <?php echo htmlspecialchars($color['hex_code']); ?>; display: inline-block; width: 15px; height: 15px; border-radius: 3px; margin-left: 5px;"></span>
+                                        <?php endif; ?>
+                                    </option>
                                     <?php endforeach; ?>
                                 </select>
                                 <div class="invalid-feedback">Please select a color.</div>
+                                <?php if (empty($colors)): ?>
+                                <small class="text-warning">
+                                    <i class="bi bi-exclamation-triangle"></i> No colors available. 
+                                    <a href="/new-stock-system/index.php?page=colors_create">Add colors first</a>
+                                </small>
+                                <?php endif; ?>
                             </div>
                             
                             <div class="col-md-6 mb-3">

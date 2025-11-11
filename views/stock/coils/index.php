@@ -13,6 +13,7 @@
 require_once __DIR__ . '/../../../config/db.php';
 require_once __DIR__ . '/../../../config/constants.php';
 require_once __DIR__ . '/../../../models/coil.php';
+require_once __DIR__ . '/../../../models/color.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 
 $pageTitle = 'Coils - ' . APP_NAME;
@@ -22,6 +23,18 @@ $currentPage = isset($_GET['page_num']) ? (int)$_GET['page_num'] : 1;
 $searchQuery = $_GET['search'] ?? '';
 
 $coilModel = new Coil();
+$colorModel = new Color();
+$colors = [];
+
+// Fetch all colors and create a map by ID for quick lookup
+try {
+    $colorList = $colorModel->getActive();
+    foreach ($colorList as $color) {
+        $colors[$color['id']] = $color['name'];
+    }
+} catch (Exception $e) {
+    error_log("Error fetching colors: " . $e->getMessage());
+}
 
 if (!empty($searchQuery)) {
     $coils = $coilModel->search($searchQuery, $category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
@@ -128,7 +141,13 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <td><?php echo htmlspecialchars($coil['name']); ?></td>
                             
                             <!-- Color Column -->
-                            <td><?php echo htmlspecialchars(COIL_COLORS[$coil['color']] ?? $coil['color']); ?></td>
+                            <td>
+                                <?php 
+                                $colorId = $coil['color_id'] ?? 0;
+                                $colorName = $colors[$colorId] ?? 'Unknown';
+                                echo htmlspecialchars($colorName); 
+                                ?>
+                            </td>
                             
                             <!-- Net Weight Column -->
                             <td><?php echo number_format($coil['net_weight'], 2); ?> kg</td>

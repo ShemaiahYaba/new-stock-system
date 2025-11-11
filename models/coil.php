@@ -19,10 +19,7 @@ class Coil
     }
 
     /**
-     * Create a new coil
-     *
-     * @param array $data Coil data
-     * @return int|false Coil ID or false on failure
+     * Create a new coil - UPDATED for color_id
      */
     public function create($data)
     {
@@ -35,7 +32,7 @@ class Coil
             $stmt->execute([
                 ':code' => $data['code'],
                 ':name' => $data['name'],
-                ':color_id' => $data['color_id'],
+                ':color_id' => $data['color_id'], // CHANGED
                 ':net_weight' => $data['net_weight'],
                 ':category' => $data['category'],
                 ':status' => $data['status'] ?? STOCK_STATUS_AVAILABLE,
@@ -50,15 +47,15 @@ class Coil
     }
 
     /**
-     * Find coil by ID
-     *
-     * @param int $id Coil ID
-     * @return array|false
+     * Find coil by ID - UPDATED to join with colors
      */
     public function findById($id)
     {
         try {
-            $sql = "SELECT * FROM {$this->table} WHERE id = :id AND deleted_at IS NULL";
+            $sql = "SELECT c.*, col.name as color_name, col.code as color_code, col.hex_code as color_hex 
+                    FROM {$this->table} c
+                    LEFT JOIN colors col ON c.color_id = col.id
+                    WHERE c.id = :id AND c.deleted_at IS NULL";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':id' => $id]);
 
@@ -71,9 +68,6 @@ class Coil
 
     /**
      * Find coil by code
-     *
-     * @param string $code Coil code
-     * @return array|false
      */
     public function findByCode($code)
     {
@@ -91,9 +85,6 @@ class Coil
 
     /**
      * Count coils by category
-     *
-     * @param string $category Category filter (optional)
-     * @return int
      */
     public function countByCategory($category = null)
     {
@@ -118,21 +109,16 @@ class Coil
     }
 
     /**
-     * Get all coils with pagination
-     *
-     * @param string $category Category filter
-     * @param int $limit Limit
-     * @param int $offset Offset
-     * @return array
+     * Get all coils with pagination - UPDATED to join with colors
      */
     public function getAll($category = null, $limit = RECORDS_PER_PAGE, $offset = 0)
     {
         try {
-            $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code
-                FROM {$this->table} c
-                LEFT JOIN users u ON c.created_by = u.id
-                LEFT JOIN colors col ON c.color_id = col.id
-                WHERE c.deleted_at IS NULL";
+            $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code, col.hex_code as color_hex
+                    FROM {$this->table} c
+                    LEFT JOIN users u ON c.created_by = u.id
+                    LEFT JOIN colors col ON c.color_id = col.id
+                    WHERE c.deleted_at IS NULL";
 
             if ($category) {
                 $sql .= ' AND c.category = :category';
@@ -159,9 +145,6 @@ class Coil
 
     /**
      * Count total coils
-     *
-     * @param string $category Category filter
-     * @return int
      */
     public function count($category = null)
     {
@@ -189,11 +172,7 @@ class Coil
     }
 
     /**
-     * Update coil
-     *
-     * @param int $id Coil ID
-     * @param array $data Coil data
-     * @return bool
+     * Update coil - UPDATED for color_id
      */
     public function update($id, $data)
     {
@@ -211,9 +190,9 @@ class Coil
                 $params[':name'] = $data['name'];
             }
 
-            if (isset($data['color'])) {
-                $fields[] = 'color = :color';
-                $params[':color'] = $data['color'];
+            if (isset($data['color_id'])) { // CHANGED
+                $fields[] = 'color_id = :color_id';
+                $params[':color_id'] = $data['color_id'];
             }
 
             if (isset($data['net_weight'])) {
@@ -243,12 +222,7 @@ class Coil
     }
 
     /**
-     * updated✅
      * Update coil status
-     *
-     * @param int $id Coil ID
-     * @param string $status New status
-     * @return bool
      */
     public function updateStatus($id, $status)
     {
@@ -270,9 +244,6 @@ class Coil
 
     /**
      * Soft delete coil
-     *
-     * @param int $id Coil ID
-     * @return bool
      */
     public function delete($id)
     {
@@ -288,20 +259,15 @@ class Coil
     }
 
     /**
-     * Search coils
-     *
-     * @param string $query Search query
-     * @param string $category Category filter
-     * @param int $limit Limit
-     * @param int $offset Offset
-     * @return array
+     * Search coils - UPDATED to join with colors
      */
     public function search($query, $category = null, $limit = RECORDS_PER_PAGE, $offset = 0)
     {
         try {
-            $sql = "SELECT c.*, u.name as created_by_name 
+            $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code, col.hex_code as color_hex
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
+                    LEFT JOIN colors col ON c.color_id = col.id
                     WHERE c.deleted_at IS NULL 
                     AND (c.code LIKE :query OR c.name LIKE :query)";
 
@@ -330,13 +296,7 @@ class Coil
     }
 
     /**
-     * updated✅
      * Get coils by status
-     *
-     * @param string $status Status filter
-     * @param int $limit Limit
-     * @param int $offset Offset
-     * @return array
      */
     public function getByStatus($status, $limit = 1000, $offset = 0)
     {
@@ -361,12 +321,7 @@ class Coil
     }
 
     /**
-     * New✅
      * Get coils by category and status
-     *
-     * @param string $category Category filter
-     * @param string $status Status filter
-     * @return array
      */
     public function getByCategoryAndStatus($category, $status)
     {
@@ -392,13 +347,11 @@ class Coil
 
     /**
      * Get all active coils for dropdown selection
-     *
-     * @return array
      */
     public function getForDropdown()
     {
         try {
-            $sql = "SELECT id, code, name, category, status, color, net_weight 
+            $sql = "SELECT id, code, name, category, status, color_id, net_weight 
                     FROM {$this->table} 
                     WHERE deleted_at IS NULL 
                     ORDER BY code ASC";
@@ -411,16 +364,11 @@ class Coil
     }
 
     /**
-     * New✅
      * Get coils with remaining stock meters
-     * Joins with stock_entries to show available meters
-     *
-     * @return array
      */
     public function getWithStockInfo()
     {
         try {
-            // First, get all coils with stock info
             $sql = "SELECT c.*, 
                        COALESCE(SUM(se.meters_remaining), 0) as total_remaining_meters,
                        COUNT(se.id) as stock_entry_count
@@ -436,7 +384,6 @@ class Coil
             $stmt = $this->db->query($sql);
             $coils = $stmt->fetchAll();
 
-            // Get stock entries for each coil
             $coilIds = array_column($coils, 'id');
             $entriesByCoil = [];
 
@@ -450,13 +397,11 @@ class Coil
                 $stmt->execute($coilIds);
                 $entries = $stmt->fetchAll();
 
-                // Group entries by coil_id
                 foreach ($entries as $entry) {
                     $entriesByCoil[$entry['coil_id']][] = $entry;
                 }
             }
 
-            // Merge stock entries into coils data
             foreach ($coils as &$coil) {
                 $coil['stock_entries'] = $entriesByCoil[$coil['id']] ?? [];
             }
@@ -467,14 +412,4 @@ class Coil
             return [];
         }
     }
-
-    /**
-     * New✅
-     * Get all colors for dropdown - NEW METHOD
-     */
-    public function getColorsForDropdown() {
-    require_once __DIR__ . '/color.php';
-    $colorModel = new Color();
-    return $colorModel->getActive();
-}
 }

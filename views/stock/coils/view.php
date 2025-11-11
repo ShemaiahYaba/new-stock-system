@@ -6,6 +6,7 @@
 require_once __DIR__ . '/../../../config/db.php';
 require_once __DIR__ . '/../../../config/constants.php';
 require_once __DIR__ . '/../../../models/coil.php';
+require_once __DIR__ . '/../../../models/color.php';
 require_once __DIR__ . '/../../../models/stock_entry.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 
@@ -20,9 +21,17 @@ if ($coilId <= 0) {
 }
 
 $coilModel = new Coil();
+$colorModel = new Color();
 $stockEntryModel = new StockEntry();
 
 $coil = $coilModel->findById($coilId);
+
+// Get color name
+$colorName = 'Unknown';
+if (!empty($coil['color_id'])) {
+    $color = $colorModel->findById($coil['color_id']);
+    $colorName = $color ? $color['name'] : 'Unknown';
+}
 
 if (!$coil) {
     setFlashMessage('error', 'Coil not found.');
