@@ -1,6 +1,6 @@
 <?php
 /**
- * Colors List View
+ * Colors List View - FIXED
  */
 
 require_once __DIR__ . '/../../config/db.php';
@@ -15,9 +15,10 @@ $searchQuery = $_GET['search'] ?? '';
 
 $colorModel = new Color();
 
+// ✅ FIXED: Properly count search results
 if (!empty($searchQuery)) {
     $colors = $colorModel->search($searchQuery, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalColors = count($colors);
+    $totalColors = $colorModel->countSearch($searchQuery); // Use the new countSearch method
 } else {
     $colors = $colorModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
     $totalColors = $colorModel->count();
@@ -48,7 +49,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <div class="card-header">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <i class="bi bi-palette"></i> Colors List
+                    <i class="bi bi-palette"></i> Colors List (<?= $totalColors ?> total<?= !empty($searchQuery) ? ' - filtered' : '' ?>)
                 </div>
                 <div class="col-md-6">
                     <form method="GET" action="/new-stock-system/index.php" class="d-flex">
@@ -68,7 +69,12 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <div class="card-body p-0">
             <?php if (empty($colors)): ?>
             <div class="alert alert-info m-3">
-                <i class="bi bi-info-circle"></i> No colors found.
+                <i class="bi bi-info-circle"></i> 
+                <?php if (!empty($searchQuery)): ?>
+                    No colors found matching "<?php echo htmlspecialchars($searchQuery); ?>".
+                <?php else: ?>
+                    No colors found.
+                <?php endif; ?>
             </div>
             <?php else: ?>
             <div class="table-responsive">

@@ -1,6 +1,6 @@
 <?php
 /**
- * Color Model
+ * Color Model - FIXED
  * 
  * Handles all color-related database operations
  */
@@ -23,15 +23,15 @@ class Color {
         try {
             $sql = "INSERT INTO {$this->table} 
                     (code, name, hex_code, is_active, created_by, created_at) 
-                    VALUES (:code, :name, :hex_code, :is_active, :created_by, NOW())";
+                    VALUES (?, ?, ?, ?, ?, NOW())";
             
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                ':code' => $data['code'],
-                ':name' => $data['name'],
-                ':hex_code' => $data['hex_code'] ?? null,
-                ':is_active' => $data['is_active'] ?? 1,
-                ':created_by' => $data['created_by']
+                $data['code'],
+                $data['name'],
+                $data['hex_code'] ?? null,
+                $data['is_active'] ?? 1,
+                $data['created_by']
             ]);
             
             return $this->db->lastInsertId();
@@ -43,17 +43,14 @@ class Color {
     
     /**
      * Find color by ID
-     */
-    /**
-     * Find color by ID
      * @param int $id Color ID to find
      * @return array|false Returns color data as array or false if not found/error
      */
     public function findById($id): array|false {
         try {
-            $sql = "SELECT * FROM {$this->table} WHERE id = :id AND deleted_at IS NULL";
+            $sql = "SELECT * FROM {$this->table} WHERE id = ? AND deleted_at IS NULL";
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([':id' => $id]);
+            $stmt->execute([$id]);
             return $stmt->fetch();
         } catch (PDOException $e) {
             error_log("Color find error: " . $e->getMessage());
@@ -66,11 +63,11 @@ class Color {
      */
     public function findByCode($code) {
         try {
-            $sql = "SELECT * FROM {$this->table} WHERE code = :code AND deleted_at IS NULL";
+            $sql = "SELECT * FROM {$this->table} WHERE code = ? AND deleted_at IS NULL";
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([':code' => $code]);
+            $stmt->execute([$code]);
             return $stmt->fetch();
-        }catch (PDOException $e) {
+        } catch (PDOException $e) {
             error_log("Color find error: " . $e->getMessage());
             return false;
         }
@@ -86,12 +83,10 @@ class Color {
                     LEFT JOIN users u ON c.created_by = u.id
                     WHERE c.deleted_at IS NULL 
                     ORDER BY c.name ASC 
-                    LIMIT :limit OFFSET :offset";
+                    LIMIT ? OFFSET ?";
             
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt->execute([(int)$limit, (int)$offset]);
             
             return $stmt->fetchAll();
         } catch (PDOException $e) {
@@ -133,19 +128,19 @@ class Color {
     }
     
     /**
-     * Update color
+     * Update color - FIXED to use positional parameters
      */
     public function update($id, $data) {
         try {
             $fields = [];
-            $params = [':id' => $id];
+            $params = [];
             
             $allowedFields = ['code', 'name', 'hex_code', 'is_active'];
             
             foreach ($allowedFields as $field) {
                 if (isset($data[$field])) {
-                    $fields[] = "$field = :$field";
-                    $params[":$field"] = $data[$field];
+                    $fields[] = "$field = ?";
+                    $params[] = $data[$field];
                 }
             }
             
@@ -154,8 +149,9 @@ class Color {
             }
             
             $fields[] = "updated_at = NOW()";
+            $params[] = $id; // Add ID as the last parameter
             
-            $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = :id";
+            $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = ?";
             $stmt = $this->db->prepare($sql);
             
             return $stmt->execute($params);
@@ -170,9 +166,9 @@ class Color {
      */
     public function delete($id) {
         try {
-            $sql = "UPDATE {$this->table} SET deleted_at = NOW() WHERE id = :id";
+            $sql = "UPDATE {$this->table} SET deleted_at = NOW() WHERE id = ?";
             $stmt = $this->db->prepare($sql);
-            return $stmt->execute([':id' => $id]);
+            return $stmt->execute([$id]);
         } catch (PDOException $e) {
             error_log("Color delete error: " . $e->getMessage());
             return false;
@@ -180,7 +176,7 @@ class Color {
     }
     
     /**
-     * Search colors
+     * Search colors - FIXED to use positional parameters
      */
     public function search($query, $limit = RECORDS_PER_PAGE, $offset = 0) {
         try {
@@ -188,20 +184,40 @@ class Color {
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
                     WHERE c.deleted_at IS NULL 
-                    AND (c.code LIKE :query OR c.name LIKE :query)
+                    AND (c.code LIKE ? OR c.name LIKE ?)
                     ORDER BY c.name ASC 
-                    LIMIT :limit OFFSET :offset";
+                    LIMIT ? OFFSET ?";
             
+            $searchParam = "%$query%";
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':query', "%$query%", PDO::PARAM_STR);
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt->execute([$searchParam, $searchParam, (int)$limit, (int)$offset]);
             
             return $stmt->fetchAll();
         } catch (PDOException $e) {
             error_log("Color search error: " . $e->getMessage());
             return [];
+        }
+    }
+    
+    /**
+     * Count search results - NEW METHOD to properly count filtered results
+     */
+    public function countSearch($query) {
+        try {
+            $sql = "SELECT COUNT(*) as total 
+                    FROM {$this->table} 
+                    WHERE deleted_at IS NULL 
+                    AND (code LIKE ? OR name LIKE ?)";
+            
+            $searchParam = "%$query%";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$searchParam, $searchParam]);
+            $result = $stmt->fetch();
+            
+            return $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log("Color count search error: " . $e->getMessage());
+            return 0;
         }
     }
 }
