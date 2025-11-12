@@ -341,7 +341,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
     </div>
 
     <!-- Payment History -->
-    <?php if ($invoice['paid_amount'] > 0): ?>
+    <?php 
+    // Include Receipt model if not already included
+    require_once __DIR__ . '/../../models/receipt.php';
+    $receiptModel = new Receipt();
+    $payments = $receiptModel->findByInvoiceId($invoiceId);
+    
+    if (!empty($payments)): ?>
     <div class="card mb-4">
         <div class="card-header">
             <strong>Payment History</strong>
@@ -355,18 +361,27 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <th>Reference</th>
                             <th>Method</th>
                             <th class="text-end">Amount</th>
+                            <th>Processed By</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- This would come from the receipts table in a real implementation -->
+                        <?php 
+                        $totalPaid = 0;
+                        foreach ($payments as $payment): 
+                            $totalPaid += (float)$payment['amount_paid'];
+                        ?>
                         <tr>
-                            <td><?= date('M d, Y', strtotime($invoice['updated_at'])) ?></td>
-                            <td>Initial Payment</td>
-                            <td>N/A</td>
-                            <td class="text-end">₦<?= number_format(
-                                $invoice['paid_amount'],
-                                2,
-                            ) ?></td>
+                            <td><?= date('M d, Y h:i A', strtotime($payment['created_at'])) ?></td>
+                            <td><?= !empty($payment['reference']) ? htmlspecialchars($payment['reference']) : 'N/A' ?></td>
+                            <td><?= ucfirst(htmlspecialchars($payment['payment_method'] ?? 'N/A')) ?></td>
+                            <td class="text-end">₦<?= number_format($payment['amount_paid'], 2) ?></td>
+                            <td><?= htmlspecialchars($payment['created_by_name'] ?? 'System') ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <tr class="table-active">
+                            <td colspan="3" class="text-end"><strong>Total Paid:</strong></td>
+                            <td class="text-end"><strong>₦<?= number_format($totalPaid, 2) ?></strong></td>
+                            <td></td>
                         </tr>
                     </tbody>
                 </table>
