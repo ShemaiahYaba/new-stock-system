@@ -289,7 +289,14 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($invoiceData['items'] as $index => $item): ?>
+                        <?php 
+                        $subtotal = 0;
+                        foreach ($invoiceData['items'] as $index => $item): 
+                            $quantity = (float)($item['quantity'] ?? 0);
+                            $unitPrice = (float)($item['unit_price'] ?? 0);
+                            $amount = $quantity * $unitPrice;
+                            $subtotal += $amount;
+                        ?>
                         <tr>
                             <td><?= $index + 1 ?></td>
                             <td>
@@ -300,17 +307,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     $item['description'] ?? '',
                                 ) ?></div>
                             </td>
-                            <td class="text-end">₦<?= number_format(
-                                $item['unit_price'] ?? 0,
-                                2,
-                            ) ?></td>
-                            <td class="text-end"><?= htmlspecialchars(
-                                $item['qty_text'] ?? '',
-                            ) ?></td>
-                            <td class="text-end">₦<?= number_format(
-                                $item['subtotal'] ?? 0,
-                                2,
-                            ) ?></td>
+                            <td class="text-end">₦<?= number_format($unitPrice, 2) ?></td>
+                            <td class="text-end"><?= number_format($quantity, 2) ?></td>
+                            <td class="text-end">₦<?= number_format($amount, 2) ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
