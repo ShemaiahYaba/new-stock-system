@@ -1,6 +1,6 @@
 <?php
 /**
- * Sale Model
+ * Sale Model - COMPLETELY FIXED
  * 
  * Handles all sale-related database operations
  */
@@ -32,7 +32,7 @@ class Sale {
                             :price_per_meter, :total_amount, :status, :created_by, NOW())";
             
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([
+            $result = $stmt->execute([
                 ':customer_id' => $data['customer_id'],
                 ':coil_id' => $data['coil_id'],
                 ':stock_entry_id' => $data['stock_entry_id'] ?? null,
@@ -43,6 +43,11 @@ class Sale {
                 ':status' => $data['status'] ?? SALE_STATUS_PENDING,
                 ':created_by' => $data['created_by']
             ]);
+            
+            if (!$result) {
+                error_log("Sale creation failed - execute returned false");
+                return false;
+            }
             
             return $this->db->lastInsertId();
         } catch (PDOException $e) {
@@ -88,49 +93,40 @@ class Sale {
      */
     public function getAll($limit = RECORDS_PER_PAGE, $offset = 0) {
         try {
+            // Simplified query without window functions
             $sql = "SELECT s.*, 
                            c.name as customer_name,
                            co.code as coil_code, co.name as coil_name,
-                           u.name as created_by_name,
-                           i.id as invoice_id, i.status as invoice_status,
-                           i.invoice_number, i.paid_amount, i.total as invoice_total
+                           u.name as created_by_name
                     FROM {$this->table} s
                     LEFT JOIN customers c ON s.customer_id = c.id
                     LEFT JOIN coils co ON s.coil_id = co.id
                     LEFT JOIN users u ON s.created_by = u.id
-                    LEFT JOIN (
-                        SELECT id, sale_id, status, invoice_number, paid_amount, total,
-                               ROW_NUMBER() OVER (PARTITION BY sale_id ORDER BY created_at DESC) as rn
-                        FROM {$this->invoiceTable}
-                    ) i ON s.id = i.sale_id AND i.rn = 1
                     WHERE s.deleted_at IS NULL
                     ORDER BY s.created_at DESC
-                    LIMIT :limit OFFSET :offset";
+                    LIMIT ? OFFSET ?";
             
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt->execute([(int)$limit, (int)$offset]);
             
             $sales = $stmt->fetchAll();
             
-            // Format the results to match the expected structure
-            return array_map(function($sale) {
-                $sale['has_invoice'] = !empty($sale['invoice_id']);
-                $sale['invoice'] = $sale['invoice_id'] ? [
-                    'id' => $sale['invoice_id'],
-                    'status' => $sale['invoice_status'],
-                    'invoice_number' => $sale['invoice_number'],
-                    'paid_amount' => $sale['paid_amount'],
-                    'total' => $sale['invoice_total']
-                ] : null;
+            // Get invoice data separately for each sale
+            foreach ($sales as &$sale) {
+                $invoiceSql = "SELECT id, status, invoice_number, paid_amount, total 
+                              FROM {$this->invoiceTable} 
+                              WHERE sale_id = ? 
+                              ORDER BY created_at DESC 
+                              LIMIT 1";
+                $invoiceStmt = $this->db->prepare($invoiceSql);
+                $invoiceStmt->execute([$sale['id']]);
+                $invoice = $invoiceStmt->fetch();
                 
-                // Remove the raw fields to avoid confusion
-                unset($sale['invoice_id'], $sale['invoice_status'], 
-                      $sale['invoice_number'], $sale['paid_amount'], $sale['invoice_total']);
-                
-                return $sale;
-            }, $sales);
+                $sale['has_invoice'] = !empty($invoice);
+                $sale['invoice'] = $invoice ?: null;
+            }
+            
+            return $sales;
         } catch (PDOException $e) {
             error_log("Sale fetch error: " . $e->getMessage());
             return [];
@@ -163,9 +159,9 @@ class Sale {
      */
     public function getInvoice($saleId) {
         try {
-            $sql = "SELECT * FROM {$this->invoiceTable} WHERE sale_id = :sale_id ORDER BY created_at DESC LIMIT 1";
+            $sql = "SELECT * FROM {$this->invoiceTable} WHERE sale_id = ? ORDER BY created_at DESC LIMIT 1";
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([':sale_id' => $saleId]);
+            $stmt->execute([$saleId]);
             
             $invoice = $stmt->fetch();
             
@@ -188,9 +184,9 @@ class Sale {
      */
     public function hasInvoice($saleId) {
         try {
-            $sql = "SELECT COUNT(*) as count FROM {$this->invoiceTable} WHERE sale_id = :sale_id";
+            $sql = "SELECT COUNT(*) as count FROM {$this->invoiceTable} WHERE sale_id = ?";
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([':sale_id' => $saleId]);
+            $stmt->execute([$saleId]);
             $result = $stmt->fetch();
             
             return ($result['count'] ?? 0) > 0;
@@ -201,7 +197,7 @@ class Sale {
     }
     
     /**
-     * Update sale
+     * Update sale - with stock_entry_id support
      * 
      * @param int $id Sale ID
      * @param array $data Sale data
@@ -210,35 +206,42 @@ class Sale {
     public function update($id, $data) {
         try {
             $fields = [];
-            $params = [':id' => $id];
+            $params = [];
+            
+            if (isset($data['stock_entry_id'])) {
+                $fields[] = "stock_entry_id = ?";
+                $params[] = $data['stock_entry_id'];
+            }
             
             if (isset($data['status'])) {
-                $fields[] = "status = :status";
-                $params[':status'] = $data['status'];
+                $fields[] = "status = ?";
+                $params[] = $data['status'];
             }
             
             if (isset($data['meters'])) {
-                $fields[] = "meters = :meters";
-                $params[':meters'] = $data['meters'];
+                $fields[] = "meters = ?";
+                $params[] = $data['meters'];
             }
             
             if (isset($data['price_per_meter'])) {
-                $fields[] = "price_per_meter = :price_per_meter";
-                $params[':price_per_meter'] = $data['price_per_meter'];
+                $fields[] = "price_per_meter = ?";
+                $params[] = $data['price_per_meter'];
             }
             
             if (isset($data['total_amount'])) {
-                $fields[] = "total_amount = :total_amount";
-                $params[':total_amount'] = $data['total_amount'];
+                $fields[] = "total_amount = ?";
+                $params[] = $data['total_amount'];
             }
             
             if (empty($fields)) {
+                error_log("Sale update called with no fields to update for ID: $id");
                 return false;
             }
             
             $fields[] = "updated_at = NOW()";
+            $params[] = $id; // Add ID as last parameter
             
-            $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = :id";
+            $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = ?";
             $stmt = $this->db->prepare($sql);
             
             return $stmt->execute($params);
@@ -257,13 +260,9 @@ class Sale {
      */
     public function updateStatus($id, $status) {
         try {
-            $sql = "UPDATE {$this->table} SET status = :status, updated_at = NOW() WHERE id = :id";
+            $sql = "UPDATE {$this->table} SET status = ?, updated_at = NOW() WHERE id = ?";
             $stmt = $this->db->prepare($sql);
-            
-            return $stmt->execute([
-                ':id' => $id,
-                ':status' => $status
-            ]);
+            return $stmt->execute([$status, $id]);
         } catch (PDOException $e) {
             error_log("Sale status update error: " . $e->getMessage());
             return false;
@@ -278,10 +277,9 @@ class Sale {
      */
     public function delete($id) {
         try {
-            $sql = "UPDATE {$this->table} SET deleted_at = NOW() WHERE id = :id";
+            $sql = "UPDATE {$this->table} SET deleted_at = NOW() WHERE id = ?";
             $stmt = $this->db->prepare($sql);
-            
-            return $stmt->execute([':id' => $id]);
+            return $stmt->execute([$id]);
         } catch (PDOException $e) {
             error_log("Sale delete error: " . $e->getMessage());
             return false;
@@ -299,11 +297,11 @@ class Sale {
             $sql = "SELECT s.*, co.code as coil_code, co.name as coil_name
                     FROM {$this->table} s
                     LEFT JOIN coils co ON s.coil_id = co.id
-                    WHERE s.customer_id = :customer_id AND s.deleted_at IS NULL
+                    WHERE s.customer_id = ? AND s.deleted_at IS NULL
                     ORDER BY s.created_at DESC";
             
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([':customer_id' => $customerId]);
+            $stmt->execute([$customerId]);
             
             return $stmt->fetchAll();
         } catch (PDOException $e) {
@@ -323,11 +321,11 @@ class Sale {
             $sql = "SELECT s.*, c.name as customer_name
                     FROM {$this->table} s
                     LEFT JOIN customers c ON s.customer_id = c.id
-                    WHERE s.coil_id = :coil_id AND s.deleted_at IS NULL
+                    WHERE s.coil_id = ? AND s.deleted_at IS NULL
                     ORDER BY s.created_at DESC";
             
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([':coil_id' => $coilId]);
+            $stmt->execute([$coilId]);
             
             return $stmt->fetchAll();
         } catch (PDOException $e) {
@@ -347,18 +345,18 @@ class Sale {
         try {
             $sql = "SELECT SUM(total_amount) as total 
                     FROM {$this->table} 
-                    WHERE status = :status AND deleted_at IS NULL";
+                    WHERE status = ? AND deleted_at IS NULL";
             
-            $params = [':status' => SALE_STATUS_COMPLETED];
+            $params = [SALE_STATUS_COMPLETED];
             
             if ($startDate) {
-                $sql .= " AND created_at >= :start_date";
-                $params[':start_date'] = $startDate;
+                $sql .= " AND created_at >= ?";
+                $params[] = $startDate;
             }
             
             if ($endDate) {
-                $sql .= " AND created_at <= :end_date";
-                $params[':end_date'] = $endDate;
+                $sql .= " AND created_at <= ?";
+                $params[] = $endDate;
             }
             
             $stmt = $this->db->prepare($sql);
@@ -373,10 +371,10 @@ class Sale {
     }
     
     /**
-     * Get filtered sales with pagination
+     * Get filtered sales with pagination - USING POSITIONAL PARAMETERS
      * 
      * @param string $whereClause WHERE clause with conditions
-     * @param array $params Query parameters
+     * @param array $params Query parameters (positional, not named)
      * @param int $limit Records per page
      * @param int $offset Offset for pagination
      * @return array
@@ -393,34 +391,48 @@ class Sale {
                     LEFT JOIN users u ON s.created_by = u.id
                     $whereClause
                     ORDER BY s.created_at DESC
-                    LIMIT :limit OFFSET :offset";
+                    LIMIT ? OFFSET ?";
+            
+            // Add pagination parameters to the end
+            $allParams = array_values($params);
+            $allParams[] = (int)$limit;
+            $allParams[] = (int)$offset;
             
             $stmt = $this->db->prepare($sql);
+            $stmt->execute($allParams);
             
-            // Bind search parameters
-            foreach ($params as $key => $value) {
-                $paramType = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
-                $stmt->bindValue($key, $value, $paramType);
+            $sales = $stmt->fetchAll();
+            
+            // Get invoice data separately for each sale
+            foreach ($sales as &$sale) {
+                $invoiceSql = "SELECT id, status, invoice_number, paid_amount, total 
+                              FROM {$this->invoiceTable} 
+                              WHERE sale_id = ? 
+                              ORDER BY created_at DESC 
+                              LIMIT 1";
+                $invoiceStmt = $this->db->prepare($invoiceSql);
+                $invoiceStmt->execute([$sale['id']]);
+                $invoice = $invoiceStmt->fetch();
+                
+                $sale['has_invoice'] = !empty($invoice);
+                $sale['invoice'] = $invoice ?: null;
             }
             
-            // Bind pagination parameters
-            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
-            
-            $stmt->execute();
-            return $stmt->fetchAll();
+            return $sales;
             
         } catch (PDOException $e) {
             error_log("Filtered sales fetch error: " . $e->getMessage());
-            throw $e;
+            error_log("SQL: " . ($sql ?? 'N/A'));
+            error_log("Params count: " . count($allParams ?? []));
+            return [];
         }
     }
     
     /**
-     * Count filtered sales
+     * Count filtered sales - USING POSITIONAL PARAMETERS
      * 
      * @param string $whereClause WHERE clause with conditions
-     * @param array $params Query parameters
+     * @param array $params Query parameters (positional, not named)
      * @return int
      */
     public function countFilteredSales($whereClause, $params = []) {
@@ -432,21 +444,15 @@ class Sale {
                     $whereClause";
             
             $stmt = $this->db->prepare($sql);
-            
-            // Bind parameters
-            foreach ($params as $key => $value) {
-                $paramType = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
-                $stmt->bindValue($key, $value, $paramType);
-            }
-            
-            $stmt->execute();
+            $stmt->execute(array_values($params));
             $result = $stmt->fetch();
             
             return (int)($result['total'] ?? 0);
             
         } catch (PDOException $e) {
             error_log("Filtered sales count error: " . $e->getMessage());
-            throw $e;
+            error_log("SQL: " . ($sql ?? 'N/A'));
+            return 0;
         }
     }
     
@@ -457,11 +463,12 @@ class Sale {
      */
     public function search($query, $limit = RECORDS_PER_PAGE, $offset = 0) {
         $whereClause = 'WHERE s.deleted_at IS NULL 
-                       AND (c.name LIKE :query OR co.code LIKE :query OR co.name LIKE :query)';
+                       AND (c.name LIKE ? OR co.code LIKE ? OR co.name LIKE ?)';
         
+        $searchParam = "%$query%";
         return $this->getFilteredSales(
             $whereClause, 
-            [':query' => "%$query%"], 
+            [$searchParam, $searchParam, $searchParam], 
             $limit, 
             $offset
         );

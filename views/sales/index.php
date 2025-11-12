@@ -1,6 +1,6 @@
 <?php
 /**
- * Sales List View with Workflow Actions
+ * Sales List View with Workflow Actions - FIXED
  * File: views/sales/index.php
  */
 
@@ -23,9 +23,11 @@ $invoiceModel = new Invoice();
 $receiptModel = new Receipt();
 
 if (!empty($searchQuery)) {
+    // ✅ FIXED: Use positional parameters (?) instead of named parameters (:query)
     $whereClause = 'WHERE s.deleted_at IS NULL 
-                   AND (c.name LIKE :query OR co.code LIKE :query OR co.name LIKE :query)';
-    $params = [':query' => "%$searchQuery%"];
+                   AND (c.name LIKE ? OR co.code LIKE ? OR co.name LIKE ?)';
+    $searchParam = "%$searchQuery%";
+    $params = [$searchParam, $searchParam, $searchParam]; // Use same param 3 times
 
     $sales = $saleModel->getFilteredSales(
         $whereClause,
