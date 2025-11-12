@@ -277,8 +277,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                                 ); ?>"
                                                 data-category="<?php echo $coil['category']; ?>"
                                                 data-status="<?php echo $coil['status']; ?>"
-                                                data-color="<?php echo htmlspecialchars(
-                                                    $coil['color'] ?? '',
+                                                data-color_name="<?php echo htmlspecialchars(
+                                                    $coil['color_name'] ?? '',
                                                 ); ?>"
                                                 data-weight="<?php echo htmlspecialchars(
                                                     $coil['net_weight'] ?? 0,
@@ -788,7 +788,7 @@ document.getElementById('coil_id').addEventListener('change', function() {
         // Update metadata display
         document.getElementById('coil_code').textContent = option.dataset.code || '-';
         document.getElementById('coil_name').textContent = option.dataset.name || '-';
-        document.getElementById('coil_color').textContent = option.dataset.color || '-';
+        document.getElementById('coil_color').textContent = option.dataset.color_name || '-';
         document.getElementById('coil_weight').textContent = option.dataset.weight || '0.00';
         document.getElementById('coil_category').textContent = STOCK_CATEGORIES[option.dataset.category] || option.dataset.category || '-';
         
@@ -815,7 +815,7 @@ document.getElementById('coil_id').addEventListener('change', function() {
                 code: option.dataset.code,
                 name: option.dataset.name,
                 category: option.dataset.category,
-                color: option.dataset.color,
+                color_name: option.dataset.color_name,
                 weight: option.dataset.weight,
                 status: option.dataset.status
             };

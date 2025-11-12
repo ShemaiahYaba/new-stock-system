@@ -31,7 +31,9 @@ foreach ($coils as $coil) {
         $coilMetadata[$coilId] = [
             'code' => $coil['code'],
             'name' => $coil['name'],
-            'color' => $coil['color'],
+            'color_id' => $coil['color_id'],
+            'color_name' => $coil['color_name'],
+            'gauge' => $coil['gauge'],
             'category' => $coil['category'],
             'weight' => $coil['net_weight'],
             'status' => $coil['status'],

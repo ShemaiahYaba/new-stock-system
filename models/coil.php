@@ -371,10 +371,12 @@ class Coil
     public function getForDropdown()
     {
         try {
-            $sql = "SELECT id, code, name, category, status, color_id, net_weight, meters, gauge 
-                    FROM {$this->table} 
-                    WHERE deleted_at IS NULL 
-                    ORDER BY code ASC";
+            $sql = "SELECT c.id, c.code, c.name, c.category, c.status, c.color_id, c.net_weight, c.meters, c.gauge,
+                           col.name as color_name, col.hex_code as color_hex
+                    FROM {$this->table} c
+                    LEFT JOIN colors col ON c.color_id = col.id
+                    WHERE c.deleted_at IS NULL 
+                    ORDER BY c.code ASC";
             $stmt = $this->db->query($sql);
             return $stmt->fetchAll();
         } catch (PDOException $e) {
@@ -390,16 +392,18 @@ class Coil
     {
         try {
             $sql = "SELECT c.*, 
-                       COALESCE(SUM(se.meters_remaining), 0) as total_remaining_meters,
-                       COUNT(se.id) as stock_entry_count
-                FROM {$this->table} c
-                LEFT JOIN stock_entries se ON c.id = se.coil_id 
-                    AND se.deleted_at IS NULL 
-                    AND se.meters_remaining > 0
-                WHERE c.deleted_at IS NULL
-                GROUP BY c.id
-                HAVING stock_entry_count > 0
-                ORDER BY c.code ASC";
+        col.name as color_name, 
+        COALESCE(SUM(se.meters_remaining), 0) as total_remaining_meters,
+        COUNT(se.id) as stock_entry_count
+        FROM {$this->table} c
+        LEFT JOIN colors col ON c.color_id = col.id
+        LEFT JOIN stock_entries se ON c.id = se.coil_id 
+            AND se.deleted_at IS NULL 
+            AND se.meters_remaining > 0
+        WHERE c.deleted_at IS NULL
+        GROUP BY c.id
+        HAVING stock_entry_count > 0
+        ORDER BY c.code ASC";
 
             $stmt = $this->db->query($sql);
             $coils = $stmt->fetchAll();
