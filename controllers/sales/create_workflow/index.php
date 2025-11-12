@@ -1,6 +1,6 @@
 <?php
 /**
- * Production Workflow Controller - UPDATED FOR KZINC
+ * Production Workflow Controller - FIXED STOCK ENTRY ID ISSUE
  * File: controllers/sales/create_workflow/index.php
  */
 
@@ -49,7 +49,7 @@ try {
         throw new Exception('Missing required production data');
     }
 
-    // ✅ NEW: Check if this is a KZINC coil
+    // ✅ Check if this is a KZINC coil
     $coilModel = new Coil();
     $coil = $coilModel->findById($productionData['coil_id']);
     $isKzinc = strtolower($coil['category']) === 'kzinc';
@@ -57,18 +57,75 @@ try {
     $db = Database::getInstance()->getConnection();
     $db->beginTransaction();
 
+    $productionPaper = $productionData['production_paper'];
+    $primaryStockEntryId = null; // ✅ Initialize to track the stock entry
+
+    // ========================================
+    // STEP 0: PRE-VALIDATE & GET STOCK ENTRY FOR ALUSTEEL
+    // ========================================
+    if (!$isKzinc) {
+        $stockEntryModel = new StockEntry();
+        $totalMeters = $productionPaper['summary']['totalMeters'];
+
+        // Get available stock entries
+        $stockEntries = $stockEntryModel->getByCoilAndStatus(
+            $productionData['coil_id'],
+            STOCK_STATUS_FACTORY_USE,
+        );
+
+        if (empty($stockEntries)) {
+            throw new Exception('No factory-use stock entries available for this coil');
+        }
+
+        // Pre-calculate and validate stock availability
+        $remainingToDeduct = $totalMeters;
+        $plannedDeductions = [];
+
+        foreach ($stockEntries as $entry) {
+            if ($remainingToDeduct <= 0) {
+                break;
+            }
+
+            $availableMeters = $entry['meters_remaining'];
+            $deductAmount = min($remainingToDeduct, $availableMeters);
+
+            $plannedDeductions[] = [
+                'entry_id' => $entry['id'],
+                'deduct_amount' => $deductAmount,
+                'new_remaining' => $availableMeters - $deductAmount
+            ];
+
+            $remainingToDeduct -= $deductAmount;
+        }
+
+        // Validate sufficient stock BEFORE creating sale
+        if ($remainingToDeduct > 0) {
+            throw new Exception(
+                "Insufficient stock: Need $totalMeters meters, only " .
+                    ($totalMeters - $remainingToDeduct) .
+                    ' meters available',
+            );
+        }
+
+        // ✅ Set the primary stock entry (the first one we'll use)
+        $primaryStockEntryId = $plannedDeductions[0]['entry_id'];
+        
+        error_log("ALUSTEEL sale: Will use stock_entry_id = $primaryStockEntryId");
+    } else {
+        error_log("KZINC sale: No stock entry required");
+    }
+
     // ========================================
     // STEP 1: CREATE SALE RECORD
     // ========================================
     $saleModel = new Sale();
-    $productionPaper = $productionData['production_paper'];
 
     $saleData = [
         'customer_id' => $productionData['customer_id'],
         'coil_id' => $productionData['coil_id'],
-        'stock_entry_id' => $isKzinc ? null : null, // Will be set later for Alusteel
+        'stock_entry_id' => $primaryStockEntryId, // ✅ NOW CORRECTLY SET!
         'sale_type' => SALE_TYPE_RETAIL,
-        'meters' => $productionPaper['summary']['totalMeters'], // Will be 0 for KZINC
+        'meters' => $productionPaper['summary']['totalMeters'],
         'price_per_meter' => $isKzinc ? 0 : calculateAveragePrice($productionPaper['properties']),
         'total_amount' => $productionPaper['summary']['totalAmount'],
         'status' => SALE_STATUS_COMPLETED,
@@ -80,6 +137,8 @@ try {
     if (!$saleId) {
         throw new Exception('Failed to create sale record');
     }
+
+    error_log("Sale #$saleId created with stock_entry_id = " . ($primaryStockEntryId ?? 'NULL'));
 
     // ========================================
     // STEP 2: CREATE PRODUCTION RECORD (IMMUTABLE)
@@ -184,37 +243,24 @@ try {
     // STEP 4: DEDUCT STOCK METERS (ALUSTEEL ONLY)
     // ========================================
     if (!$isKzinc) {
-        // Original meter deduction logic for Alusteel
+        // ✅ Use the pre-calculated deductions
         $stockEntryModel = new StockEntry();
-        $totalMeters = $productionPaper['summary']['totalMeters'];
 
-        $stockEntries = $stockEntryModel->getByCoilAndStatus(
-            $productionData['coil_id'],
-            STOCK_STATUS_FACTORY_USE,
-        );
+        foreach ($plannedDeductions as $deduction) {
+            $entryId = $deduction['entry_id'];
+            $deductAmount = $deduction['deduct_amount'];
+            $newRemaining = $deduction['new_remaining'];
 
-        if (empty($stockEntries)) {
-            throw new Exception('No factory-use stock entries available for this coil');
-        }
-
-        $remainingToDeduct = $totalMeters;
-        $usedStockEntries = [];
-
-        foreach ($stockEntries as $entry) {
-            if ($remainingToDeduct <= 0) {
-                break;
-            }
-
-            $availableMeters = $entry['meters_remaining'];
-            $deductAmount = min($remainingToDeduct, $availableMeters);
-
-            $newRemaining = $availableMeters - $deductAmount;
-            $stockEntryModel->update($entry['id'], [
+            // Update stock entry
+            $updateResult = $stockEntryModel->update($entryId, [
                 'meters_remaining' => $newRemaining,
             ]);
 
-            $usedStockEntries[] = $entry['id'];
+            if (!$updateResult) {
+                throw new Exception("Failed to update stock entry #$entryId");
+            }
 
+            // Log to stock ledger
             logStockCardEntry(
                 $productionData['coil_id'],
                 $productionId,
@@ -223,28 +269,16 @@ try {
                 $newRemaining,
                 "Production drawdown for sale #$saleId",
                 $currentUser['id'],
-                $entry['id'],
+                $entryId,
             );
 
-            $remainingToDeduct -= $deductAmount;
+            error_log("Deducted $deductAmount meters from stock_entry #$entryId, new remaining: $newRemaining");
         }
 
-        if ($remainingToDeduct > 0) {
-            throw new Exception(
-                "Insufficient stock: Need $totalMeters meters, only " .
-                    ($totalMeters - $remainingToDeduct) .
-                    ' meters available',
-            );
-        }
-
-        $saleModel->update($saleId, [
-            'stock_entry_id' => $usedStockEntries[0],
-        ]);
-
+        // Update coil status if needed
         $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
     } else {
-        // ✅ KZINC: No stock deduction, no ledger entries
-        error_log("KZINC sale #{$saleId}: Skipping meter deduction and ledger entries");
+        error_log("KZINC sale #$saleId: Skipping meter deduction and ledger entries");
     }
 
     $db->commit();
