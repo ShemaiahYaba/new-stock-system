@@ -12,11 +12,10 @@ class Database {
     
     // Database credentials
     private $host = 'localhost';
-    private $db_name = 'stock_system';
+    private $db_name = 'obumuvcg_stockdb';
     private $username = 'root';
     private $password = '';
     private $charset = 'utf8mb4';
-    
     /**
      * Private constructor to prevent direct instantiation
      */
