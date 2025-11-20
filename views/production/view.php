@@ -239,8 +239,17 @@ require_once __DIR__ . '/../../layout/sidebar.php';
             </tr>
             <tr>
                 <th>Color:</th>
-                <td><?php echo COIL_COLORS[$prodPaper['coil']['color']] ??
-                    ($prodPaper['coil']['color'] ?? 'N/A'); ?></td>
+                <td>
+                    <?php 
+                    // Check if color exists in coil data, otherwise show N/A
+                    if (isset($prodPaper['coil']['color'])) {
+                        $color = $prodPaper['coil']['color'];
+                        echo COIL_COLORS[$color] ?? htmlspecialchars($color);
+                    } else {
+                        echo 'N/A';
+                    }
+                    ?>
+                </td>
             </tr>
             <tr>
                 <th>Weight:</th>
