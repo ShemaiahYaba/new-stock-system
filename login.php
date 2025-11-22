@@ -17,233 +17,178 @@ redirectIfAuthenticated();
 $pageTitle = 'Login - ' . APP_NAME;
 ?>
 <!DOCTYPE html>
+
 <html lang="en">
+    
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?></title>
-    
+
+    <!-- Favicons for all devices -->
+    <link rel="icon" type="image/png" href="/new-stock-system/assets/logo.png">
+    <link rel="apple-touch-icon" href="/new-stock-system/assets/logo.png">
+    <link rel="shortcut icon" href="/new-stock-system/assets/logo.png">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            background: #f8f9fa;
             min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background 0.6s ease-in-out;
             padding: 20px;
         }
-        
+
         .login-wrapper {
             width: 100%;
-            max-width: 480px;
+            max-width: 460px;
         }
-        
+
         .login-card {
-            background: #ffffff;
             border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.04);
             overflow: hidden;
-            border: 1px solid #e5e7eb;
-        }
-        
-        .login-header {
-            padding: 48px 40px 32px;
-            text-align: center;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(229, 231, 235, 0.6);
             background: #ffffff;
-            border-bottom: 1px solid #f3f4f6;
         }
-        
-        .logo-container {
-            margin-bottom: 24px;
-        }
-        
-        .logo-container img {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-        }
-        
-        .logo-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-        }
-        
-        .logo-icon i {
-            font-size: 40px;
+
+        .login-header {
+            background: #1e3a8a;
             color: white;
+            text-align: center;
+            padding: 30px 20px;
         }
-        
-        .company-name {
-            font-size: 24px;
-            font-weight: 700;
-            color: #111827;
-            margin-bottom: 4px;
-            letter-spacing: -0.5px;
+
+        .login-header img {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+            margin-bottom: 12px;
         }
-        
-        .app-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #6b7280;
-            letter-spacing: 0.3px;
-        }
-        
-        .login-body {
-            padding: 32px 40px 48px;
-        }
-        
-        .login-title {
+
+        .login-header h1 {
             font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            color: #dbeafe;
+            margin: 0;
+        }
+
+        .login-body {
+            padding: 32px 36px 40px;
+            background: #ffffff;
+        }
+
+        .login-title {
+            font-size: 18px;
             font-weight: 600;
             color: #111827;
             margin-bottom: 24px;
             text-align: center;
         }
-        
+
         .form-label {
             font-size: 14px;
             font-weight: 500;
             color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 6px;
             margin-bottom: 8px;
         }
-        
-        .form-label i {
-            font-size: 14px;
-            margin-right: 6px;
-            color: #6b7280;
-        }
-        
+
         .form-control {
-            height: 48px;
-            padding: 12px 16px;
+            height: 46px;
+            padding: 12px 14px;
             font-size: 15px;
-            border: 1.5px solid #e5e7eb;
+            border: 1.5px solid #d1d5db;
             border-radius: 8px;
             transition: all 0.2s ease;
-            background: #ffffff;
         }
-        
-        .form-control:hover {
-            border-color: #d1d5db;
-        }
-        
+
         .form-control:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            background: #ffffff;
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
         }
-        
-        .form-control::placeholder {
-            color: #9ca3af;
+
+        .password-wrapper {
+            position: relative;
         }
-        
+
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 18px;
+        }
+
+        .toggle-password:hover {
+            color: #1e3a8a;
+        }
+
         .btn-login {
-            height: 48px;
-            background: #3b82f6;
+            height: 46px;
+            background: #1e3a8a;
             border: none;
             border-radius: 8px;
             font-size: 15px;
             font-weight: 600;
             color: white;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
             letter-spacing: 0.3px;
         }
-        
+
         .btn-login:hover {
-            background: #2563eb;
+            background: #1d4ed8;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 14px rgba(30, 64, 175, 0.35);
         }
-        
-        .btn-login:active {
-            transform: translateY(0);
-        }
-        
-        .alert {
-            border-radius: 8px;
-            border: none;
-            padding: 12px 16px;
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
-        
-        .alert-success {
-            background: #ecfdf5;
-            color: #065f46;
-            border-left: 3px solid #10b981;
-        }
-        
-        .alert-danger {
-            background: #fef2f2;
-            color: #991b1b;
-            border-left: 3px solid #ef4444;
-        }
-        
-        .alert-warning {
-            background: #fffbeb;
-            color: #92400e;
-            border-left: 3px solid #f59e0b;
-        }
-        
-        .alert-info {
-            background: #eff6ff;
-            color: #1e40af;
-            border-left: 3px solid #3b82f6;
-        }
-        
-        .btn-close {
-            font-size: 12px;
-        }
-        
-        .invalid-feedback {
-            font-size: 13px;
-            margin-top: 6px;
-        }
-        
-        .footer-text {
+
+        .login-footer {
+            background: #f9fafb;
             text-align: center;
-            margin-top: 24px;
+            padding: 16px;
             font-size: 13px;
             color: #6b7280;
         }
-        
+
         @media (max-width: 576px) {
-            .login-header {
-                padding: 36px 24px 24px;
-            }
-            
             .login-body {
-                padding: 24px 24px 36px;
-            }
-            
-            .company-name {
-                font-size: 20px;
+                padding: 24px;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="login-wrapper">
         <div class="login-card">
@@ -312,19 +257,25 @@ $pageTitle = 'Login - ' . APP_NAME;
                     
                     <div class="mb-4">
                         <label for="password" class="form-label">
-                            <i class="bi bi-lock"></i>Password
+                            <i class="bi bi-lock"></i> Password
                         </label>
-                        <input type="password" 
-                               class="form-control" 
-                               id="password" 
-                               name="password" 
-                               placeholder="Enter your password"
-                               required
-                               autocomplete="current-password">
+                        <div class="password-wrapper">
+                            <input type="password"
+                                   class="form-control"
+                                   id="password"
+                                   name="password"
+                                   placeholder="Enter your password"
+                                   required
+                                   autocomplete="current-password">
+                            <button type="button" class="toggle-password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                         <div class="invalid-feedback">
                             Please provide your password.
                         </div>
                     </div>
+
                     
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-login">
@@ -333,11 +284,13 @@ $pageTitle = 'Login - ' . APP_NAME;
                     </div>
                 </form>
             </div>
+            
+             <div class="login-footer">
+                &copy; <?php echo date('Y'); ?> <?php echo COMPANY_NAME; ?>. All rights reserved.
+            </div>
         </div>
         
-        <div class="footer-text">
-            &copy; <?php echo date('Y'); ?> <?php echo COMPANY_NAME; ?>. All rights reserved.
-        </div>
+      
     </div>
     
     <!-- Bootstrap JS -->
@@ -359,5 +312,34 @@ $pageTitle = 'Login - ' . APP_NAME;
             });
         })();
     </script>
+    
+    <script>
+        // Random background images
+        const backgrounds = [
+            '/new-stock-system/assets/bg1.png',
+            '/new-stock-system/assets/bg2.png',
+            '/new-stock-system/assets/bg3.png'
+        ];
+    
+        const randomIndex = Math.floor(Math.random() * backgrounds.length);
+        const chosenBg = backgrounds[randomIndex];
+    
+        // Apply lighter overlay for clearer images
+        document.body.style.backgroundImage =
+            `linear-gradient(rgba(17, 24, 39, 0.35), rgba(17, 24, 39, 0.35)), url('${chosenBg}')`;
+    
+        // Password toggle functionality
+        const togglePassword = document.querySelector('.toggle-password');
+        const passwordField = document.getElementById('password');
+    
+        togglePassword.addEventListener('click', function () {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            this.innerHTML = type === 'password'
+                ? '<i class="bi bi-eye"></i>'
+                : '<i class="bi bi-eye-slash"></i>';
+        });
+    </script>
+
 </body>
 </html>

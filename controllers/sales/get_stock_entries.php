@@ -25,8 +25,8 @@ if ($coilId <= 0) {
 try {
     $stockEntryModel = new StockEntry();
 
-    // Get available entries (already filtered by the model)
-    $entries = $stockEntryModel->getByCoilId($coilId, 1000, 0);
+    // Get entries for production workflow - only show factory use entries
+    $entries = $stockEntryModel->getByCoilAndStatus($coilId, STOCK_STATUS_FACTORY_USE);
 
     // Return the entries array directly since that's what the frontend expects
     echo json_encode([
