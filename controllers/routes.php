@@ -312,6 +312,74 @@ $routes = [
         'action' => ACTION_CREATE,
         'is_api' => true,
     ],
+
+    // Design Management
+'designs' => [
+    'view' => 'views/tiles/designs/index.php',
+    'module' => MODULE_DESIGN_MANAGEMENT,
+    'action' => ACTION_VIEW,
+],
+'designs_create' => [
+    'view' => 'views/tiles/designs/create.php',
+    'module' => MODULE_DESIGN_MANAGEMENT,
+    'action' => ACTION_CREATE,
+],
+'designs_edit' => [
+    'view' => 'views/tiles/designs/edit.php',
+    'module' => MODULE_DESIGN_MANAGEMENT,
+    'action' => ACTION_EDIT,
+],
+
+// Tile Products
+'tile_products' => [
+    'view' => 'views/tiles/products/index.php',
+    'module' => MODULE_TILE_MANAGEMENT,
+    'action' => ACTION_VIEW,
+],
+'tile_products_create' => [
+    'view' => 'views/tiles/products/create.php',
+    'module' => MODULE_TILE_MANAGEMENT,
+    'action' => ACTION_CREATE,
+],
+'tile_products_view' => [
+    'view' => 'views/tiles/products/view.php',
+    'module' => MODULE_TILE_MANAGEMENT,
+    'action' => ACTION_VIEW,
+],
+
+// Tile Stock
+'tile_stock' => [
+    'view' => 'views/tiles/stock/index.php',
+    'module' => MODULE_TILE_MANAGEMENT,
+    'action' => ACTION_VIEW,
+],
+'tile_stock_add' => [
+    'view' => 'views/tiles/stock/add.php',
+    'module' => MODULE_TILE_MANAGEMENT,
+    'action' => ACTION_CREATE,
+],
+'tile_stock_card' => [
+    'view' => 'views/tiles/stock/card.php',
+    'module' => MODULE_TILE_MANAGEMENT,
+    'action' => ACTION_VIEW,
+],
+
+// Tile Sales
+'tile_sales' => [
+    'view' => 'views/tiles/sales/index.php',
+    'module' => MODULE_TILE_SALES,
+    'action' => ACTION_VIEW,
+],
+'tile_sales_create' => [
+    'view' => 'views/tiles/sales/create.php',
+    'module' => MODULE_TILE_SALES,
+    'action' => ACTION_CREATE,
+],
+'tile_sales_view' => [
+    'view' => 'views/tiles/sales/view.php',
+    'module' => MODULE_TILE_SALES,
+    'action' => ACTION_VIEW,
+],
 ];
 
 // Check if route exists

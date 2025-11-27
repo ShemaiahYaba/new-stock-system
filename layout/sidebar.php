@@ -227,6 +227,51 @@ $currentPage = $_GET['page'] ?? 'dashboard';
     </ul>
 </li>
 <?php endif; ?>
+<!-- Tile Management -->
+<?php if (hasPermission(MODULE_TILE_MANAGEMENT) || hasPermission(MODULE_TILE_SALES)): ?>
+<li class="nav-item">
+    <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#tilesMenu">
+        <i class="bi bi-grid-3x3"></i>
+        <span>Roofing Tiles</span>
+        <i class="bi bi-chevron-down ms-auto"></i>
+    </a>
+    <ul class="collapse list-unstyled ps-4" id="tilesMenu">
+        <?php if (hasPermission(MODULE_DESIGN_MANAGEMENT)): ?>
+        <li>
+            <a href="/new-stock-system/index.php?page=designs" class="nav-link">
+                <i class="bi bi-circle"></i> Designs
+            </a>
+        </li>
+        <?php endif; ?>
+        
+        <?php if (hasPermission(MODULE_TILE_MANAGEMENT)): ?>
+        <li>
+            <a href="/new-stock-system/index.php?page=tile_products" class="nav-link">
+                <i class="bi bi-circle"></i> Products
+            </a>
+        </li>
+        <li>
+            <a href="/new-stock-system/index.php?page=tile_stock" class="nav-link">
+                <i class="bi bi-circle"></i> Stock Overview
+            </a>
+        </li>
+        <li>
+            <a href="/new-stock-system/index.php?page=tile_stock_card" class="nav-link">
+                <i class="bi bi-circle"></i> Stock Card
+            </a>
+        </li>
+        <?php endif; ?>
+        
+        <?php if (hasPermission(MODULE_TILE_SALES)): ?>
+        <li>
+            <a href="/new-stock-system/index.php?page=tile_sales" class="nav-link">
+                <i class="bi bi-circle"></i> Sales
+            </a>
+        </li>
+        <?php endif; ?>
+    </ul>
+</li>
+<?php endif; ?>
         
         <!-- Reports -->
         <?php if (hasPermission(MODULE_REPORTS)): ?>

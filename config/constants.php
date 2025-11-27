@@ -141,6 +141,9 @@ define('MODULE_INVOICE_MANAGEMENT', 'invoice_management'); // NEW
 define('MODULE_SUPPLY_MANAGEMENT', 'supply_management'); // NEW
 define('MODULE_REPORTS', 'reports');
 define('MODULE_DASHBOARD', 'dashboard');
+define('MODULE_DESIGN_MANAGEMENT', 'design_management'); // NEW
+define('MODULE_TILE_MANAGEMENT', 'tile_management'); // NEW
+define('MODULE_TILE_SALES', 'tile_sales'); // NEW
 
 // Permission Modules Array
 const PERMISSION_MODULES = [
@@ -155,6 +158,9 @@ const PERMISSION_MODULES = [
     MODULE_SUPPLY_MANAGEMENT => 'Supply Management', // NEW
     MODULE_REPORTS => 'Reports',
     MODULE_DASHBOARD => 'Dashboard',
+    MODULE_DESIGN_MANAGEMENT => 'Design Management',
+    MODULE_TILE_MANAGEMENT => 'Tile Management',
+    MODULE_TILE_SALES => 'Tile Sales',
 ];
 
 // Permission Actions
@@ -185,6 +191,10 @@ const DEFAULT_PERMISSIONS = [
         MODULE_REPORTS => [ACTION_VIEW],
         MODULE_DASHBOARD => [ACTION_VIEW],
         MODULE_COLOR_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE], // NEW  
+        MODULE_DESIGN_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
+        MODULE_TILE_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
+        MODULE_TILE_SALES => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
+        
     ],
     ROLE_STOCK_MANAGER => [
         MODULE_STOCK_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
@@ -193,6 +203,10 @@ const DEFAULT_PERMISSIONS = [
         MODULE_REPORTS => [ACTION_VIEW],
         MODULE_DASHBOARD => [ACTION_VIEW],
         MODULE_COLOR_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT], // NEW
+        MODULE_DESIGN_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT],
+        MODULE_TILE_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
+        MODULE_TILE_SALES => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT],
+
     ],
     ROLE_HR_DIRECTOR => [
         MODULE_USER_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
@@ -277,3 +291,28 @@ if (!defined('ACTION_DELETE')) {
 define('APP_NAME', 'Stock Taking System');
 define('APP_VERSION', '1.0.0');
 define('COMPANY_NAME', 'Obumek Aluminium Company Ltd.');
+
+// Tile Management Constants
+const TILE_GAUGES = [
+    'thick' => 'Thick',
+    'normal' => 'Normal',
+    'light' => 'Light'
+];
+
+const TILE_STOCK_STATUS = [
+    'available' => 'Available',
+    'out_of_stock' => 'Out of Stock'
+];
+
+const TILE_TRANSACTION_TYPES = [
+    'stock_in' => 'Stock In',
+    'sale' => 'Sale',
+    'adjustment' => 'Adjustment',
+    'return' => 'Return'
+];
+
+const TILE_SALE_STATUS = [
+    'pending' => 'Pending',
+    'completed' => 'Completed',
+    'cancelled' => 'Cancelled'
+];
