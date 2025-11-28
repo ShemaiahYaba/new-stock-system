@@ -10,10 +10,12 @@ class TileSale {
         $this->db = Database::getInstance()->getConnection();
     }
     
+    /**
+     * Create tile sale WITHOUT internal transaction handling
+     * Transaction should be managed by the calling controller
+     */
     public function create($data) {
         try {
-            $this->db->beginTransaction();
-            
             // 1. Create sale record
             $sql = "INSERT INTO {$this->table} 
                     (customer_id, tile_product_id, quantity, unit_price, 
@@ -46,8 +48,7 @@ class TileSale {
             );
             
             if (!$ledgerSuccess) {
-                $this->db->rollBack();
-                return false;
+                throw new Exception('Failed to record stock deduction');
             }
             
             // 3. Update product status if out of stock
@@ -57,13 +58,11 @@ class TileSale {
                 $productModel->updateStatus($data['tile_product_id'], 'out_of_stock');
             }
             
-            $this->db->commit();
             return $saleId;
             
         } catch (PDOException $e) {
-            $this->db->rollBack();
             error_log("Tile sale creation error: " . $e->getMessage());
-            return false;
+            throw $e; // Re-throw so controller can catch and rollback
         }
     }
     
@@ -71,8 +70,9 @@ class TileSale {
         try {
             $sql = "SELECT ts.*, 
                            c.name as customer_name, c.phone as customer_phone,
-                           tp.code as product_code,
-                           d.name as design_name, col.name as color_name,
+                           tp.code as product_code, tp.gauge,
+                           d.name as design_name, d.code as design_code,
+                           col.name as color_name,
                            u.name as created_by_name
                     FROM {$this->table} ts
                     LEFT JOIN customers c ON ts.customer_id = c.id

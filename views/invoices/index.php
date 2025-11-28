@@ -196,20 +196,16 @@ if (!defined('RECORDS_PER_PAGE')) {
                                     : 'danger');
                             ?>
                         <tr>
-                            <td>
-                                <strong><?= htmlspecialchars($invoice['invoice_number']) ?></strong>
-                                <?php if ($invoice['production_id']): ?>
-                                <br>
-                                <small class="text-muted">
-                                    <i class="bi bi-gear"></i> PR-<?= str_pad(
-                                        $invoice['production_id'],
-                                        4,
-                                        '0',
-                                        STR_PAD_LEFT,
-                                    ) ?>
-                                </small>
-                                <?php endif; ?>
-                            </td>
+                           <td>
+    <strong><?= htmlspecialchars($invoice['invoice_number']) ?></strong>
+    <?php if ($invoice['production_id']): ?>
+    <br><small class="text-muted"><i class="bi bi-gear"></i> Production</small>
+    <?php elseif ($invoice['sale_type'] === 'tile_sale'): ?>
+    <br><small class="text-muted"><i class="bi bi-grid-3x3"></i> Tile Sale</small>
+    <?php elseif ($invoice['sale_type'] === 'coil_sale'): ?>
+    <br><small class="text-muted"><i class="bi bi-disc"></i> Coil Sale</small>
+    <?php endif; ?>
+</td>
                             <td><?= htmlspecialchars(
                                 $invoiceData['customer']['name'] ?? 'N/A',
                             ) ?></td>

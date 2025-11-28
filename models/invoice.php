@@ -17,14 +17,17 @@ class Invoice
         $invoiceNumber = $this->generateInvoiceNumber();
 
         $sql = "INSERT INTO {$this->table} 
-                (sale_id, production_id, invoice_number, invoice_shape, total, tax, shipping, 
-                 paid_amount, status, immutable_hash) 
-                VALUES (:sale_id, :production_id, :invoice_number, :invoice_shape, :total, 
-                        :tax, :shipping, :paid_amount, :status, :hash)";
+                (sale_type, sale_reference_id, sale_id, production_id, invoice_number, 
+                 invoice_shape, total, tax, shipping, paid_amount, status, immutable_hash) 
+                VALUES (:sale_type, :sale_reference_id, :sale_id, :production_id, 
+                        :invoice_number, :invoice_shape, :total, :tax, :shipping, 
+                        :paid_amount, :status, :hash)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
-            ':sale_id' => $data['sale_id'],
+            ':sale_type' => $data['sale_type'] ?? null,
+            ':sale_reference_id' => $data['sale_reference_id'] ?? null,
+            ':sale_id' => $data['sale_id'] ?? null,
             ':production_id' => $data['production_id'] ?? null,
             ':invoice_number' => $invoiceNumber,
             ':invoice_shape' => json_encode($data['invoice_shape']),
@@ -77,6 +80,28 @@ class Invoice
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':sale_id' => $saleId]);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Find invoice by tile sale ID (NEW METHOD)
+     */
+    public function findByTileSale($tileSaleId)
+    {
+        $sql = "SELECT * FROM {$this->table} 
+                WHERE sale_type = 'tile_sale' 
+                AND sale_reference_id = :tile_sale_id 
+                ORDER BY created_at DESC 
+                LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':tile_sale_id' => $tileSaleId]);
+        $result = $stmt->fetch();
+
+        if ($result && isset($result['invoice_shape'])) {
+            $result['invoice_shape'] = json_decode($result['invoice_shape'], true);
+        }
+
+        return $result;
     }
 
     public function getAll($limit = 10, $offset = 0, $status = '')
