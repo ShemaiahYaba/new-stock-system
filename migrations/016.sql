@@ -1,18 +1,26 @@
--- Grant tile permissions to Super Admins
-INSERT INTO user_permissions (user_id, module, actions)
-SELECT id, 'design_management', '["view","create","edit","delete"]'
-FROM users 
-WHERE role = 'super_admin' AND deleted_at IS NULL
-ON DUPLICATE KEY UPDATE actions = '["view","create","edit","delete"]';
+-- Migration: Add polymorphic invoice support for multiple sale types
+-- Date: 2024-11-28
+-- Purpose: Allow invoices to reference tile_sales, coil sales, and production
 
-INSERT INTO user_permissions (user_id, module, actions)
-SELECT id, 'tile_management', '["view","create","edit","delete"]'
-FROM users 
-WHERE role = 'super_admin' AND deleted_at IS NULL
-ON DUPLICATE KEY UPDATE actions = '["view","create","edit","delete"]';
+-- Add new columns for polymorphic relationship
+ALTER TABLE invoices 
+ADD COLUMN sale_type ENUM('coil_sale', 'tile_sale', 'production') NULL AFTER sale_id,
+ADD COLUMN sale_reference_id INT NULL AFTER sale_type;
 
-INSERT INTO user_permissions (user_id, module, actions)
-SELECT id, 'tile_sales', '["view","create","edit","delete"]'
-FROM users 
-WHERE role = 'super_admin' AND deleted_at IS NULL
-ON DUPLICATE KEY UPDATE actions = '["view","create","edit","delete"]';
+-- Make old sale_id nullable for backwards compatibility
+ALTER TABLE invoices 
+MODIFY COLUMN sale_id INT NULL;
+
+-- Add index for performance on polymorphic queries
+CREATE INDEX idx_sale_reference ON invoices(sale_type, sale_reference_id);
+
+-- Migrate existing coil sales to new structure
+UPDATE invoices 
+SET sale_type = 'coil_sale',
+    sale_reference_id = sale_id
+WHERE sale_id IS NOT NULL AND sale_type IS NULL;
+
+-- Migrate existing production-based invoices
+UPDATE invoices 
+SET sale_type = 'production'
+WHERE production_id IS NOT NULL AND sale_type IS NULL;

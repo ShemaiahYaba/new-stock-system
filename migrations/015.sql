@@ -94,9 +94,9 @@ CREATE TABLE IF NOT EXISTS tile_sales (
 
 -- Step 5: Seed initial designs (optional)
 INSERT INTO designs (code, name, description, is_active, created_by, created_at) VALUES
-('MILANO', 'Milano', 'Milano roofing tile design', 1, 1, NOW()),
-('SHINGLE', 'Shingle', 'Shingle roofing tile design', 1, 1, NOW()),
-('CORONA', 'Corona', 'Corona roofing tile design', 1, 1, NOW())
+('MILANO', 'Milano', 'Milano roofing tile design', 1, 5, NOW()),
+('SHINGLE', 'Shingle', 'Shingle roofing tile design', 5, 1, NOW()),
+('CORONA', 'Corona', 'Corona roofing tile design', 1, 5, NOW())
 ON DUPLICATE KEY UPDATE name = name;
 
 -- Migration completed successfully

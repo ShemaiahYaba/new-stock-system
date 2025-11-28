@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 27, 2025 at 09:06 AM
+-- Generation Time: Nov 28, 2025 at 09:15 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -215,11 +215,11 @@ INSERT INTO `coils` (`id`, `code`, `name`, `color`, `color_id`, `net_weight`, `m
 (199, 'AS238', 'Alusteel coil', 'GBeige', 14, 3374.00, 2251.00, '0.18', 'alusteel', 'available', 5, '2025-11-11 08:59:26', '2025-11-14 15:15:53', NULL),
 (200, 'AS239', 'Alusteel coil', 'TBlack', 12, 3332.00, 2243.00, '0.18', 'alusteel', 'available', 5, '2025-11-11 09:00:08', '2025-11-14 15:16:44', NULL),
 (201, 'AS240', 'Alusteel coil', 'TBlack', 12, 3336.00, 2253.00, '0.18', 'alusteel', 'available', 5, '2025-11-11 09:00:48', '2025-11-14 15:17:33', NULL),
-(202, 'AS242', 'Alusteel coil', 'PGreen', 10, 3050.00, 1765.00, '0.24', 'alusteel', 'available', 5, '2025-11-11 09:01:29', '2025-11-14 15:18:36', NULL),
+(202, 'AS242', 'Alusteel coil', 'PGreen', 10, 3050.00, 1765.00, '0.18', 'alusteel', 'available', 5, '2025-11-11 09:01:29', '2025-11-27 11:53:31', NULL),
 (203, 'AS243', 'Alusteel coil', 'PGreen', 10, 3890.00, 2303.00, '0.24', 'alusteel', 'available', 5, '2025-11-11 09:02:13', '2025-11-14 15:19:42', NULL),
-(204, 'AS244', 'Alusteel coil', 'IBeige', 9, 3202.00, 2161.00, '0.24', 'alusteel', 'available', 5, '2025-11-11 09:02:55', '2025-11-14 15:20:47', NULL),
+(204, 'AS244', 'Alusteel coil', 'IBeige', 9, 3202.00, 2161.00, '0.18', 'alusteel', 'available', 5, '2025-11-11 09:02:55', '2025-11-27 11:53:57', NULL),
 (205, 'AS245', 'Alusteel coil', 'BGreen', 15, 3184.00, 1896.00, '0.24', 'alusteel', 'available', 5, '2025-11-11 09:03:40', '2025-11-14 15:21:49', NULL),
-(206, 'AS246', 'Alusteel coil', 'PGreen', 10, 3478.00, 2085.00, '0.24', 'alusteel', 'available', 5, '2025-11-11 09:04:22', '2025-11-14 15:22:53', NULL),
+(206, 'AS246', 'Alusteel coil', 'PGreen', 10, 3478.00, 2085.00, '0.18', 'alusteel', 'available', 5, '2025-11-11 09:04:22', '2025-11-27 11:54:20', NULL),
 (207, 'AS247', 'Alusteel coil', 'IBeige', 9, 3554.00, 2109.00, '0.24', 'alusteel', 'available', 5, '2025-11-11 09:05:00', '2025-11-14 15:23:43', NULL),
 (208, 'AS248', 'Alusteel coil', 'IBeige', 9, 3560.00, 2118.00, '0.24', 'alusteel', 'available', 5, '2025-11-11 09:05:46', '2025-11-14 15:24:39', NULL),
 (209, 'AS249', 'Alusteel coil', 'IBeige', 9, 3600.00, 2164.00, '0.24', 'alusteel', 'available', 5, '2025-11-11 09:06:44', '2025-11-14 15:25:56', NULL),
@@ -588,7 +588,64 @@ INSERT INTO `coils` (`id`, `code`, `name`, `color`, `color_id`, `net_weight`, `m
 (572, 'K227', 'K Zinc coil', '', 18, 2914.00, 1455.00, '0.20', 'kzinc', 'available', 5, '2025-11-17 11:43:56', NULL, NULL),
 (573, 'K225', 'K Zinc coil', '', 18, 2908.00, 1455.00, '0.20', 'kzinc', 'available', 5, '2025-11-17 11:45:00', NULL, NULL),
 (574, 'K282', 'K Zinc coil', '', 18, 2940.00, 1455.00, '0.20', 'kzinc', 'available', 5, '2025-11-17 11:54:12', NULL, NULL),
-(575, 'K283', 'K Zinc coil', '', 18, 2944.00, 1455.00, '0.20', 'kzinc', 'available', 5, '2025-11-17 11:55:28', NULL, NULL);
+(575, 'K283', 'K Zinc coil', '', 18, 2944.00, 1455.00, '0.20', 'kzinc', 'available', 5, '2025-11-17 11:55:28', NULL, NULL),
+(576, 'A1', 'Aluminium coil', '', 9, 1845.00, 1180.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:21:29', NULL, NULL),
+(577, 'A2', 'Aluminium coil', '', 9, 1804.00, 1155.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:22:24', NULL, NULL),
+(578, 'A3', 'Aluminium coil', '', 9, 1782.00, 1220.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:23:31', NULL, NULL),
+(579, 'A4', 'Aluminium coil', '', 9, 1805.00, 1226.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:24:36', NULL, NULL),
+(580, 'A5', 'Aluminium coil', '', 14, 1792.00, 1147.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:25:55', NULL, NULL),
+(581, 'A6', 'Aluminium coil', '', 14, 1899.00, 1225.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:26:50', NULL, NULL),
+(582, 'A7', 'Aluminium coil', '', 14, 1849.00, 1272.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:27:42', NULL, NULL),
+(583, 'A8', 'Aluminium coil', '', 13, 1772.00, 1211.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:28:29', NULL, NULL),
+(584, 'A9', 'Aluminium coil', '', 13, 1777.00, 1215.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:29:12', NULL, NULL),
+(585, 'A10', 'Aluminium coil', '', 13, 1911.00, 0.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:29:46', NULL, NULL),
+(586, 'A11', 'Aluminium coil', '', 12, 1898.00, 1220.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:30:30', NULL, NULL),
+(587, 'A12', 'Aluminium coil', '', 15, 1823.00, 1255.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:31:21', NULL, NULL),
+(588, 'A13', 'Aluminium coil', '', 15, 1870.00, 0.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:31:59', NULL, NULL),
+(589, 'A14', 'Aluminium coil', '', 15, 1870.00, 1195.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:32:53', NULL, NULL),
+(590, 'A15', 'Aluminium coil', '', 15, 1817.00, 1160.00, '0.5', 'aluminum', 'available', 5, '2025-11-25 12:33:41', NULL, NULL),
+(591, 'A16', 'Aluminium coil', '', 9, 1844.00, 1178.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:34:34', NULL, NULL),
+(592, 'A17', 'Aluminium coil', '', 9, 1811.00, 1158.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:35:23', NULL, NULL),
+(593, 'A18', 'Aluminium coil', '', 9, 1792.00, 1220.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:36:02', NULL, NULL),
+(594, 'A19', 'Aluminium coil', '', 14, 1910.00, 1232.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:36:57', NULL, NULL),
+(595, 'A20', 'Aluminium coil', '', 14, 1945.00, 1330.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:37:38', NULL, NULL),
+(596, 'A21', 'Aluminium coil', '', 14, 1853.00, 1275.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:38:33', NULL, NULL),
+(597, 'A22', 'Aluminium coil', '', 13, 1770.00, 1211.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:39:46', NULL, NULL),
+(598, 'A23', 'Aluminium coil', '', 13, 1923.00, 1225.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:40:27', NULL, NULL),
+(599, 'A24', 'Aluminium coil', '', 13, 1728.00, 1108.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:41:10', NULL, NULL),
+(600, 'A25', 'Aluminium coil', '', 12, 1897.00, 1220.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:42:02', NULL, NULL),
+(601, 'A26', 'Aluminium coil', '', 12, 1903.00, 1222.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:42:49', NULL, NULL),
+(602, 'A27', 'Aluminium coil', '', 15, 1813.00, 1158.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:43:33', NULL, NULL),
+(603, 'A28', 'Aluminium coil', '', 11, 1768.00, 1214.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:44:20', NULL, NULL),
+(604, 'A29', 'Aluminium coil', '', 11, 1776.00, 1220.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:44:59', NULL, NULL),
+(605, 'A30', 'Aluminium coil', '', 11, 1784.00, 1222.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:45:36', NULL, NULL),
+(606, 'A31', 'Aluminium coil', '', 14, 1998.00, 1290.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:46:23', NULL, NULL),
+(607, 'A32', 'Aluminium coil', '', 12, 2086.00, 2246.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:47:09', NULL, NULL),
+(608, 'A33', 'Aluminium coil', '', 18, 2190.00, 2351.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:48:00', NULL, NULL),
+(609, 'A34', 'Aluminium coil', '', 18, 2192.00, 2353.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:49:01', NULL, NULL),
+(610, 'A35', 'Aluminium coil', '', 11, 2138.00, 2291.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:49:46', NULL, NULL),
+(611, 'A36', 'Aluminium coil', '', 11, 2105.00, 2262.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:50:34', NULL, NULL),
+(612, 'A37', 'Aluminium coil', '', 11, 2112.00, 2267.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:51:21', NULL, NULL),
+(613, 'A38', 'Aluminium coil', '', 15, 2087.00, 1750.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:52:09', NULL, NULL),
+(614, 'A39', 'Aluminium coil', '', 15, 2086.00, 1750.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:56:17', NULL, NULL),
+(615, 'A40', 'Aluminium coil', '', 15, 2169.00, 2331.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:57:07', NULL, NULL),
+(616, 'A41', 'Aluminium coil', '', 15, 2183.00, 2341.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:57:57', NULL, NULL),
+(617, 'A42', 'Aluminium coil', '', 9, 2102.00, 1759.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:59:07', NULL, NULL),
+(618, 'A43', 'Aluminium coil', '', 9, 2114.00, 1764.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 12:59:59', NULL, NULL),
+(619, 'A44', 'Aluminium coil', '', 15, 1971.00, 1347.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:00:41', NULL, NULL),
+(620, 'A45', 'Aluminium coil', '', 15, 1833.00, 1262.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:01:25', NULL, NULL),
+(621, 'A46', 'Aluminium coil', '', 12, 2044.00, 2203.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:02:13', NULL, NULL),
+(622, 'A47', 'Aluminium coil', '', 12, 2045.00, 2203.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:03:41', NULL, NULL),
+(623, 'A48', 'Aluminium coil', '', 9, 1787.00, 1907.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:04:32', NULL, NULL),
+(624, 'A49', 'Aluminium coil', '', 9, 1788.00, 1908.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:05:21', NULL, NULL),
+(625, 'A50', 'Aluminium coil', '', 9, 1773.00, 1898.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:06:05', NULL, NULL),
+(626, 'A51', 'Aluminium coil', '', 14, 2021.00, 1697.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:06:55', NULL, NULL),
+(627, 'A52', 'Aluminium coil', '', 14, 2029.00, 1702.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:07:45', NULL, NULL),
+(628, 'A53', 'Aluminium coil', '', 13, 2071.00, 2219.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:08:53', NULL, NULL),
+(629, 'A54', 'Aluminium coil', '', 13, 2085.00, 1747.00, '0.55', 'kzinc', 'available', 5, '2025-11-25 13:48:09', NULL, NULL),
+(630, 'A55', 'Aluminium coil', '', 13, 2080.00, 1745.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:48:58', NULL, NULL),
+(631, 'A56', 'Aluminium coil', '', 13, 2079.00, 2225.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:49:39', NULL, NULL),
+(632, 'A57', 'Aluminium coil', '', 13, 1914.00, 2054.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:50:21', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -623,8 +680,7 @@ INSERT INTO `colors` (`id`, `code`, `name`, `hex_code`, `is_active`, `created_by
 (16, 'IWhite', 'I/White', '#FFFFF0', 1, 5, '2025-11-11 20:27:37', '2025-11-12 06:58:08', NULL),
 (17, 'STest', 'S/Test', NULL, 0, 5, '2025-11-11 20:51:24', '2025-11-11 21:10:40', '2025-11-11 21:10:40'),
 (18, 'N/Brown', 'N/brown', NULL, 1, 5, '2025-11-13 15:54:15', '2025-11-13 15:54:44', NULL),
-(19, 'AL/Skin', 'AL/Skin', NULL, 1, 5, '2025-11-14 09:13:33', '2025-11-14 09:17:30', NULL),
-(20, 'BLACK', 'BLACK', '#000000', 1, 1, '2025-11-27 03:03:06', NULL, NULL);
+(19, 'AL/Skin', 'AL/Skin', NULL, 1, 5, '2025-11-14 09:13:33', '2025-11-14 09:17:30', NULL);
 
 -- --------------------------------------------------------
 
@@ -653,8 +709,7 @@ INSERT INTO `customers` (`id`, `name`, `email`, `phone`, `address`, `company`, `
 (1, 'Mr Lawal', 'customer1@example.com', '09039988198', 'NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA', 'HEXA', 3, '2025-11-05 09:34:04', NULL, NULL),
 (3, 'Stevo Aluminium', 'stevoaluminum@gmail.com', '08032218808', NULL, 'Stevo Aluminium IG LTD', 5, '2025-11-08 12:56:42', '2025-11-08 13:11:09', NULL),
 (4, 'Usman Madugu', 'omale.ochigbo@obumek360.app', '07071132619', 'Kaduna State', 'Usman Aluminium Ltd', 5, '2025-11-17 12:31:01', '2025-11-17 14:17:29', NULL),
-(5, 'Adams', 'adamjames@yahoo.com', '08055084883', 'Kubwa Abuja', 'Adams Aluminium Ltd', 5, '2025-11-19 08:34:00', NULL, NULL),
-(6, 'ENGINEER DAVID', 'architouchengineering@email.com', '09039988198', 'NO. 4C, ZONE D, MILLONAIRE QUATERS, BYAZHIN, KUBWA, ABUJA', 'ARCHITOUOCH ENGINEERING', 1, '2025-11-27 03:09:59', NULL, NULL);
+(5, 'Adams', 'adamjames@yahoo.com', '08055084883', 'Kubwa Abuja', 'Adams Aluminium Ltd', 5, '2025-11-19 08:34:00', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -679,9 +734,9 @@ CREATE TABLE `designs` (
 --
 
 INSERT INTO `designs` (`id`, `code`, `name`, `description`, `is_active`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'MILANO', 'Milano', 'Milano roofing tile design', 1, 1, '2025-11-27 02:29:18', NULL, NULL),
-(2, 'SHINGLE', 'Shingle', 'Shingle roofing tile design', 1, 1, '2025-11-27 02:29:18', NULL, NULL),
-(3, 'CORONA', 'Corona', 'Corona roofing tile design', 1, 1, '2025-11-27 02:29:18', NULL, NULL);
+(1, 'MILANO', 'Milano', 'Milano roofing tile design', 1, 5, '2025-11-28 20:11:09', NULL, NULL),
+(2, 'SHINGLE', 'Shingle', 'Shingle roofing tile design', 5, 1, '2025-11-28 20:11:09', NULL, NULL),
+(3, 'CORONA', 'Corona', 'Corona roofing tile design', 1, 5, '2025-11-28 20:11:09', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -691,7 +746,9 @@ INSERT INTO `designs` (`id`, `code`, `name`, `description`, `is_active`, `create
 
 CREATE TABLE `invoices` (
   `id` int(11) NOT NULL,
-  `sale_id` int(11) NOT NULL,
+  `sale_id` int(11) DEFAULT NULL,
+  `sale_type` enum('coil_sale','tile_sale','production') DEFAULT NULL,
+  `sale_reference_id` int(11) DEFAULT NULL,
   `production_id` int(11) DEFAULT NULL,
   `invoice_number` varchar(50) NOT NULL,
   `invoice_shape` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Complete invoice data structure' CHECK (json_valid(`invoice_shape`)),
@@ -717,10 +774,10 @@ CREATE TABLE `invoices` (
 -- Dumping data for table `invoices`
 --
 
-INSERT INTO `invoices` (`id`, `sale_id`, `production_id`, `invoice_number`, `invoice_shape`, `subtotal`, `tax_type`, `tax_value`, `tax_amount`, `discount_type`, `discount_value`, `discount_amount`, `total`, `tax`, `other_charges`, `paid_amount`, `shipping`, `status`, `created_at`, `updated_at`, `immutable_hash`) VALUES
-(35, 49, NULL, 'INV-2025-000001', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Usman Madugu\\\",\\\"company\\\":\\\"Usman Aluminium Ltd\\\",\\\"email\\\":\\\"omale.ochigbo@obumek360.app\\\",\\\"phone\\\":\\\"07071132619\\\",\\\"address\\\":\\\"Kaduna State\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-17 12:51:31\\\",\\\"ref\\\":\\\"#SO-20251117-000049\\\",\\\"sale_id\\\":\\\"49\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"D31 - I\\\\\\/beige Aluminium coil\\\",\\\"quantity\\\":2073000,\\\"qty_text\\\":\\\"2,073,000.00 meters\\\",\\\"unit_price\\\":5800,\\\"subtotal\\\":12023400000}],\\\"subtotal\\\":12023400000,\\\"order_tax\\\":901755000,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":12925155000,\\\"paid\\\":0,\\\"due\\\":12925155000,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 9999999999.99, 99999999.99, 0.00, 9999999999.99, 0.00, 'paid', '2025-11-17 12:51:31', '2025-11-17 14:13:42', '7c7814f9a19819350f8f7ddac27e19294ce7ce45a0f4f8be91e61d2698fa53d8'),
-(36, 50, NULL, 'INV-2025-000002', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Usman Madugu\\\",\\\"company\\\":\\\"Usman Aluminium Ltd\\\",\\\"email\\\":\\\"omale.ochigbo@obumek360.app\\\",\\\"phone\\\":\\\"07071132619\\\",\\\"address\\\":\\\"Kaduna State\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-18 11:43:49\\\",\\\"ref\\\":\\\"#SO-20251118-000050\\\",\\\"sale_id\\\":\\\"50\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"AS382 - Alusteel coil\\\",\\\"quantity\\\":2000,\\\"qty_text\\\":\\\"2,000.00 meters\\\",\\\"unit_price\\\":400,\\\"subtotal\\\":800000}],\\\"subtotal\\\":800000,\\\"order_tax\\\":60000,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":860000,\\\"paid\\\":0,\\\"due\\\":860000,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 860000.00, 60000.00, 0.00, 860000.00, 0.00, 'paid', '2025-11-18 11:43:49', '2025-11-18 11:47:09', '398c81e4f784b8e027704a50d1ff6c1a1e7255e07abc570acab26b28e2a8bb30'),
-(37, 51, NULL, 'INV-2025-000003', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Adams\\\",\\\"company\\\":\\\"Adams Aluminium Ltd\\\",\\\"email\\\":\\\"adamjames@yahoo.com\\\",\\\"phone\\\":\\\"08055084883\\\",\\\"address\\\":\\\"Kubwa Abuja\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-19 13:23:23\\\",\\\"ref\\\":\\\"#SO-20251119-000051\\\",\\\"sale_id\\\":\\\"51\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"AS369 - Alusteel coil\\\",\\\"quantity\\\":6000,\\\"qty_text\\\":\\\"6,000.00 meters\\\",\\\"unit_price\\\":10800,\\\"subtotal\\\":64800000}],\\\"subtotal\\\":64800000,\\\"order_tax\\\":4860000,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":69660000,\\\"paid\\\":0,\\\"due\\\":69660000,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 69660000.00, 4860000.00, 0.00, 0.00, 0.00, 'unpaid', '2025-11-19 13:23:23', NULL, '1f2fb187423386cbd8835bea12e071429905c8168c603daff928581c185765ca');
+INSERT INTO `invoices` (`id`, `sale_id`, `sale_type`, `sale_reference_id`, `production_id`, `invoice_number`, `invoice_shape`, `subtotal`, `tax_type`, `tax_value`, `tax_amount`, `discount_type`, `discount_value`, `discount_amount`, `total`, `tax`, `other_charges`, `paid_amount`, `shipping`, `status`, `created_at`, `updated_at`, `immutable_hash`) VALUES
+(35, 49, 'coil_sale', 49, NULL, 'INV-2025-000001', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Usman Madugu\\\",\\\"company\\\":\\\"Usman Aluminium Ltd\\\",\\\"email\\\":\\\"omale.ochigbo@obumek360.app\\\",\\\"phone\\\":\\\"07071132619\\\",\\\"address\\\":\\\"Kaduna State\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-17 12:51:31\\\",\\\"ref\\\":\\\"#SO-20251117-000049\\\",\\\"sale_id\\\":\\\"49\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"D31 - I\\\\\\/beige Aluminium coil\\\",\\\"quantity\\\":2073000,\\\"qty_text\\\":\\\"2,073,000.00 meters\\\",\\\"unit_price\\\":5800,\\\"subtotal\\\":12023400000}],\\\"subtotal\\\":12023400000,\\\"order_tax\\\":901755000,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":12925155000,\\\"paid\\\":0,\\\"due\\\":12925155000,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 9999999999.99, 99999999.99, 0.00, 9999999999.99, 0.00, 'paid', '2025-11-17 12:51:31', '2025-11-28 20:11:53', '7c7814f9a19819350f8f7ddac27e19294ce7ce45a0f4f8be91e61d2698fa53d8'),
+(36, 50, 'coil_sale', 50, NULL, 'INV-2025-000002', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Usman Madugu\\\",\\\"company\\\":\\\"Usman Aluminium Ltd\\\",\\\"email\\\":\\\"omale.ochigbo@obumek360.app\\\",\\\"phone\\\":\\\"07071132619\\\",\\\"address\\\":\\\"Kaduna State\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-18 11:43:49\\\",\\\"ref\\\":\\\"#SO-20251118-000050\\\",\\\"sale_id\\\":\\\"50\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"AS382 - Alusteel coil\\\",\\\"quantity\\\":2000,\\\"qty_text\\\":\\\"2,000.00 meters\\\",\\\"unit_price\\\":400,\\\"subtotal\\\":800000}],\\\"subtotal\\\":800000,\\\"order_tax\\\":60000,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":860000,\\\"paid\\\":0,\\\"due\\\":860000,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 860000.00, 60000.00, 0.00, 860000.00, 0.00, 'paid', '2025-11-18 11:43:49', '2025-11-28 20:11:53', '398c81e4f784b8e027704a50d1ff6c1a1e7255e07abc570acab26b28e2a8bb30'),
+(37, 51, 'coil_sale', 51, NULL, 'INV-2025-000003', '\"{\\\"company\\\":{\\\"name\\\":\\\"Obumek Alluminium Company Ltd.\\\",\\\"address\\\":\\\"Plot E18-E19, Saburi, Dei-Dei, FCT, Abuja\\\",\\\"phone\\\":\\\"+2348065336645\\\",\\\"email\\\":\\\"info@obumekalluminium.com\\\"},\\\"customer\\\":{\\\"name\\\":\\\"Adams\\\",\\\"company\\\":\\\"Adams Aluminium Ltd\\\",\\\"email\\\":\\\"adamjames@yahoo.com\\\",\\\"phone\\\":\\\"08055084883\\\",\\\"address\\\":\\\"Kubwa Abuja\\\"},\\\"meta\\\":{\\\"date\\\":\\\"2025-11-19 13:23:23\\\",\\\"ref\\\":\\\"#SO-20251119-000051\\\",\\\"sale_id\\\":\\\"51\\\",\\\"payment_status\\\":\\\"Unpaid\\\"},\\\"items\\\":[{\\\"description\\\":\\\"AS369 - Alusteel coil\\\",\\\"quantity\\\":6000,\\\"qty_text\\\":\\\"6,000.00 meters\\\",\\\"unit_price\\\":10800,\\\"subtotal\\\":64800000}],\\\"subtotal\\\":64800000,\\\"order_tax\\\":4860000,\\\"discount\\\":0,\\\"shipping\\\":0,\\\"grand_total\\\":69660000,\\\"paid\\\":0,\\\"due\\\":69660000,\\\"notes\\\":{\\\"receipt_statement\\\":\\\"Received the above goods in good condition.\\\",\\\"refund_policy\\\":\\\"No refund of money after payment\\\",\\\"custom_notes\\\":\\\"\\\"},\\\"signatures\\\":{\\\"customer\\\":null,\\\"for_company\\\":\\\"Obumek Alluminium Company Ltd.\\\"}}\"', 0.00, 'fixed', 0.00, 0.00, 'fixed', 0.00, 0.00, 69660000.00, 4860000.00, 0.00, 0.00, 0.00, 'unpaid', '2025-11-19 13:23:23', '2025-11-28 20:11:53', '1f2fb187423386cbd8835bea12e071429905c8168c603daff928581c185765ca');
 
 -- --------------------------------------------------------
 
@@ -929,14 +986,6 @@ CREATE TABLE `tile_products` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `tile_products`
---
-
-INSERT INTO `tile_products` (`id`, `code`, `design_id`, `color_id`, `gauge`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'MILANO-IBEIGE-NORMAL', 1, 9, 'normal', 'available', 1, '2025-11-27 03:02:25', '2025-11-27 07:10:27', NULL),
-(2, 'SHINGLE-BLACK-LIGHT', 2, 20, 'light', 'available', 1, '2025-11-27 03:03:29', '2025-11-27 03:04:10', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -958,15 +1007,6 @@ CREATE TABLE `tile_sales` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `tile_sales`
---
-
-INSERT INTO `tile_sales` (`id`, `customer_id`, `tile_product_id`, `quantity`, `unit_price`, `total_amount`, `status`, `notes`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 6, 1, 500.00, 1000.00, 500000.00, 'completed', '', 1, '2025-11-27 06:56:57', NULL, NULL),
-(2, 6, 1, 45.00, 1000.00, 45000.00, 'completed', '', 1, '2025-11-27 07:03:42', NULL, NULL),
-(3, 6, 1, 10.50, 1000.00, 10500.00, 'completed', '', 1, '2025-11-27 07:26:47', NULL, NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -987,18 +1027,6 @@ CREATE TABLE `tile_stock_ledger` (
   `created_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `tile_stock_ledger`
---
-
-INSERT INTO `tile_stock_ledger` (`id`, `tile_product_id`, `transaction_date`, `transaction_code`, `quantity_in`, `quantity_out`, `balance`, `reference_type`, `reference_id`, `description`, `created_by`, `created_at`) VALUES
-(1, 2, '2025-11-27 03:04:10', '', 20000.00, 0.00, 20000.00, 'stock_in', NULL, '', 1, '2025-11-27 03:04:10'),
-(2, 1, '2025-11-27 03:07:10', '', 7545.00, 0.00, 7545.00, 'stock_in', NULL, '', 1, '2025-11-27 03:07:10'),
-(3, 1, '2025-11-27 06:56:57', NULL, 0.00, 500.00, 7045.00, 'sale', 1, 'Sale to customer', 1, '2025-11-27 06:56:57'),
-(4, 1, '2025-11-27 07:03:42', NULL, 0.00, 45.00, 7000.00, 'sale', 2, 'Sale to customer', 1, '2025-11-27 07:03:42'),
-(5, 1, '2025-11-27 07:10:27', '', 10.50, 0.00, 7010.50, 'stock_in', NULL, '', 1, '2025-11-27 07:10:27'),
-(6, 1, '2025-11-27 07:26:47', NULL, 0.00, 10.50, 7000.00, 'sale', 3, 'Sale to customer', 1, '2025-11-27 07:26:47');
 
 -- --------------------------------------------------------
 
@@ -1022,7 +1050,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `name`, `role`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'admin@example.com', '$2y$10$RBop9EOLBg.Vo9AKPBp.xOnx/18TGybfpkmU.//PgdAwLFSXr3GZ6', 'SHEMAIAH WAMBEBE YABA-SHIAKA', 'super_admin', '2025-11-05 08:37:50', '2025-11-25 20:26:46', NULL),
+(1, 'admin@example.com', '$2y$10$RBop9EOLBg.Vo9AKPBp.xOnx/18TGybfpkmU.//PgdAwLFSXr3GZ6', 'SHEMAIAH WAMBEBE YABA-SHIAKA', 'super_admin', '2025-11-05 08:37:50', '2025-11-28 20:15:07', '2025-11-28 20:14:58'),
 (2, 'admin@obumek360.app', '$2y$10$RBop9EOLBg.Vo9AKPBp.xOnx/18TGybfpkmU.//PgdAwLFSXr3GZ6', 'Engineer Martin', 'super_admin', '2025-11-05 08:37:50', '2025-11-06 22:31:43', NULL),
 (3, 'admin2@obumek360.app', '$2y$10$CeQL8JveXCejBemhfk2lS.L.0b8e.2qDn9KhTuGfpoQEXAYtJC5iS', 'Emeka Ezealisiji', 'super_admin', '2025-11-05 08:48:31', '2025-11-08 11:22:09', NULL),
 (4, 'nkechi4ezealisisi@gmail.com', '$2y$10$JsrDljhm9SZujr8iwOwMGuxr0M5Yvry6RtPpnKemtL4hW/6V0exI6', 'Nkechi Ezealisiji', 'super_admin', '2025-11-07 13:21:22', NULL, NULL),
@@ -1064,43 +1092,20 @@ INSERT INTO `user_permissions` (`id`, `user_id`, `module`, `actions`, `created_a
 (45, 5, 'sales_management', '[\"view\",\"create\",\"edit\"]', '2025-11-08 12:32:11', NULL),
 (46, 5, 'reports', '[\"view\"]', '2025-11-08 12:32:11', NULL),
 (47, 5, 'dashboard', '[\"view\",\"create\"]', '2025-11-08 12:32:11', NULL),
-(48, 2, 'user_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(49, 2, 'customer_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(50, 2, 'stock_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(51, 2, 'sales_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(52, 2, 'warehouse_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(53, 2, 'color_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(54, 2, 'production_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(55, 2, 'invoice_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(56, 2, 'supply_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(57, 2, 'reports', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(58, 2, 'dashboard', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-12 07:02:23', NULL),
-(60, 2, 'design_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(61, 3, 'design_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(62, 4, 'design_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(63, 5, 'design_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(67, 2, 'tile_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(68, 3, 'tile_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(69, 4, 'tile_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(70, 5, 'tile_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(74, 2, 'tile_sales', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(75, 3, 'tile_sales', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(76, 4, 'tile_sales', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(77, 5, 'tile_sales', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 02:47:35', NULL),
-(78, 1, 'user_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(79, 1, 'customer_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(80, 1, 'stock_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(81, 1, 'sales_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(82, 1, 'warehouse_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(83, 1, 'color_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(84, 1, 'production_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(85, 1, 'invoice_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(86, 1, 'supply_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(87, 1, 'reports', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(88, 1, 'dashboard', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(89, 1, 'design_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(90, 1, 'tile_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL),
-(91, 1, 'tile_sales', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-27 07:36:32', NULL);
+(59, 2, 'user_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(60, 2, 'customer_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(61, 2, 'stock_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(62, 2, 'sales_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(63, 2, 'warehouse_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(64, 2, 'color_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(65, 2, 'production_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(66, 2, 'invoice_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(67, 2, 'supply_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(68, 2, 'reports', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(69, 2, 'dashboard', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(70, 2, 'design_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(71, 2, 'tile_management', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL),
+(72, 2, 'tile_sales', '[\"view\",\"create\",\"edit\",\"delete\"]', '2025-11-28 20:13:04', NULL);
 
 -- --------------------------------------------------------
 
@@ -1200,7 +1205,8 @@ ALTER TABLE `invoices`
   ADD KEY `idx_production_id` (`production_id`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_created_at` (`created_at`),
-  ADD KEY `idx_invoice_number` (`invoice_number`);
+  ADD KEY `idx_invoice_number` (`invoice_number`),
+  ADD KEY `idx_sale_reference` (`sale_type`,`sale_reference_id`);
 
 --
 -- Indexes for table `production`
@@ -1349,19 +1355,19 @@ ALTER TABLE `audit_log`
 -- AUTO_INCREMENT for table `coils`
 --
 ALTER TABLE `coils`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=576;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=633;
 
 --
 -- AUTO_INCREMENT for table `colors`
 --
 ALTER TABLE `colors`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `designs`
@@ -1415,19 +1421,19 @@ ALTER TABLE `supply_delivery`
 -- AUTO_INCREMENT for table `tile_products`
 --
 ALTER TABLE `tile_products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `tile_sales`
 --
 ALTER TABLE `tile_sales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `tile_stock_ledger`
 --
 ALTER TABLE `tile_stock_ledger`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -1439,7 +1445,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `user_permissions`
 --
 ALTER TABLE `user_permissions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT for table `warehouses`
