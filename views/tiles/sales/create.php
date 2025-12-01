@@ -1,13 +1,9 @@
 <?php
 /**
  * ============================================
- * COMPLETE FIXED FILE: views/tiles/sales/create.php
- * Replace the entire file with this version
+ * FIXED: views/tiles/sales/create.php
+ * Quick Calculator now updates in real-time!
  * ============================================
- * FIXES:
- * 1. Customers query now excludes deleted customers
- * 2. Quantity input accepts decimals
- * 3. Better error messages
  */
 require_once __DIR__ . '/../../../config/db.php';
 require_once __DIR__ . '/../../../config/constants.php';
@@ -17,10 +13,8 @@ require_once __DIR__ . '/../../../utils/helpers.php';
 $pageTitle = 'Create Tile Sale - ' . APP_NAME;
 
 $productModel = new TileProduct();
-
 $availableProducts = $productModel->getAvailable();
 
-// FIX: Get customers excluding deleted ones
 $db = Database::getInstance()->getConnection();
 $stmt = $db->query("SELECT * FROM customers WHERE deleted_at IS NULL ORDER BY name ASC LIMIT 1000");
 $customers = $stmt->fetchAll();
@@ -133,7 +127,6 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <div class="invalid-feedback">Please enter unit price.</div>
                         </div>
                         
-                        <!-- Total Amount Display -->
                         <div class="mb-3">
                             <div class="alert alert-success" id="totalDisplay" style="display: none;">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -195,25 +188,25 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             </div>
             
             <div class="card mt-3">
-    <div class="card-header bg-success text-white">
-        <i class="bi bi-calculator"></i> Quick Calculator
-    </div>
-    <div class="card-body">
-        <div class="mb-2">
-            <small class="text-muted">Quantity:</small>
-            <div id="calcQty" class="fw-bold fs-5 text-primary">-</div>
-        </div>
-        <div class="mb-2">
-            <small class="text-muted">Unit Price:</small>
-            <div id="calcPrice" class="fw-bold fs-5 text-primary">-</div>
-        </div>
-        <hr>
-        <div>
-            <small class="text-muted">Total Amount:</small>
-            <div id="calcTotal" class="fw-bold text-success" style="font-size: 1.5rem;">₦0.00</div>
-        </div>
-    </div>
-</div>
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-calculator"></i> Quick Calculator
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <small class="text-muted">Quantity:</small>
+                        <div id="calcQty" class="fw-bold fs-5 text-primary">-</div>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Unit Price:</small>
+                        <div id="calcPrice" class="fw-bold fs-5 text-primary">-</div>
+                    </div>
+                    <hr>
+                    <div>
+                        <small class="text-muted">Total Amount:</small>
+                        <div id="calcTotal" class="fw-bold text-success" style="font-size: 1.5rem;">₦0.00</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -237,7 +230,7 @@ document.getElementById('product_id').addEventListener('change', function() {
         availableStock = 0;
     }
     
-    updateTotal();
+    updateCalculator();
     checkQuantity();
 });
 
@@ -256,64 +249,69 @@ function checkQuantity() {
     }
 }
 
-// Update total calculation
-function updateTotal() {
+// Update calculator in real-time
+function updateCalculator() {
     const quantity = parseFloat(document.getElementById('quantity').value || 0);
     const unitPrice = parseFloat(document.getElementById('unit_price').value || 0);
     const total = quantity * unitPrice;
     
+    // Update quantity display
+    if (quantity > 0) {
+        document.getElementById('calcQty').textContent = quantity.toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) + ' pcs';
+    } else {
+        document.getElementById('calcQty').textContent = '-';
+    }
+    
+    // Update unit price display
+    if (unitPrice > 0) {
+        document.getElementById('calcPrice').textContent = '₦' + unitPrice.toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    } else {
+        document.getElementById('calcPrice').textContent = '-';
+    }
+    
+    // Update total display
     if (quantity > 0 && unitPrice > 0) {
-        // Update main total display
+        document.getElementById('calcTotal').textContent = '₦' + total.toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        // Also update main total display
         document.getElementById('totalAmount').textContent = total.toLocaleString('en-NG', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
         document.getElementById('totalDisplay').style.display = 'block';
-        
-        // Update quick calculator - THIS WAS MISSING!
-        document.getElementById('calcQty').textContent = quantity.toLocaleString('en-NG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }) + ' pcs';
-        
-        document.getElementById('calcPrice').textContent = '₦' + unitPrice.toLocaleString('en-NG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        
-        document.getElementById('calcTotal').textContent = '₦' + total.toLocaleString('en-NG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
     } else {
-        document.getElementById('totalDisplay').style.display = 'none';
-        
-        // Reset calculator display
-        document.getElementById('calcQty').textContent = '-';
-        document.getElementById('calcPrice').textContent = '-';
         document.getElementById('calcTotal').textContent = '₦0.00';
+        document.getElementById('totalDisplay').style.display = 'none';
     }
 }
 
-// CRITICAL: Add event listeners for real-time updates
+// Add event listeners for real-time updates
 document.getElementById('quantity').addEventListener('input', function() {
     checkQuantity();
-    updateTotal();
+    updateCalculator();
 });
 
 document.getElementById('quantity').addEventListener('keyup', function() {
     checkQuantity();
-    updateTotal();
+    updateCalculator();
 });
 
-document.getElementById('unit_price').addEventListener('input', updateTotal);
-document.getElementById('unit_price').addEventListener('keyup', updateTotal);
+document.getElementById('unit_price').addEventListener('input', updateCalculator);
+document.getElementById('unit_price').addEventListener('keyup', updateCalculator);
 
 // Trigger on page load if product is preselected
 if (document.getElementById('product_id').value) {
     document.getElementById('product_id').dispatchEvent(new Event('change'));
 }
 </script>
-
 
 <?php require_once __DIR__ . '/../../../layout/footer.php'; ?>

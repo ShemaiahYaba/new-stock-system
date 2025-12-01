@@ -86,12 +86,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <small class="text-muted">Accepts decimal values (e.g., 1500.5)</small>
                         </div>
                         
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="transaction_code" class="form-label">Transaction Code</label>
                             <input type="text" class="form-control" id="transaction_code" name="transaction_code" 
                                    placeholder="Optional reference (e.g., PO-2024-001)">
                             <small class="form-text text-muted">Optional purchase order or reference code</small>
-                        </div>
+                        </div> -->
                         
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>

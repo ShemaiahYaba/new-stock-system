@@ -1,6 +1,6 @@
 <?php
 /**
- * Reports View
+ * Reports View - Updated with Tiles Module Stats
  */
 
 require_once __DIR__ . '/../../config/db.php';
@@ -10,11 +10,13 @@ require_once __DIR__ . '/../../models/coil.php';
 require_once __DIR__ . '/../../models/customer.php';
 require_once __DIR__ . '/../../models/stock_entry.php';
 require_once __DIR__ . '/../../models/stock_ledger.php';
+require_once __DIR__ . '/../../models/tile_product.php';
+require_once __DIR__ . '/../../models/tile_sale.php';
 require_once __DIR__ . '/../../utils/helpers.php';
 
 $pageTitle = 'Reports - ' . APP_NAME;
 
-// Get statistics
+// Get statistics for coil/sheet module
 $saleModel = new Sale();
 $coilModel = new Coil();
 $customerModel = new Customer();
@@ -44,6 +46,20 @@ foreach ($factoryUseStock as $entry) {
     $totalFactoryUseMeters += $balance;
 }
 
+// ===== NEW: Get Tile Module Statistics =====
+$tileProductModel = new TileProduct();
+$tileSaleModel = new TileSale();
+
+$totalTileProducts = $tileProductModel->count();
+$totalTileSales = $tileSaleModel->count();
+
+// Calculate total tiles in stock
+$allTileProducts = $tileProductModel->getAll([], 10000, 0);
+$totalTilesInStock = 0;
+foreach ($allTileProducts as $product) {
+    $totalTilesInStock += floatval($product['current_stock'] ?? 0);
+}
+
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';
 ?>
@@ -54,43 +70,95 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <p class="text-muted">View system statistics and reports</p>
     </div>
     
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h6 class="card-title text-white">Total Sales</h6>
-                    <h2 class="mb-0"><?php echo $totalSales; ?></h2>
-                    <small>All time</small>
+    <!-- Coil/Sheet Module Stats -->
+    <div class="mb-4">
+        <h5 class="mb-3"><i class="bi bi-layers"></i> Coil & Sheet Module</h5>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h6 class="card-title text-white">Total Sales</h6>
+                        <h2 class="mb-0"><?php echo $totalSales; ?></h2>
+                        <small>All time</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h6 class="card-title text-white">Total Revenue</h6>
+                        <h2 class="mb-0"><?php echo formatCurrency($totalRevenue); ?></h2>
+                        <small>All time</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <h6 class="card-title text-white">Monthly Revenue</h6>
+                        <h2 class="mb-0"><?php echo formatCurrency($monthlyRevenue); ?></h2>
+                        <small><?php echo date('F Y'); ?></small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h6 class="card-title text-white">Total Customers</h6>
+                        <h2 class="mb-0"><?php echo $totalCustomers; ?></h2>
+                        <small>Active customers</small>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-3">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h6 class="card-title text-white">Total Revenue</h6>
-                    <h2 class="mb-0"><?php echo formatCurrency($totalRevenue); ?></h2>
-                    <small>All time</small>
+    </div>
+    
+    <!-- NEW: Roofing Tiles Module Stats -->
+    <div class="mb-4">
+        <h5 class="mb-3"><i class="bi bi-grid-3x3"></i> Roofing Tiles Module</h5>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-purple" style="background-color: #6f42c1;">
+                    <div class="card-body">
+                        <h6 class="card-title text-white">Tile Products</h6>
+                        <h2 class="mb-0"><?php echo $totalTileProducts; ?></h2>
+                        <small>Product variants</small>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-3">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h6 class="card-title text-white">Monthly Revenue</h6>
-                    <h2 class="mb-0"><?php echo formatCurrency($monthlyRevenue); ?></h2>
-                    <small><?php echo date('F Y'); ?></small>
+            
+            <div class="col-md-3">
+                <div class="card text-white bg-teal" style="background-color: #20c997;">
+                    <div class="card-body">
+                        <h6 class="card-title text-white">Tiles in Stock</h6>
+                        <h2 class="mb-0"><?php echo number_format($totalTilesInStock, 0); ?></h2>
+                        <small>Total pieces</small>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h6 class="card-title text-white">Total Customers</h6>
-                    <h2 class="mb-0"><?php echo $totalCustomers; ?></h2>
-                    <small>Active customers</small>
+            
+            <div class="col-md-3">
+                <div class="card text-white bg-dark">
+                    <div class="card-body">
+                        <h6 class="card-title text-white">Tile Sales</h6>
+                        <h2 class="mb-0"><?php echo $totalTileSales; ?></h2>
+                        <small>All time</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card border-2 border-primary">
+                    <div class="card-body text-center">
+                        <a href="/new-stock-system/index.php?page=tile_products" 
+                           class="text-decoration-none">
+                            <i class="bi bi-grid-3x3 text-primary" style="font-size: 2rem;"></i>
+                            <h6 class="mt-2 mb-0">View Tile Products</h6>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
