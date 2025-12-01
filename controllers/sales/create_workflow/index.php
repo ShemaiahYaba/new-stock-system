@@ -1,6 +1,6 @@
 <?php
 /**
- * Production Workflow Controller - FIXED STOCK ENTRY ID ISSUE
+ * Production Workflow Controller - UPDATED FOR ALUMINIUM
  * File: controllers/sales/create_workflow/index.php
  */
 
@@ -49,10 +49,11 @@ try {
         throw new Exception('Missing required production data');
     }
 
-    // ✅ Check if this is a KZINC coil
+    // ✅ UPDATED: Check if this is a KZINC coil (aluminium and alusteel use stock-based workflow)
     $coilModel = new Coil();
     $coil = $coilModel->findById($productionData['coil_id']);
-    $isKzinc = strtolower($coil['category']) === 'kzinc';
+    $coilCategory = strtolower($coil['category']);
+    $isKzinc = $coilCategory === 'kzinc';
 
     $db = Database::getInstance()->getConnection();
     $db->beginTransaction();
@@ -61,7 +62,7 @@ try {
     $primaryStockEntryId = null; // ✅ Initialize to track the stock entry
 
     // ========================================
-    // STEP 0: PRE-VALIDATE & GET STOCK ENTRY FOR ALUSTEEL
+    // STEP 0: PRE-VALIDATE & GET STOCK ENTRY FOR STOCK-BASED CATEGORIES (ALUSTEEL & ALUMINIUM)
     // ========================================
     if (!$isKzinc) {
         $stockEntryModel = new StockEntry();
@@ -110,7 +111,7 @@ try {
         // ✅ Set the primary stock entry (the first one we'll use)
         $primaryStockEntryId = $plannedDeductions[0]['entry_id'];
         
-        error_log("ALUSTEEL sale: Will use stock_entry_id = $primaryStockEntryId");
+        error_log("Stock-based sale ($coilCategory): Will use stock_entry_id = $primaryStockEntryId");
     } else {
         error_log("KZINC sale: No stock entry required");
     }
@@ -240,7 +241,7 @@ try {
     }
 
     // ========================================
-    // STEP 4: DEDUCT STOCK METERS (ALUSTEEL ONLY)
+    // STEP 4: DEDUCT STOCK METERS (STOCK-BASED CATEGORIES ONLY: ALUSTEEL & ALUMINIUM)
     // ========================================
     if (!$isKzinc) {
         // ✅ Use the pre-calculated deductions
@@ -285,8 +286,7 @@ try {
 
     logActivity(
         'Production Workflow Completed',
-        "Sale ID: $saleId, Production ID: $productionId, Invoice ID: $invoiceId, Customer: {$productionPaper['customer']['name']}, Type: " .
-            ($isKzinc ? 'KZINC' : 'Alusteel'),
+        "Sale ID: $saleId, Production ID: $productionId, Invoice ID: $invoiceId, Customer: {$productionPaper['customer']['name']}, Type: $coilCategory",
     );
 
     echo json_encode([

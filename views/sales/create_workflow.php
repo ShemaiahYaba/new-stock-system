@@ -340,7 +340,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <!-- ✅ UPDATED: Property Selection for Alusteel (renamed ID) -->
                         <div id="property_selection_alusteel" class="d-none">
                             <hr>
-                            <h5 class="mb-3">Alusteel Property Configuration</h5>
+                            <h5 class="mb-3">Property Configuration</h5>
                             <p class="text-muted">Define the properties for this stock</p>
                             
                             <div id="properties_container">
@@ -765,7 +765,7 @@ document.getElementById('warehouse_id').addEventListener('change', function() {
 });
 
 // ============================================================
-// TAB 1: COIL SELECTION (UPDATED FOR KZINC BYPASS)
+// TAB 1: COIL SELECTION (FIXED FOR ALUMINUM & ALUSTEEL)
 // ============================================================
 
 document.getElementById('coil_id').addEventListener('change', function() {
@@ -799,7 +799,7 @@ document.getElementById('coil_id').addEventListener('change', function() {
         
         coilMetadata.classList.remove('d-none');
         
-        // ✅ KZINC BYPASS LOGIC
+        // ✅ FIXED: Check if KZINC (aluminum and alusteel use stock-based workflow)
         if (category === 'kzinc') {
             console.log('✓ KZINC coil detected - bypassing stock entry');
             
@@ -831,12 +831,25 @@ document.getElementById('coil_id').addEventListener('change', function() {
             validateProductionTab();
             
         } else {
-            // ALUSTEEL: Show stock entry dropdown
+            // ✅ STOCK-BASED WORKFLOW: Show stock entry dropdown for ALUSTEEL & ALUMINUM
+            console.log(`✓ ${category.toUpperCase()} coil detected - using stock-based workflow`);
+            
             const stockEntryCol = stockEntrySelect.closest('.col-md-6');
             if (stockEntryCol) stockEntryCol.style.display = 'block';
             
             stockEntrySelect.disabled = true;
             stockEntrySelect.innerHTML = '<option value="">Loading stock entries...</option>';
+            
+            // ✅ Set coil state immediately (before fetching stock entries)
+            workflowState.coil = {
+                id: coilId,
+                code: option.dataset.code,
+                name: option.dataset.name,
+                category: option.dataset.category,
+                color_name: option.dataset.color_name,
+                weight: option.dataset.weight,
+                status: option.dataset.status
+            };
             
             // Fetch stock entries
             fetch(`/new-stock-system/controllers/sales/get_stock_entries.php?coil_id=${coilId}`)
@@ -890,7 +903,7 @@ document.getElementById('coil_id').addEventListener('change', function() {
 });
 
 // ============================================================
-// TAB 1: STOCK ENTRY SELECTION (ALUSTEEL ONLY)
+// TAB 1: STOCK ENTRY SELECTION (FOR ALUSTEEL & ALUMINUM)
 // ============================================================
 
 document.getElementById('stock_entry_id').addEventListener('change', function() {
@@ -903,24 +916,14 @@ document.getElementById('stock_entry_id').addEventListener('change', function() 
             meters_remaining: parseFloat(option.dataset.meters || 0)
         };
         
-        const coilSelect = document.getElementById('coil_id');
-        const coilOption = coilSelect.options[coilSelect.selectedIndex];
-        
-        workflowState.coil = {
-            id: coilSelect.value,
-            code: coilOption.dataset.code,
-            name: coilOption.dataset.name,
-            category: coilOption.dataset.category,
-            color: coilOption.dataset.color,
-            weight: coilOption.dataset.weight,
-            status: coilOption.dataset.status
-        };
-        
+        // workflowState.coil is already set from coil selection
         const category = String(workflowState.coil.category).toLowerCase();
         
         hideAllPropertyPanes();
         
-        if (category === 'alusteel') {
+        // ✅ FIXED: Check for both 'alusteel' and 'aluminum' (without 'i')
+        if (category === 'alusteel' || category === 'aluminum') {
+            console.log(`✓ Showing property panel for ${category.toUpperCase()}`);
             showAlusteelProperties();
         }
     } else {
