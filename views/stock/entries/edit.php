@@ -52,25 +52,70 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info mb-3">
-                        <strong>Coil:</strong> <?php echo htmlspecialchars($entry['coil_code']); ?> - <?php echo htmlspecialchars($entry['coil_name']); ?><br>
-                        <strong>Current Meters:</strong> <?php echo number_format($entry['meters'], 2); ?>m<br>
-                        <strong>Remaining:</strong> <?php echo number_format($entry['meters_remaining'], 2); ?>m
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Coil:</strong> <?php echo htmlspecialchars($entry['coil_code']); ?> - <?php echo htmlspecialchars($entry['coil_name']); ?>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Current Meters:</strong> <?php echo number_format($entry['meters'], 2); ?>m
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Remaining:</strong> <?php echo number_format($entry['meters_remaining'], 2); ?>m
+                            </div>
+                            <?php if (array_key_exists('weight_kg', $entry)): ?>
+                            <div class="col-md-3 mt-2">
+                                <strong>Weight (KG):</strong> 
+                                <?php echo isset($entry['weight_kg']) ? number_format($entry['weight_kg'], 2) . ' kg' : 'Not set'; ?>
+                            </div>
+                            <div class="col-md-3 mt-2">
+                                <strong>Remaining Weight:</strong> 
+                                <?php 
+                                if (isset($entry['weight_kg_remaining'])) {
+                                    echo number_format($entry['weight_kg_remaining'], 2) . ' kg';
+                                } elseif (isset($entry['weight_kg'])) {
+                                    echo number_format($entry['weight_kg'], 2) . ' kg';
+                                } else {
+                                    echo 'Not set';
+                                }
+                                ?>
+                            </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     
                     <form action="/new-stock-system/controllers/stock_entries/update/index.php" method="POST" class="needs-validation" novalidate>
                         <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
                         <input type="hidden" name="id" value="<?php echo $entry['id']; ?>">
                         
-                        <div class="mb-3">
-                            <label for="meters" class="form-label">Total Meters <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="meters" name="meters" 
-                                   step="0.01" min="<?php echo $entry['meters'] - $entry['meters_remaining']; ?>" 
-                                   value="<?php echo $entry['meters']; ?>" required>
-                            <div class="invalid-feedback">Please provide meters.</div>
-                            <small class="form-text text-muted">
-                                Minimum: <?php echo number_format($entry['meters'] - $entry['meters_remaining'], 2); ?>m 
-                                (cannot be less than meters already used)
-                            </small>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="meters" class="form-label">Total Meters <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="meters" name="meters" 
+                                       step="0.01" min="<?php echo $entry['meters'] - $entry['meters_remaining']; ?>" 
+                                       value="<?php echo $entry['meters']; ?>" required>
+                                <div class="invalid-feedback">Please provide meters.</div>
+                                <small class="form-text text-muted">
+                                    Minimum: <?php echo number_format($entry['meters'] - $entry['meters_remaining'], 2); ?>m 
+                                    (cannot be less than meters already used)
+                                </small>
+                            </div>
+                            <?php if (array_key_exists('weight_kg', $entry)): ?>
+                            <div class="col-md-6 mb-3">
+                                <label for="weight_kg" class="form-label">Total Weight (KG) <?php echo isset($entry['weight_kg']) ? '<span class="text-danger">*</span>' : ''; ?></label>
+                                <input type="number" class="form-control" id="weight_kg" name="weight_kg" 
+                                       step="0.01" min="0" 
+                                       value="<?php echo $entry['weight_kg'] ?? ''; ?>" 
+                                       <?php echo isset($entry['weight_kg']) ? 'required' : ''; ?>>
+                                <div class="invalid-feedback">Please provide weight in KG.</div>
+                                <small class="form-text text-muted">
+                                    <?php if (isset($entry['weight_kg'])): ?>
+                                    Current weight: <?php echo number_format($entry['weight_kg'], 2); ?> kg
+                                    <?php else: ?>
+                                    Enter weight in kilograms (optional)
+                                    <?php endif; ?>
+                                </small>
+                            </div>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="alert alert-warning">

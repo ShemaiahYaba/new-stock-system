@@ -434,7 +434,7 @@ function updateSaleTable() {
                 <td><strong>${item.quantity.toFixed(2)} kg</strong></td>
                 <td class="text-muted">${item.meters.toFixed(2)} m</td>
                 <td>₦${item.unitPrice.toFixed(2)}/kg</td>
-                <td><strong>₦${item.total.toFixed(2)}</strong></td>
+                <td><strong>₦${item.total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
                 <td>
                     <button type="button" class="btn btn-sm btn-outline-danger remove-item" data-stock-id="${item.stockId}">
                         <i class="bi bi-trash"></i> Remove
@@ -463,9 +463,9 @@ function updateSaleTable() {
         const tax = subtotal * (taxRate / 100);
         const total = subtotal + tax;
         
-        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
-        document.getElementById('tax').textContent = tax.toFixed(2);
-        document.getElementById('totalAmount').textContent = total.toFixed(2);
+        document.getElementById('subtotal').textContent = subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('tax').textContent = tax.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('totalAmount').textContent = total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
     
     // Tax rate change listener

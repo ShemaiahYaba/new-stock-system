@@ -23,10 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $entryId = (int)($_POST['id'] ?? 0);
     $meters = floatval($_POST['meters'] ?? 0);
+    $weightKg = isset($_POST['weight_kg']) ? floatval($_POST['weight_kg']) : null;
     
     $errors = [];
     
     if ($meters <= 0) $errors[] = 'Meters must be greater than 0.';
+    if ($weightKg !== null && $weightKg < 0) $errors[] = 'Weight must be 0 or greater.';
     
     if (!empty($errors)) {
         setFlashMessage('error', implode(' ', $errors));
@@ -61,8 +63,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'meters_remaining' => $newRemaining
     ];
     
+    // Handle weight update if weight_kg is provided
+    if ($weightKg !== null) {
+    if (isset($entry['weight_kg']) && $entry['weight_kg'] > 0) {
+        // If weight exists, maintain the same ratio for remaining weight
+        $weightRatio = $entry['weight_kg_remaining'] / $entry['weight_kg'];
+        $newRemainingWeight = $weightKg * $weightRatio;
+    } else {
+        // If this is the first time setting weight, set remaining weight equal to the new weight
+        $newRemainingWeight = $weightKg;
+    }
+    
+    $data['weight_kg'] = $weightKg;
+    $data['weight_kg_remaining'] = $newRemainingWeight;
+}
+    
     if ($stockEntryModel->update($entryId, $data)) {
-        // ✅ NEW: CHECK AND UPDATE COIL STATUS AUTOMATICALLY
+        // NEW: CHECK AND UPDATE COIL STATUS AUTOMATICALLY
         $stockEntryModel->checkAndUpdateCoilStatus($entry['coil_id']);
         
         logActivity('Stock entry updated', "Entry ID: $entryId, New meters: $meters");
