@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 28, 2025 at 09:15 PM
+-- Generation Time: Dec 02, 2025 at 01:39 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -835,10 +835,13 @@ CREATE TABLE `sales` (
   `stock_entry_id` int(11) DEFAULT NULL,
   `sale_type` varchar(50) NOT NULL,
   `meters` decimal(10,2) NOT NULL,
+  `weight_kg` decimal(10,2) DEFAULT NULL COMMENT 'Quantity in KG',
   `price_per_meter` decimal(15,2) NOT NULL,
+  `price_per_kg` decimal(10,2) DEFAULT NULL COMMENT 'Price per KG',
   `total_amount` decimal(15,2) NOT NULL,
   `status` varchar(50) NOT NULL DEFAULT 'pending',
   `created_by` int(11) NOT NULL,
+  `notes` text DEFAULT NULL COMMENT 'Sale notes/remarks',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -848,18 +851,18 @@ CREATE TABLE `sales` (
 -- Dumping data for table `sales`
 --
 
-INSERT INTO `sales` (`id`, `customer_id`, `coil_id`, `stock_entry_id`, `sale_type`, `meters`, `price_per_meter`, `total_amount`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(11, 1, 49, 11, 'retail', 40.00, 3000.00, 120000.00, 'completed', 2, '2025-11-08 11:40:38', NULL, NULL),
-(12, 1, 49, 11, 'retail', 288.70, 10300.00, 2973610.00, 'completed', 2, '2025-11-08 11:50:31', NULL, NULL),
-(14, 1, 50, 12, 'retail', 400.00, 2000.00, 800000.00, 'completed', 5, '2025-11-08 12:38:10', NULL, NULL),
-(15, 1, 50, 12, 'retail', 300.00, 2000.00, 600000.00, 'completed', 5, '2025-11-08 12:40:35', NULL, NULL),
-(16, 1, 50, 12, 'retail', 400.00, 2000.00, 800000.00, 'completed', 5, '2025-11-08 12:41:44', NULL, NULL),
-(17, 1, 51, 13, 'retail', 200.00, 2000.00, 400000.00, 'completed', 5, '2025-11-08 12:49:07', NULL, NULL),
-(18, 1, 51, 13, 'retail', 400.00, 2000.00, 800000.00, 'completed', 5, '2025-11-08 12:50:39', NULL, NULL),
-(19, 3, 52, 14, 'wholesale', 2500.00, 2000.00, 5000000.00, 'completed', 5, '2025-11-08 13:11:50', NULL, NULL),
-(49, 4, 67, 32, 'available_stock', 2073000.00, 5800.00, 9999999999.99, 'completed', 5, '2025-11-17 12:51:31', NULL, NULL),
-(50, 4, 299, 33, 'available_stock', 2000.00, 400.00, 800000.00, 'completed', 5, '2025-11-18 11:43:49', NULL, NULL),
-(51, 5, 286, 38, 'available_stock', 6000.00, 10800.00, 64800000.00, 'completed', 5, '2025-11-19 13:23:23', NULL, NULL);
+INSERT INTO `sales` (`id`, `customer_id`, `coil_id`, `stock_entry_id`, `sale_type`, `meters`, `weight_kg`, `price_per_meter`, `price_per_kg`, `total_amount`, `status`, `created_by`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(11, 1, 49, 11, 'retail', 40.00, NULL, 3000.00, NULL, 120000.00, 'completed', 2, NULL, '2025-11-08 11:40:38', NULL, NULL),
+(12, 1, 49, 11, 'retail', 288.70, NULL, 10300.00, NULL, 2973610.00, 'completed', 2, NULL, '2025-11-08 11:50:31', NULL, NULL),
+(14, 1, 50, 12, 'retail', 400.00, NULL, 2000.00, NULL, 800000.00, 'completed', 5, NULL, '2025-11-08 12:38:10', NULL, NULL),
+(15, 1, 50, 12, 'retail', 300.00, NULL, 2000.00, NULL, 600000.00, 'completed', 5, NULL, '2025-11-08 12:40:35', NULL, NULL),
+(16, 1, 50, 12, 'retail', 400.00, NULL, 2000.00, NULL, 800000.00, 'completed', 5, NULL, '2025-11-08 12:41:44', NULL, NULL),
+(17, 1, 51, 13, 'retail', 200.00, NULL, 2000.00, NULL, 400000.00, 'completed', 5, NULL, '2025-11-08 12:49:07', NULL, NULL),
+(18, 1, 51, 13, 'retail', 400.00, NULL, 2000.00, NULL, 800000.00, 'completed', 5, NULL, '2025-11-08 12:50:39', NULL, NULL),
+(19, 3, 52, 14, 'wholesale', 2500.00, NULL, 2000.00, NULL, 5000000.00, 'completed', 5, NULL, '2025-11-08 13:11:50', NULL, NULL),
+(49, 4, 67, 32, 'available_stock', 2073000.00, NULL, 5800.00, NULL, 9999999999.99, 'completed', 5, NULL, '2025-11-17 12:51:31', NULL, NULL),
+(50, 4, 299, 33, 'available_stock', 2000.00, NULL, 400.00, NULL, 800000.00, 'completed', 5, NULL, '2025-11-18 11:43:49', NULL, NULL),
+(51, 5, 286, 38, 'available_stock', 6000.00, NULL, 10800.00, NULL, 64800000.00, 'completed', 5, NULL, '2025-11-19 13:23:23', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -872,6 +875,8 @@ CREATE TABLE `stock_entries` (
   `coil_id` int(11) NOT NULL,
   `meters` decimal(10,2) NOT NULL,
   `meters_remaining` decimal(10,2) NOT NULL,
+  `weight_kg` decimal(10,2) DEFAULT NULL,
+  `weight_kg_remaining` decimal(10,2) DEFAULT NULL,
   `meters_used` decimal(10,2) DEFAULT 0.00,
   `status` enum('available','factory_use','sold') NOT NULL DEFAULT 'available' COMMENT 'Stock entry status: available for direct sale or factory use',
   `created_by` int(11) NOT NULL,
@@ -884,19 +889,19 @@ CREATE TABLE `stock_entries` (
 -- Dumping data for table `stock_entries`
 --
 
-INSERT INTO `stock_entries` (`id`, `coil_id`, `meters`, `meters_remaining`, `meters_used`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(11, 49, 2600.00, 2271.30, 0.00, 'factory_use', 2, '2025-11-08 11:38:09', '2025-11-19 13:40:31', '2025-11-19 13:40:31'),
-(12, 50, 2650.00, 1550.00, 0.00, 'factory_use', 5, '2025-11-08 12:25:44', '2025-11-19 13:40:35', '2025-11-19 13:40:35'),
-(13, 51, 2500.00, 1900.00, 0.00, 'factory_use', 5, '2025-11-08 12:45:41', '2025-11-17 14:21:31', '2025-11-17 14:21:31'),
-(14, 52, 2500.00, 0.00, 0.00, 'available', 5, '2025-11-08 12:54:10', '2025-11-19 13:40:42', '2025-11-19 13:40:42'),
-(31, 67, 5800.00, 2069273.00, 0.00, 'factory_use', 5, '2025-11-17 12:27:30', '2025-11-17 12:43:18', '2025-11-17 12:43:18'),
-(32, 67, 2073000.00, 0.00, 2073000.00, 'sold', 5, '2025-11-17 12:43:55', '2025-11-19 13:40:46', '2025-11-19 13:40:46'),
-(33, 299, 2000.00, 0.00, 2000.00, 'sold', 5, '2025-11-18 11:27:31', '2025-11-19 13:40:51', '2025-11-19 13:40:51'),
-(34, 316, 40000.00, 40000.00, 0.00, 'factory_use', 5, '2025-11-18 13:31:46', '2025-11-18 13:31:52', NULL),
-(35, 569, 5000.00, 5000.00, 0.00, 'factory_use', 5, '2025-11-19 08:31:41', '2025-11-19 08:40:19', '2025-11-19 08:40:19'),
-(36, 311, 5000.00, 5000.00, 0.00, 'factory_use', 5, '2025-11-19 08:41:07', '2025-11-19 08:50:41', NULL),
-(37, 287, 5000.00, 5000.00, 0.00, 'available', 5, '2025-11-19 08:55:10', '2025-11-19 13:25:23', NULL),
-(38, 286, 6000.00, 0.00, 6000.00, 'sold', 5, '2025-11-19 09:19:51', '2025-11-19 13:23:23', NULL);
+INSERT INTO `stock_entries` (`id`, `coil_id`, `meters`, `meters_remaining`, `weight_kg`, `weight_kg_remaining`, `meters_used`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(11, 49, 2600.00, 2271.30, NULL, NULL, 0.00, 'factory_use', 2, '2025-11-08 11:38:09', '2025-11-19 13:40:31', '2025-11-19 13:40:31'),
+(12, 50, 2650.00, 1550.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-08 12:25:44', '2025-11-19 13:40:35', '2025-11-19 13:40:35'),
+(13, 51, 2500.00, 1900.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-08 12:45:41', '2025-11-17 14:21:31', '2025-11-17 14:21:31'),
+(14, 52, 2500.00, 0.00, NULL, NULL, 0.00, 'available', 5, '2025-11-08 12:54:10', '2025-11-19 13:40:42', '2025-11-19 13:40:42'),
+(31, 67, 5800.00, 2069273.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-17 12:27:30', '2025-11-17 12:43:18', '2025-11-17 12:43:18'),
+(32, 67, 2073000.00, 0.00, NULL, NULL, 2073000.00, 'sold', 5, '2025-11-17 12:43:55', '2025-11-19 13:40:46', '2025-11-19 13:40:46'),
+(33, 299, 2000.00, 0.00, NULL, NULL, 2000.00, 'sold', 5, '2025-11-18 11:27:31', '2025-11-19 13:40:51', '2025-11-19 13:40:51'),
+(34, 316, 40000.00, 40000.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-18 13:31:46', '2025-11-18 13:31:52', NULL),
+(35, 569, 5000.00, 5000.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-19 08:31:41', '2025-11-19 08:40:19', '2025-11-19 08:40:19'),
+(36, 311, 5000.00, 5000.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-19 08:41:07', '2025-11-19 08:50:41', NULL),
+(37, 287, 5000.00, 5000.00, NULL, NULL, 0.00, 'available', 5, '2025-11-19 08:55:10', '2025-11-19 13:25:23', NULL),
+(38, 286, 6000.00, 0.00, NULL, NULL, 6000.00, 'sold', 5, '2025-11-19 09:19:51', '2025-11-19 13:23:23', NULL);
 
 -- --------------------------------------------------------
 

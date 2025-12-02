@@ -23,35 +23,42 @@ class Sale {
      * @param array $data Sale data
      * @return int|false Sale ID or false on failure
      */
-    public function create($data) {
+     public function create($data)
+    {
         try {
             $sql = "INSERT INTO {$this->table} 
-                    (customer_id, coil_id, stock_entry_id, sale_type, meters, price_per_meter, 
-                     total_amount, status, created_by, created_at) 
-                    VALUES (:customer_id, :coil_id, :stock_entry_id, :sale_type, :meters, 
-                            :price_per_meter, :total_amount, :status, :created_by, NOW())";
-            
+                    (customer_id, coil_id, stock_entry_id, sale_type, meters, weight_kg, 
+                     price_per_meter, price_per_kg, total_amount, status, created_by, notes, created_at) 
+                    VALUES 
+                    (:customer_id, :coil_id, :stock_entry_id, :sale_type, :meters, :weight_kg, 
+                     :price_per_meter, :price_per_kg, :total_amount, :status, :created_by, :notes, NOW())";
+
             $stmt = $this->db->prepare($sql);
+            
             $result = $stmt->execute([
                 ':customer_id' => $data['customer_id'],
                 ':coil_id' => $data['coil_id'],
                 ':stock_entry_id' => $data['stock_entry_id'] ?? null,
                 ':sale_type' => $data['sale_type'],
-                ':meters' => $data['meters'],
-                ':price_per_meter' => $data['price_per_meter'],
+                ':meters' => $data['meters'] ?? 0,
+                ':weight_kg' => $data['weight_kg'] ?? null,
+                ':price_per_meter' => $data['price_per_meter'] ?? 0,
+                ':price_per_kg' => $data['price_per_kg'] ?? null,
                 ':total_amount' => $data['total_amount'],
-                ':status' => $data['status'] ?? SALE_STATUS_PENDING,
-                ':created_by' => $data['created_by']
+                ':status' => $data['status'],
+                ':created_by' => $data['created_by'],
+                ':notes' => $data['notes'] ?? null,
             ]);
-            
-            if (!$result) {
-                error_log("Sale creation failed - execute returned false");
-                return false;
+
+            if ($result) {
+                return $this->db->lastInsertId();
             }
             
-            return $this->db->lastInsertId();
+            return false;
         } catch (PDOException $e) {
-            error_log("Sale creation error: " . $e->getMessage());
+            error_log('Sale creation error: ' . $e->getMessage());
+            error_log('SQL State: ' . $e->getCode());
+            error_log('Data: ' . print_r($data, true));
             return false;
         }
     }

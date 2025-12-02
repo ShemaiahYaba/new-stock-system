@@ -1,7 +1,6 @@
 <?php
 /**
- * Stock Entries List - UPDATED with Entry-specific Ledger Links
- * Replace views/stock/entries/index.php
+ * Stock Entries List - WITH KG COLUMN
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -60,52 +59,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             <div class="alert alert-info m-3">
                 <i class="bi bi-info-circle"></i> No stock entries found.
             </div>
-            <?php
-                // Determine display status
-
-                // If meters are exhausted, show as "Sold Out"
-
-                // Set badge and text based on status
-
-                // Check if THIS SPECIFIC ENTRY has ledger entries
-                // Determine display status
-                // If meters are exhausted, show as "Sold Out"
-                // Set badge and text based on status
-                // Check if THIS SPECIFIC ENTRY has ledger entries
-                // Determine display status
-
-                // If meters are exhausted, show as "Sold Out"
-
-                // Set badge and text based on status
-
-                // Check if THIS SPECIFIC ENTRY has ledger entries
-                // Determine display status
-                // If meters are exhausted, show as "Sold Out"
-                // Set badge and text based on status
-                // Check if THIS SPECIFIC ENTRY has ledger entries
-                // Determine display status
-
-                // If meters are exhausted, show as "Sold Out"
-
-                // Set badge and text based on status
-
-                // Check if THIS SPECIFIC ENTRY has ledger entries
-                // Determine display status
-                // If meters are exhausted, show as "Sold Out"
-                // Set badge and text based on status
-                // Check if THIS SPECIFIC ENTRY has ledger entries
-                // Determine display status
-
-                // If meters are exhausted, show as "Sold Out"
-
-                // Set badge and text based on status
-
-                // Check if THIS SPECIFIC ENTRY has ledger entries
-                // Determine display status
-                // If meters are exhausted, show as "Sold Out"
-                // Set badge and text based on status
-                // Check if THIS SPECIFIC ENTRY has ledger entries
-                else: ?>
+            <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
@@ -114,7 +68,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>Coil Code</th>
                             <th>Coil Name</th>
                             <th>Meters</th>
-                            <th>Remaining</th>
+                            <th>Weight (KG)</th> <!-- NEW COLUMN -->
+                            <th>Remaining (M)</th>
                             <th>Status</th>
                             <th>Created By</th>
                             <th>Actions</th>
@@ -140,8 +95,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             $statusText = 'Factory Use';
                         }
 
-                        $checkLedgerSql =
-                            'SELECT COUNT(*) as count FROM stock_ledger WHERE stock_entry_id = ?';
+                        $checkLedgerSql = 'SELECT COUNT(*) as count FROM stock_ledger WHERE stock_entry_id = ?';
                         $checkStmt = $db->prepare($checkLedgerSql);
                         $checkStmt->execute([$entry['id']]);
                         $ledgerCheck = $checkStmt->fetch();
@@ -156,6 +110,18 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 ? htmlspecialchars($entry['coil_name'])
                                 : 'N/A'; ?></td>
                             <td><?php echo number_format($entry['meters'], 2); ?>m</td>
+                            
+                            <!-- NEW: Display Weight KG -->
+                            <td>
+                                <?php if (!empty($entry['weight_kg']) && $entry['weight_kg'] > 0): ?>
+                                    <span class="text-primary fw-bold">
+                                        <?php echo number_format($entry['weight_kg'], 2); ?> kg
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-muted">N/A</span>
+                                <?php endif; ?>
+                            </td>
+                            
                             <td>
                                 <span class="badge <?php echo $entry['meters_remaining'] > 0
                                     ? 'bg-success'
@@ -163,58 +129,31 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     <?php echo number_format($entry['meters_remaining'], 2); ?>m
                                 </span>
                             </td>
+                            
                             <td>
                                 <span class="badge <?php echo $statusBadge; ?>">
                                     <?php echo $statusText; ?>
                                 </span>
                                 
-                                <?php if (
-                                    $hasLedger &&
-                                    hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_VIEW)
-                                ): ?>
-                                <a href="/new-stock-system/index.php?page=stock_ledger&entry_id=<?php echo $entry[
-                                    'id'
-                                ]; ?>" 
-                                   class="btn btn-sm btn-outline-primary ms-1" title="View Stock Card for Entry #<?php echo $entry[
-                                       'id'
-                                   ]; ?>">
+                                <?php if ($hasLedger && hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_VIEW)): ?>
+                                <a href="/new-stock-system/index.php?page=stock_ledger&entry_id=<?php echo $entry['id']; ?>" 
+                                   class="btn btn-sm btn-outline-primary ms-1" 
+                                   title="View Stock Card for Entry #<?php echo $entry['id']; ?>">
                                     <i class="bi bi-journal-text"></i> Stock Card
                                 </a>
                                 <?php endif; ?>
                             </td>
                             <td><?php echo htmlspecialchars($entry['created_by_name']); ?></td>
                             <td>
-                                <?php if (
-                                    hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT) &&
-                                    $entry['meters_remaining'] > 0
-                                ): ?>
+                                <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT) && $entry['meters_remaining'] > 0): ?>
                                 <form method="POST" action="/new-stock-system/controllers/stock_entries/toggle_status/index.php" style="display: inline;">
                                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
-                                    <input type="hidden" name="id" value="<?php echo $entry[
-                                        'id'
-                                    ]; ?>">
-                                    <input type="hidden" name="current_status" value="<?php echo $entry[
-                                        'status'
-                                    ] ?? 'available'; ?>">
-                                    <button type="submit" class="btn btn-sm btn-<?php echo ($entry[
-                                        'status'
-                                    ] ??
-                                        'available') ===
-                                    'available'
-                                        ? 'warning'
-                                        : 'info'; ?>" 
-                                            title="<?php echo ($entry['status'] ?? 'available') ===
-                                            'available'
-                                                ? 'Move to Factory Use'
-                                                : 'Move to Available'; ?>">
-                                        <i class="bi bi-arrow-<?php echo ($entry['status'] ??
-                                            'available') ===
-                                        'available'
-                                            ? 'right'
-                                            : 'left'; ?>-circle"></i>
-                                        <?php echo ($entry['status'] ?? 'available') === 'available'
-                                            ? 'To Factory'
-                                            : 'To Available'; ?>
+                                    <input type="hidden" name="id" value="<?php echo $entry['id']; ?>">
+                                    <input type="hidden" name="current_status" value="<?php echo $entry['status'] ?? 'available'; ?>">
+                                    <button type="submit" class="btn btn-sm btn-<?php echo ($entry['status'] ?? 'available') === 'available' ? 'warning' : 'info'; ?>" 
+                                            title="<?php echo ($entry['status'] ?? 'available') === 'available' ? 'Move to Factory Use' : 'Move to Available'; ?>">
+                                        <i class="bi bi-arrow-<?php echo ($entry['status'] ?? 'available') === 'available' ? 'right' : 'left'; ?>-circle"></i>
+                                        <?php echo ($entry['status'] ?? 'available') === 'available' ? 'To Factory' : 'To Available'; ?>
                                     </button>
                                 </form>
                                 <?php endif; ?>

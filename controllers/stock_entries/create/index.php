@@ -1,9 +1,4 @@
 <?php
-/**
- * REPLACE controllers/stock_entries/create/index.php with this
- * Automatically sets coil to AVAILABLE when new stock added to OUT_OF_STOCK coil
- */
-
 session_start();
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -25,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $coilId = (int)($_POST['coil_id'] ?? 0);
     $meters = floatval($_POST['meters'] ?? 0);
+    $weightKg = floatval($_POST['weight_kg'] ?? 0); // NEW
     
     $errors = [];
     
@@ -58,6 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'coil_id' => $coilId,
             'meters' => $meters,
             'meters_remaining' => $meters,
+            'weight_kg' => $weightKg > 0 ? $weightKg : null, // NEW
+            'weight_kg_remaining' => $weightKg > 0 ? $weightKg : null, // NEW - FIXED
             'created_by' => $currentUser['id']
         ];
         
@@ -74,8 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ledgerModel->recordInflow($coilId, $entryId, $meters, $description, $currentUser['id']);
         }
         
-        // ✅ NEW: CHECK AND UPDATE COIL STATUS AUTOMATICALLY
-        // If coil was OUT_OF_STOCK, this will set it back to AVAILABLE
+        // ✅ CHECK AND UPDATE COIL STATUS AUTOMATICALLY
         $statusChanged = $stockEntryModel->checkAndUpdateCoilStatus($coilId);
         
         $db->commit();

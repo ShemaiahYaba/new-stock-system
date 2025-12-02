@@ -1,6 +1,6 @@
 <?php
 /**
- * Handle creation of sales from available stock
+ * Handle creation of sales from available stock (KG-based)
  */
 
 require_once __DIR__ . '/../../config/db.php';
@@ -78,7 +78,7 @@ try {
     $stockEntries = [];
     $firstSaleId = null;
 
-    // Process each stock item first to calculate total amount
+    // Process each stock item - NOW USING KG
     foreach ($_POST['unit_price'] as $stockEntryId => $unitPrice) {
         $stockEntry = $stockEntryModel->findById($stockEntryId);
 
@@ -86,26 +86,51 @@ try {
             throw new Exception('Invalid or unavailable stock entry: ' . $stockEntryId);
         }
 
-        // Get quantity from POST or use remaining meters
-        $quantity = isset($_POST['quantity'][$stockEntryId])
-            ? floatval($_POST['quantity'][$stockEntryId])
-            : $stockEntry['meters_remaining'];
+        // CRITICAL: Check if weight data exists
+        if (empty($stockEntry['weight_kg_remaining']) || $stockEntry['weight_kg_remaining'] <= 0) {
+            throw new Exception('No weight data available for stock entry: ' . $stockEntryId);
+        }
 
-        // Validate unit price
+        // Get quantity in KG from POST
+        $quantityKg = isset($_POST['quantity'][$stockEntryId])
+            ? floatval($_POST['quantity'][$stockEntryId])
+            : $stockEntry['weight_kg_remaining'];
+
+        // Validate quantity
+        if ($quantityKg <= 0) {
+            throw new Exception('Invalid quantity for stock entry: ' . $stockEntryId);
+        }
+
+        if ($quantityKg > $stockEntry['weight_kg_remaining']) {
+            throw new Exception('Quantity exceeds available weight for stock entry: ' . $stockEntryId);
+        }
+
+        // Validate unit price (now per KG)
         $unitPrice = floatval($unitPrice);
         if ($unitPrice <= 0) {
             throw new Exception('Invalid unit price for stock entry: ' . $stockEntryId);
         }
 
-        // Calculate line total
-        $lineTotal = $quantity * $unitPrice;
+        // Calculate corresponding meters to deduct from stock
+        // Formula: (quantityKg / total_weight_kg) * total_meters
+        $metersToDeduct = 0;
+        if ($stockEntry['weight_kg_remaining'] > 0) {
+            $metersToDeduct = ($quantityKg / $stockEntry['weight_kg_remaining']) * $stockEntry['meters_remaining'];
+        } else {
+            // Fallback: use all remaining meters if no weight data
+            $metersToDeduct = $stockEntry['meters_remaining'];
+        }
+
+        // Calculate line total (KG-based)
+        $lineTotal = $quantityKg * $unitPrice;
         $totalAmount += $lineTotal;
 
         // Add to sale items
         $saleItems[] = [
             'coil_id' => $stockEntry['coil_id'],
             'stock_entry_id' => $stockEntryId,
-            'quantity' => $quantity,
+            'quantity_kg' => $quantityKg,
+            'meters_deducted' => $metersToDeduct,
             'unit_price' => $unitPrice,
             'total' => $lineTotal,
             'stock_entry' => $stockEntry,
@@ -119,14 +144,31 @@ try {
             'coil_id' => $item['coil_id'],
             'stock_entry_id' => $item['stock_entry_id'],
             'sale_type' => 'available_stock',
-            'meters' => $item['quantity'],
-            'price_per_meter' => $item['unit_price'],
+            'meters' => $item['meters_deducted'], // Store meters for stock tracking
+            'weight_kg' => $item['quantity_kg'], // NEW: Store KG for sale record
+            'price_per_meter' => 0, // Not used anymore
+            'price_per_kg' => $item['unit_price'], // NEW: Store price per KG
             'total_amount' => $item['total'],
             'status' => SALE_STATUS_COMPLETED,
             'created_by' => $_SESSION['user_id'],
             'notes' => $_POST['notes'] ?? null,
         ];
 
+        // Add this RIGHT BEFORE the $saleId = $saleModel->create($saleData); line
+
+error_log('=== ATTEMPTING TO CREATE SALE ===');
+error_log('Sale Data: ' . print_r($saleData, true));
+
+$saleId = $saleModel->create($saleData);
+
+error_log('Sale ID Result: ' . ($saleId ? $saleId : 'FALSE'));
+
+if (!$saleId) {
+    // Get PDO error info
+    $errorInfo = $db->errorInfo();
+    error_log('PDO Error Info: ' . print_r($errorInfo, true));
+    throw new Exception('Failed to create sale record. Check error logs for details.');
+}
         $saleId = $saleModel->create($saleData);
 
         if (!$saleId) {
@@ -138,20 +180,23 @@ try {
             $firstSaleId = $saleId;
         }
 
-        // Mark stock entry as used
+        // Mark stock entry as used (or partially used)
         $stockEntries[] = [
             'id' => $item['stock_entry_id'],
             'status' => STOCK_STATUS_SOLD,
-            'meters_used' => $item['quantity'],
+            'meters_used' => $item['meters_deducted'],
+            'weight_kg_used' => $item['quantity_kg'], // NEW
         ];
     }
 
     // Update stock entries
     foreach ($stockEntries as $entry) {
-        $updated = $stockEntryModel->updateStatusAndUsage(
+        // Update both meters and weight
+        $updated = $stockEntryModel->updateStatusAndUsageWithWeight(
             $entry['id'],
             $entry['status'],
             $entry['meters_used'],
+            $entry['weight_kg_used']
         );
 
         if (!$updated) {
@@ -159,16 +204,16 @@ try {
         }
     }
 
-    // Prepare invoice items
+    // Prepare invoice items (NOW SHOWING KG)
     $invoiceItems = [];
     foreach ($saleItems as $item) {
         $invoiceItems[] = [
             'description' =>
                 $item['stock_entry']['coil_code'] . ' - ' . $item['stock_entry']['coil_name'],
-            'quantity' => $item['quantity'],
-            'qty_text' => number_format($item['quantity'], 2) . ' meters', // ← ADDED THIS
+            'quantity' => $item['quantity_kg'],
+            'qty_text' => number_format($item['quantity_kg'], 2) . ' kg', // CHANGED to KG
             'unit_price' => $item['unit_price'],
-            'subtotal' => $item['total'], // FIXED: Was 'total_price'
+            'subtotal' => $item['total'],
         ];
     }
 
@@ -240,7 +285,7 @@ try {
 
     // Log activity
     logActivity(
-        'Sale from Available Stock Created - Sale #' . $firstSaleId . ' for ' . $customer['name'],
+        'Sale from Available Stock Created (KG-based) - Sale #' . $firstSaleId . ' for ' . $customer['name'],
     );
 
     // Redirect to sales view

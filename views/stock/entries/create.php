@@ -79,12 +79,19 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <?php endif; ?>
                         
                         <div class="mb-3">
-                            <label for="meters" class="form-label">Meters <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="meters" name="meters" 
-                                   step="0.01" min="0.01" placeholder="e.g., 500.50" required>
-                            <div class="invalid-feedback">Please provide meters.</div>
-                            <small class="form-text text-muted">Total meters for this stock entry</small>
-                        </div>
+    <label for="meters" class="form-label">Meters <span class="text-danger">*</span></label>
+    <input type="number" class="form-control" id="meters" name="meters" 
+           step="0.01" min="0.01" placeholder="e.g., 500.50" required>
+    <small class="form-text text-muted">Total meters for this stock entry</small>
+</div>
+
+<!-- NEW FIELD -->
+<div class="mb-3">
+    <label for="weight_kg" class="form-label">Weight (KG) </label>
+    <input type="number" class="form-control" id="weight_kg" name="weight_kg" 
+           step="0.01" min="0" placeholder="e.g., 2850.00">
+    <small class="form-text text-muted">Weight(kg)</small>
+</div>
                         
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> 

@@ -25,26 +25,28 @@ class StockEntry
      * @return int|false Stock entry ID or false on failure
      */
     public function create($data)
-    {
-        try {
-            $sql = "INSERT INTO {$this->table} 
-                    (coil_id, meters, meters_remaining, created_by, created_at) 
-                    VALUES (:coil_id, :meters, :meters_remaining, :created_by, NOW())";
+{
+    try {
+        $sql = "INSERT INTO {$this->table} 
+                (coil_id, meters, meters_remaining, weight_kg, weight_kg_remaining, created_by, created_at) 
+                VALUES (:coil_id, :meters, :meters_remaining, :weight_kg, :weight_kg_remaining, :created_by, NOW())";
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([
-                ':coil_id' => $data['coil_id'],
-                ':meters' => $data['meters'],
-                ':meters_remaining' => $data['meters'],
-                ':created_by' => $data['created_by'],
-            ]);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            ':coil_id' => $data['coil_id'],
+            ':meters' => $data['meters'],
+            ':meters_remaining' => $data['meters'],
+            ':weight_kg' => $data['weight_kg'] ?? null,
+            ':weight_kg_remaining' => $data['weight_kg_remaining'] ?? null,
+            ':created_by' => $data['created_by'],
+        ]);
 
-            return $this->db->lastInsertId();
-        } catch (PDOException $e) {
-            error_log('Stock entry creation error: ' . $e->getMessage());
-            return false;
-        }
+        return $this->db->lastInsertId();
+    } catch (PDOException $e) {
+        error_log('Stock entry creation error: ' . $e->getMessage());
+        return false;
     }
+}
 
     /**
      * Find stock entry by ID
@@ -284,25 +286,31 @@ class StockEntry
      *
      * @return array Array of available stock entries
      */
-    public function getAvailableStock()
-    {
-        try {
-            $sql = "SELECT se.*, c.code as coil_code, c.name as coil_name 
-                    FROM {$this->table} se
-                    JOIN coils c ON se.coil_id = c.id
-                    WHERE se.status = :status 
-                    AND se.meters_remaining > 0
-                    AND se.deleted_at IS NULL";
+ public function getAvailableStock()
+{
+    try {
+        $sql = "SELECT se.*, 
+                       c.code as coil_code, 
+                       c.name as coil_name, 
+                       COALESCE(se.weight_kg, 0) as weight_kg, 
+                       COALESCE(se.weight_kg_remaining, 
+                               (se.weight_kg * (se.meters_remaining / NULLIF(se.meters, 0))), 
+                               0) as weight_kg_remaining
+                FROM {$this->table} se
+                JOIN coils c ON se.coil_id = c.id
+                WHERE se.status = :status 
+                AND se.meters_remaining > 0
+                AND se.deleted_at IS NULL";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':status' => STOCK_STATUS_AVAILABLE]);
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([':status' => STOCK_STATUS_AVAILABLE]);
-
-            return $stmt->fetchAll();
-        } catch (PDOException $e) {
-            error_log('Error fetching available stock: ' . $e->getMessage());
-            return [];
-        }
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log('Error fetching available stock: ' . $e->getMessage());
+        return [];
     }
+}
 
     /**
      * Update stock entry status and usage
@@ -611,4 +619,47 @@ class StockEntry
             return 0;
         }
     }
+
+ public function updateStatusAndUsageWithWeight($id, $status, $metersUsed, $weightKgUsed)
+{
+    try {
+        // First check if meters_used column exists
+        $checkColumn = $this->db->query("SHOW COLUMNS FROM {$this->table} LIKE 'meters_used'");
+        if ($checkColumn->rowCount() === 0) {
+            // Add column if it doesn't exist
+            $this->db->exec(
+                "ALTER TABLE {$this->table} ADD COLUMN meters_used DECIMAL(10,2) DEFAULT 0.00 AFTER meters_remaining"
+            );
+        }
+        
+        $sql = "UPDATE {$this->table} 
+                SET status = :status,
+                    meters_used = COALESCE(meters_used, 0) + :meters_used,
+                    meters_remaining = meters_remaining - :meters_to_deduct,
+                    weight_kg_remaining = weight_kg_remaining - :weight_kg_used,
+                    updated_at = NOW()
+                WHERE id = :id";
+
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->execute([
+            ':status' => $status,
+            ':meters_used' => $metersUsed,
+            ':meters_to_deduct' => $metersUsed,  // ← Different placeholder name
+            ':weight_kg_used' => $weightKgUsed,
+            ':id' => $id,
+        ]);
+
+        if (!$result) {
+            error_log('Stock entry weight update failed: ' . print_r($stmt->errorInfo(), true));
+            return false;
+        }
+
+        return true;
+        
+    } catch (PDOException $e) {
+        error_log('Stock entry weight update error: ' . $e->getMessage());
+        error_log('Parameters: ID=' . $id . ', Status=' . $status . ', Meters=' . $metersUsed . ', Weight KG=' . $weightKgUsed);
+        return false;
+    }
+}
 }
