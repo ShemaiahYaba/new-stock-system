@@ -662,4 +662,123 @@ class StockEntry
         return false;
     }
 }
+/**
+ * Add these methods to your existing models/stock_entry.php file
+ */
+
+/**
+ * Search stock entries by coil code or name
+ *
+ * @param string $query Search query
+ * @param string $statusFilter Optional status filter
+ * @param int $limit Limit
+ * @param int $offset Offset
+ * @return array
+ */
+public function search($query, $statusFilter = '', $limit = RECORDS_PER_PAGE, $offset = 0)
+{
+    try {
+        $searchQuery = "%{$query}%";
+        
+        $sql = "SELECT se.*, 
+                       c.code as coil_code, 
+                       c.name as coil_name, 
+                       c.status as coil_status, 
+                       u.name as created_by_name
+                FROM {$this->table} se
+                LEFT JOIN coils c ON se.coil_id = c.id
+                LEFT JOIN users u ON se.created_by = u.id
+                WHERE se.deleted_at IS NULL 
+                AND (c.code LIKE ? OR c.name LIKE ?)";
+
+        $params = [$searchQuery, $searchQuery];
+
+        if ($statusFilter !== '') {
+            $sql .= ' AND se.status = ?';
+            $params[] = $statusFilter;
+        }
+
+        $sql .= ' ORDER BY se.created_at DESC LIMIT ? OFFSET ?';
+        $params[] = (int)$limit;
+        $params[] = (int)$offset;
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log('Stock entry search error: ' . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Count search results
+ *
+ * @param string $query Search query
+ * @param string $statusFilter Optional status filter
+ * @return int
+ */
+public function countSearch($query, $statusFilter = '')
+{
+    try {
+        $searchQuery = "%{$query}%";
+        
+        $sql = "SELECT COUNT(*) as total 
+                FROM {$this->table} se
+                LEFT JOIN coils c ON se.coil_id = c.id
+                WHERE se.deleted_at IS NULL 
+                AND (c.code LIKE ? OR c.name LIKE ?)";
+
+        $params = [$searchQuery, $searchQuery];
+
+        if ($statusFilter !== '') {
+            $sql .= ' AND se.status = ?';
+            $params[] = $statusFilter;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+
+        return $result['total'] ?? 0;
+    } catch (PDOException $e) {
+        error_log('Stock entry count search error: ' . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get all stock entries by status with pagination
+ *
+ * @param string $status Status filter
+ * @param int $limit Limit
+ * @param int $offset Offset
+ * @return array
+ */
+public function getAllByStatus($status, $limit = RECORDS_PER_PAGE, $offset = 0)
+{
+    try {
+        $sql = "SELECT se.*, 
+                       c.code as coil_code, 
+                       c.name as coil_name, 
+                       c.status as coil_status, 
+                       u.name as created_by_name
+                FROM {$this->table} se
+                LEFT JOIN coils c ON se.coil_id = c.id
+                LEFT JOIN users u ON se.created_by = u.id
+                WHERE se.deleted_at IS NULL 
+                AND se.status = ?
+                ORDER BY se.created_at DESC
+                LIMIT ? OFFSET ?";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$status, (int)$limit, (int)$offset]);
+
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log('Stock entry fetch by status error: ' . $e->getMessage());
+        return [];
+    }
+}
 }

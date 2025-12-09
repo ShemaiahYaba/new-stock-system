@@ -1,33 +1,48 @@
 <?php
 /**
- * Stock Entries List - WITH KG COLUMN
+ * Stock Entries List - WITH FILTERING
  */
 
 require_once __DIR__ . '/../../../config/db.php';
 require_once __DIR__ . '/../../../config/constants.php';
 require_once __DIR__ . '/../../../models/stock_entry.php';
+require_once __DIR__ . '/../../../models/coil.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 
 $pageTitle = 'Stock Entries - ' . APP_NAME;
 
+// Get filter parameters
 $currentPage = isset($_GET['page_num']) ? (int) $_GET['page_num'] : 1;
 $coilId = isset($_GET['coil_id']) ? (int) $_GET['coil_id'] : null;
+$statusFilter = isset($_GET['status']) ? sanitize($_GET['status']) : '';
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 $stockEntryModel = new StockEntry();
+$coilModel = new Coil();
 
-if ($coilId) {
-    $entries = $stockEntryModel->getByCoil(
-        $coilId,
-        RECORDS_PER_PAGE,
-        ($currentPage - 1) * RECORDS_PER_PAGE,
-    );
-    $totalEntries = count($stockEntryModel->getByCoil($coilId, 10000, 0));
+// Build query based on filters
+if ($searchQuery !== '') {
+    // Search mode - search by coil code/name
+    $entries = $stockEntryModel->search($searchQuery, $statusFilter, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
+    $totalEntries = $stockEntryModel->countSearch($searchQuery, $statusFilter);
+} elseif ($coilId) {
+    // Filter by specific coil
+    $entries = $stockEntryModel->getByCoil($coilId, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE, false);
+    $totalEntries = count($stockEntryModel->getByCoil($coilId, 10000, 0, false));
+} elseif ($statusFilter !== '') {
+    // Filter by status
+    $entries = $stockEntryModel->getAllByStatus($statusFilter, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
+    $totalEntries = $stockEntryModel->countByStatus($statusFilter);
 } else {
+    // No filters - get all
     $entries = $stockEntryModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
     $totalEntries = $stockEntryModel->count();
 }
 
 $paginationData = getPaginationData($totalEntries, $currentPage);
+
+// Get coils for dropdown filter (if needed)
+$coilsForFilter = $coilModel->getAll(null, 1000, 0);
 
 $db = Database::getInstance()->getConnection();
 
@@ -40,13 +55,84 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h1 class="page-title">Stock Entries</h1>
-                <p class="text-muted">Manage stock meter entries</p>
+                <p class="text-muted">
+                    Manage stock meter entries
+                    <?php if ($searchQuery !== ''): ?>
+                        <span class="badge bg-info">Search: "<?php echo htmlspecialchars($searchQuery); ?>"</span>
+                    <?php endif; ?>
+                    <?php if ($statusFilter !== ''): ?>
+                        <span class="badge bg-secondary">Status: <?php echo ucfirst(str_replace('_', ' ', $statusFilter)); ?></span>
+                    <?php endif; ?>
+                    <?php if ($coilId): ?>
+                        <span class="badge bg-primary">Coil Filter Active</span>
+                    <?php endif; ?>
+                    (<?php echo $totalEntries; ?> total)
+                </p>
             </div>
             <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_CREATE)): ?>
             <a href="/new-stock-system/index.php?page=stock_entries_create" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Add Stock Entry
             </a>
             <?php endif; ?>
+        </div>
+    </div>
+    
+    <!-- Filters Card -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Status Filter Buttons -->
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">Filter by Status:</label>
+                    <div class="btn-group w-100" role="group">
+                        <a href="/new-stock-system/index.php?page=stock_entries<?php echo $coilId ? '&coil_id='.$coilId : ''; ?><?php echo $searchQuery !== '' ? '&search='.urlencode($searchQuery) : ''; ?>" 
+                           class="btn btn-sm <?php echo $statusFilter === '' ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                            All
+                        </a>
+                        <a href="/new-stock-system/index.php?page=stock_entries&status=available<?php echo $coilId ? '&coil_id='.$coilId : ''; ?><?php echo $searchQuery !== '' ? '&search='.urlencode($searchQuery) : ''; ?>" 
+                           class="btn btn-sm <?php echo $statusFilter === 'available' ? 'btn-success' : 'btn-outline-success'; ?>">
+                            Available
+                        </a>
+                        <a href="/new-stock-system/index.php?page=stock_entries&status=factory_use<?php echo $coilId ? '&coil_id='.$coilId : ''; ?><?php echo $searchQuery !== '' ? '&search='.urlencode($searchQuery) : ''; ?>" 
+                           class="btn btn-sm <?php echo $statusFilter === 'factory_use' ? 'btn-warning' : 'btn-outline-warning'; ?>">
+                            Factory Use
+                        </a>
+                        <a href="/new-stock-system/index.php?page=stock_entries&status=sold<?php echo $coilId ? '&coil_id='.$coilId : ''; ?><?php echo $searchQuery !== '' ? '&search='.urlencode($searchQuery) : ''; ?>" 
+                           class="btn btn-sm <?php echo $statusFilter === 'sold' ? 'btn-danger' : 'btn-outline-danger'; ?>">
+                            Sold Out
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">Search:</label>
+                    <form method="GET" action="/new-stock-system/index.php" class="d-flex">
+                        <input type="hidden" name="page" value="stock_entries">
+                        <?php if ($coilId): ?>
+                        <input type="hidden" name="coil_id" value="<?php echo $coilId; ?>">
+                        <?php endif; ?>
+                        <?php if ($statusFilter !== ''): ?>
+                        <input type="hidden" name="status" value="<?php echo htmlspecialchars($statusFilter); ?>">
+                        <?php endif; ?>
+                        <input type="text" 
+                               name="search" 
+                               class="form-control form-control-sm me-2" 
+                               placeholder="Search by coil code or name..." 
+                               value="<?php echo htmlspecialchars($searchQuery); ?>"
+                               autocomplete="off">
+                        <button type="submit" class="btn btn-sm btn-primary" title="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <?php if ($searchQuery !== '' || $statusFilter !== '' || $coilId): ?>
+                        <a href="/new-stock-system/index.php?page=stock_entries" 
+                           class="btn btn-sm btn-secondary ms-2" title="Clear all filters">
+                            <i class="bi bi-x"></i>
+                        </a>
+                        <?php endif; ?>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -57,7 +143,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         <div class="card-body p-0">
             <?php if (empty($entries)): ?>
             <div class="alert alert-info m-3">
-                <i class="bi bi-info-circle"></i> No stock entries found.
+                <i class="bi bi-info-circle"></i> 
+                <?php if ($searchQuery !== ''): ?>
+                    No stock entries found matching "<?php echo htmlspecialchars($searchQuery); ?>".
+                <?php elseif ($statusFilter !== ''): ?>
+                    No stock entries found with status "<?php echo ucfirst(str_replace('_', ' ', $statusFilter)); ?>".
+                <?php else: ?>
+                    No stock entries found.
+                <?php endif; ?>
             </div>
             <?php else: ?>
             <div class="table-responsive">
@@ -68,7 +161,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>Coil Code</th>
                             <th>Coil Name</th>
                             <th>Meters</th>
-                            <th>Weight (KG)</th> <!-- NEW COLUMN -->
+                            <th>Weight (KG)</th>
                             <th>Remaining (M)</th>
                             <th>Status</th>
                             <th>Created By</th>
@@ -111,7 +204,6 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 : 'N/A'; ?></td>
                             <td><?php echo number_format($entry['meters'], 2); ?>m</td>
                             
-                            <!-- NEW: Display Weight KG -->
                             <td>
                                 <?php if (!empty($entry['weight_kg']) && $entry['weight_kg'] > 0): ?>
                                     <span class="text-primary fw-bold">
@@ -173,7 +265,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             </div>
             <?php endif; ?>
         </div>
-        <?php if (!empty($entries)): ?>
+        <?php if (!empty($entries) && $totalEntries > RECORDS_PER_PAGE): ?>
         <div class="card-footer">
             <?php
             $queryParams = $_GET;

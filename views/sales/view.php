@@ -137,38 +137,55 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 </div>
             </div>
 
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h4>Product Details</h4>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Coil Code</th>
-                                    <th>Coil Name</th>
-                                    <th>Stock Entry</th>
-                                    <th>Meters Sold</th>
-                                    <th>Price per Meter</th>
-                                    <th>Total Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($coil['code'] ?? 'N/A'); ?></td>
-                                    <td><?php echo htmlspecialchars($coil['name'] ?? 'N/A'); ?></td>
-                                    <td>#<?php echo $stockEntry ? $stockEntry['id'] : 'N/A'; ?></td>
-                                    <td><?php echo number_format($sale['meters'], 2); ?> m</td>
-                                    <td>₦<?php echo number_format(
-                                        $sale['price_per_meter'],
-                                        2,
-                                    ); ?></td>
-                                    <td>₦<?php echo number_format($sale['total_amount'], 2); ?></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+<div class="row mb-4">
+    <div class="col-12">
+        <h4>Product Details</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Coil Code</th>
+                        <th>Coil Name</th>
+                        <th>Stock Entry</th>
+                        <th>Quantity Sold</th>
+                        <th>Unit Price</th>
+                        <th>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><?php echo htmlspecialchars($coil['code'] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($coil['name'] ?? 'N/A'); ?></td>
+                        <td>#<?php echo $stockEntry ? $stockEntry['id'] : 'N/A'; ?></td>
+                        <td>
+                            <?php 
+                            if ($sale['weight_kg'] !== null && $sale['weight_kg'] > 0) {
+                                // Sale was made in KG
+                                echo number_format($sale['weight_kg'], 2) . ' kg';
+                            } else {
+                                // Sale was made in meters
+                                echo number_format($sale['meters'], 2) . ' m';
+                            }
+                            ?>
+                        </td>
+                        <td>
+                            <?php 
+                            if ($sale['price_per_kg'] !== null && $sale['price_per_kg'] > 0) {
+                                // Price per KG
+                                echo '₦' . number_format($sale['price_per_kg'], 2) . '/kg';
+                            } else {
+                                // Price per meter
+                                echo '₦' . number_format($sale['price_per_meter'], 2) . '/m';
+                            }
+                            ?>
+                        </td>
+                        <td>₦<?php echo number_format($sale['total_amount'], 2); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
             <?php if ($invoice): ?>
             <div class="row mt-4">
@@ -251,11 +268,11 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 </a>
                             <?php endif; ?>
                             
-                            <a href="/new-stock-system/controllers/sales/export_invoice.php?id=<?php echo $sale[
-                                'id'
-                            ]; ?>" 
-                               class="btn btn-success" target="_blank">
-                                <i class="bi bi-file-pdf"></i> Export Invoice
+                            <a href="/new-stock-system/index.php?page=invoice_view&id=<?php echo $invoice[
+                                    'id'
+                                ]; ?>"
+                               class="btn btn-success">
+                                <i class="bi bi-file-pdf"></i> Go to Invoice
                             </a>
                             
                             <?php if (hasPermission(MODULE_SALES, ACTION_DELETE)): ?>
