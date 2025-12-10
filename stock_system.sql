@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 02, 2025 at 01:39 PM
+-- Generation Time: Dec 03, 2025 at 10:51 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -87,7 +87,7 @@ INSERT INTO `coils` (`id`, `code`, `name`, `color`, `color_id`, `net_weight`, `m
 (67, 'D31', 'I/beige Aluminium coil', 'IBeige', 9, 2073.00, 2000.00, '0.55', 'aluminum', 'out_of_stock', 5, '2025-11-10 13:45:50', '2025-11-19 13:40:46', NULL),
 (68, 'D54', 'G/beige Aluminium coil', 'GBeige', 14, 2055.00, 1992.00, '0.55', 'aluminum', 'available', 5, '2025-11-10 13:46:46', '2025-11-14 12:42:19', NULL),
 (69, 'D57', 'I/beige Aluminium coil', 'IBeige', 9, 2161.00, 2243.00, '0.55', 'aluminum', 'available', 5, '2025-11-10 13:48:03', '2025-11-14 12:41:41', NULL),
-(70, 'D60', 'G/beige Aluminium coil', 'GBeige', 14, 2053.00, 1990.00, '0.55', 'aluminum', 'available', 5, '2025-11-10 13:49:05', '2025-11-14 12:43:00', NULL),
+(70, 'D60', 'G/beige Aluminium coil', 'GBeige', 14, 2053.00, 1990.00, '0.55', 'aluminum', 'out_of_stock', 5, '2025-11-10 13:49:05', '2025-12-02 13:36:32', NULL),
 (71, 'C30', 'G/beige Aluminium coil', 'GBeige', 14, 2064.00, 2010.00, '0.55', 'aluminum', 'available', 5, '2025-11-10 13:50:02', '2025-11-14 12:44:18', NULL),
 (72, 'D99', 'G/beige Aluminium coil', 'GBeige', 14, 2140.00, 2064.00, '0.55', 'aluminum', 'available', 5, '2025-11-10 13:51:59', '2025-11-14 12:45:56', NULL),
 (73, 'D101', 'G/beige Aluminium coil', 'GBeige', 14, 2137.00, 2063.00, '0.55', 'aluminum', 'available', 5, '2025-11-10 13:52:46', '2025-11-14 12:46:49', NULL),
@@ -298,8 +298,8 @@ INSERT INTO `coils` (`id`, `code`, `name`, `color`, `color_id`, `net_weight`, `m
 (283, 'AS366', 'Alusteel coil', 'SBlue', 11, 3248.00, 1583.00, '0.22', 'alusteel', 'available', 5, '2025-11-11 10:16:32', '2025-11-17 09:37:03', NULL),
 (284, 'AS367', 'Alusteel coil', 'IWhite', 16, 3246.00, 1560.00, '0.22', 'alusteel', 'available', 5, '2025-11-11 10:17:14', '2025-11-17 09:38:56', NULL),
 (285, 'AS368', 'Alusteel coil', 'IWhite', 16, 3276.00, 1576.00, '0.22', 'alusteel', 'available', 5, '2025-11-11 10:18:03', '2025-11-17 09:39:27', NULL),
-(286, 'AS369', 'Alusteel coil', 'IWhite', 16, 3360.00, 1630.00, '0.22', 'alusteel', 'available', 5, '2025-11-11 10:18:50', '2025-11-17 09:40:12', NULL),
-(287, 'AS370', 'Alusteel coil', 'IWhite', 16, 2714.00, 1319.00, '0.22', 'alusteel', 'available', 5, '2025-11-11 10:19:40', '2025-11-17 09:40:40', NULL),
+(286, 'AS369', 'Alusteel coil', 'IWhite', 16, 3360.00, 1630.00, '0.22', 'alusteel', 'out_of_stock', 5, '2025-11-11 10:18:50', '2025-12-03 09:00:04', NULL),
+(287, 'AS370', 'Alusteel coil', 'IWhite', 16, 2714.00, 1319.00, '0.22', 'alusteel', 'out_of_stock', 5, '2025-11-11 10:19:40', '2025-12-03 09:00:10', NULL),
 (288, 'AS371', 'Alusteel coil', 'IWhite', 16, 2722.00, 1321.00, '0.22', 'alusteel', 'available', 5, '2025-11-11 10:20:24', '2025-11-17 09:41:23', NULL),
 (289, 'AS372', 'Alusteel coil', 'IWhite', 16, 2840.00, 1397.00, '0.22', 'alusteel', 'available', 5, '2025-11-11 10:21:07', '2025-11-17 09:41:55', NULL),
 (290, 'AS373', 'Alusteel coil', 'IWhite', 16, 2968.00, 1432.00, '0.22', 'alusteel', 'available', 5, '2025-11-11 10:21:47', '2025-11-17 09:42:37', NULL),
@@ -323,12 +323,12 @@ INSERT INTO `coils` (`id`, `code`, `name`, `color`, `color_id`, `net_weight`, `m
 (308, 'AS393', 'Alusteel coil', 'IWhite', 16, 3202.00, 1310.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:42:23', '2025-11-17 10:25:10', NULL),
 (309, 'AS394', 'Alusteel coil', 'IWhite', 16, 3350.00, 1374.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:43:02', '2025-11-17 10:25:38', NULL),
 (310, 'AS395', 'Alusteel coil', 'IWhite', 16, 3202.00, 1312.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:44:28', '2025-11-17 10:26:11', NULL),
-(311, 'AS396', 'Alusteel coil', 'IWhite', 16, 3208.00, 1310.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:45:17', '2025-11-17 10:26:47', NULL),
+(311, 'AS396', 'Alusteel coil', 'IWhite', 16, 3208.00, 1310.00, '0.26', 'alusteel', 'out_of_stock', 5, '2025-11-11 13:45:17', '2025-12-03 09:00:16', NULL),
 (312, 'AS397', 'Alusteel coil', 'IWhite', 16, 3364.00, 1379.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:46:01', '2025-11-17 10:27:26', NULL),
 (313, 'AS398', 'Alusteel coil', 'IWhite', 16, 2182.00, 889.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:46:46', '2025-11-17 10:27:58', NULL),
 (314, 'AS399', 'Alusteel coil', 'IWhite', 16, 2316.00, 932.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:47:23', '2025-11-17 10:28:29', NULL),
 (315, 'AS400', 'Alusteel coil', 'GBeige', 14, 3204.00, 1313.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:48:55', '2025-11-17 10:29:02', NULL),
-(316, 'AS401', 'Alusteel coil', 'GBeige', 14, 3202.00, 1312.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:49:47', '2025-11-17 10:29:33', NULL),
+(316, 'AS401', 'Alusteel coil', 'GBeige', 14, 3202.00, 1312.00, '0.26', 'alusteel', 'out_of_stock', 5, '2025-11-11 13:49:47', '2025-12-03 09:00:21', NULL),
 (317, 'AS402', 'Alusteel coil', 'GBeige', 14, 3428.00, 1380.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:50:34', '2025-11-17 10:30:05', NULL),
 (318, 'AS403', 'Alusteel coil', 'GBeige', 14, 2994.00, 1229.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:51:15', '2025-11-17 10:30:41', NULL),
 (319, 'AS404', 'Alusteel coil', 'GBeige', 14, 3196.00, 1319.00, '0.26', 'alusteel', 'available', 5, '2025-11-11 13:51:50', '2025-11-17 10:47:20', NULL),
@@ -396,9 +396,9 @@ INSERT INTO `coils` (`id`, `code`, `name`, `color`, `color_id`, `net_weight`, `m
 (381, 'K325', 'K Zinc coil', 'IWhite', 16, 2954.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:04:30', '2025-11-17 11:28:33', NULL),
 (382, 'K326', 'K Zinc coil', 'IWhite', 16, 2960.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:05:13', '2025-11-17 11:04:45', NULL),
 (383, 'K327', 'K Zinc coil', 'IWhite', 16, 2962.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:05:51', '2025-11-17 11:05:29', NULL),
-(384, 'K337', 'K Zinc coil', 'IWhite', 16, 3030.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:10:46', '2025-11-17 11:06:20', NULL),
-(385, 'K338', 'K Zinc coil', 'IWhite', 16, 2990.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:11:42', '2025-11-17 11:06:56', NULL);
+(384, 'K337', 'K Zinc coil', 'IWhite', 16, 3030.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:10:46', '2025-11-17 11:06:20', NULL);
 INSERT INTO `coils` (`id`, `code`, `name`, `color`, `color_id`, `net_weight`, `meters`, `gauge`, `category`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(385, 'K338', 'K Zinc coil', 'IWhite', 16, 2990.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:11:42', '2025-11-17 11:06:56', NULL),
 (386, 'K339', 'K Zinc coil', 'IWhite', 16, 2996.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:12:37', '2025-11-17 11:26:45', NULL),
 (387, 'K347', 'K Zinc coil', 'IWhite', 16, 3000.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:13:43', '2025-11-17 11:07:37', NULL),
 (388, 'K348', 'K Zinc coil', 'IWhite', 16, 2972.00, 1470.00, '0.20', 'kzinc', 'available', 5, '2025-11-11 15:14:23', '2025-11-17 11:08:16', NULL),
@@ -645,7 +645,8 @@ INSERT INTO `coils` (`id`, `code`, `name`, `color`, `color_id`, `net_weight`, `m
 (629, 'A54', 'Aluminium coil', '', 13, 2085.00, 1747.00, '0.55', 'kzinc', 'available', 5, '2025-11-25 13:48:09', NULL, NULL),
 (630, 'A55', 'Aluminium coil', '', 13, 2080.00, 1745.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:48:58', NULL, NULL),
 (631, 'A56', 'Aluminium coil', '', 13, 2079.00, 2225.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:49:39', NULL, NULL),
-(632, 'A57', 'Aluminium coil', '', 13, 1914.00, 2054.00, '0.55', 'aluminum', 'available', 5, '2025-11-25 13:50:21', NULL, NULL);
+(632, 'A57', 'Aluminium coil', '', 13, 1914.00, 2054.00, '0.55', 'aluminum', 'out_of_stock', 5, '2025-11-25 13:50:21', '2025-12-03 08:59:58', NULL),
+(633, 'D33', 'Aluminium coil', '', 12, 2147.00, 1417.90, '0.55', 'aluminum', 'available', 5, '2025-12-03 09:11:39', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -680,7 +681,33 @@ INSERT INTO `colors` (`id`, `code`, `name`, `hex_code`, `is_active`, `created_by
 (16, 'IWhite', 'I/White', '#FFFFF0', 1, 5, '2025-11-11 20:27:37', '2025-11-12 06:58:08', NULL),
 (17, 'STest', 'S/Test', NULL, 0, 5, '2025-11-11 20:51:24', '2025-11-11 21:10:40', '2025-11-11 21:10:40'),
 (18, 'N/Brown', 'N/brown', NULL, 1, 5, '2025-11-13 15:54:15', '2025-11-13 15:54:44', NULL),
-(19, 'AL/Skin', 'AL/Skin', NULL, 1, 5, '2025-11-14 09:13:33', '2025-11-14 09:17:30', NULL);
+(19, 'AL/Skin', 'AL/Skin', NULL, 1, 5, '2025-11-14 09:13:33', '2025-11-14 09:17:30', NULL),
+(20, 'BLACK SHINGLE 01', 'BLACK SHINGLE', NULL, 1, 5, '2025-12-02 11:54:24', NULL, NULL),
+(21, 'CBS_03', 'Claret black shingle', NULL, 1, 5, '2025-12-02 11:56:03', NULL, NULL),
+(22, 'CB_02', 'Claret Shingle', NULL, 1, 5, '2025-12-02 11:57:01', NULL, NULL),
+(23, 'GS_04', 'Green shingle', NULL, 1, 5, '2025-12-02 11:57:29', NULL, NULL),
+(24, 'CBBPS_06', 'Claret brown &amp;black patch shingle', NULL, 1, 5, '2025-12-02 11:59:55', NULL, NULL),
+(25, 'BRPS_07', 'Black and Red patch Shingle', NULL, 1, 5, '2025-12-02 12:00:42', NULL, NULL),
+(26, 'BM_01', 'Black Milano', NULL, 1, 5, '2025-12-02 12:01:25', NULL, NULL),
+(27, 'CBM_02', 'Claret Black Milano', NULL, 1, 5, '2025-12-02 12:02:32', NULL, NULL),
+(28, 'CM_03', 'Claret Milano', NULL, 1, 5, '2025-12-02 12:03:05', NULL, NULL),
+(29, 'BM_04', 'Blue Milano', NULL, 1, 5, '2025-12-02 12:03:47', NULL, NULL),
+(30, 'GM_05', 'Green Milano', NULL, 1, 5, '2025-12-02 12:04:20', NULL, NULL),
+(31, 'CBM__6', 'Claret Brown Milano', NULL, 1, 5, '2025-12-02 12:05:15', NULL, NULL),
+(32, 'CBBM_07', 'Claret Brown Black Milano', NULL, 1, 5, '2025-12-02 12:06:05', NULL, NULL),
+(33, 'BB_01', 'Black Bond', NULL, 1, 5, '2025-12-02 12:06:50', NULL, NULL),
+(34, 'GB_03', 'Green Bond', NULL, 1, 5, '2025-12-02 12:07:37', NULL, NULL),
+(35, 'BBD_04', 'Blue bond', NULL, 1, 5, '2025-12-02 12:08:04', NULL, NULL),
+(36, 'cbbd', 'Claret Brown Bond', NULL, 1, 5, '2025-12-02 12:10:05', NULL, NULL),
+(37, 'RBD_06', 'Red Bond', NULL, 1, 5, '2025-12-02 12:10:33', NULL, NULL),
+(38, 'BC_01', 'Black Classic', NULL, 1, 5, '2025-12-02 12:11:19', NULL, NULL),
+(39, 'CBC_02', 'Claret Brown Classic', NULL, 1, 5, '2025-12-02 12:12:23', NULL, NULL),
+(40, 'GC_03', 'Green Classic', NULL, 1, 5, '2025-12-02 12:12:59', NULL, NULL),
+(41, 'BCH_01', 'Black Check', NULL, 1, 5, '2025-12-02 12:13:42', NULL, NULL),
+(42, 'CCK_02', 'Claret Check', NULL, 1, 5, '2025-12-02 12:14:27', NULL, NULL),
+(43, 'BRM_01', 'Black Romania', NULL, 1, 5, '2025-12-02 12:15:13', NULL, NULL),
+(44, 'CRM_02', 'Claret Romania', NULL, 1, 5, '2025-12-02 12:15:44', NULL, NULL),
+(45, 'CBRM_04', 'claret and brown romania', NULL, 1, 5, '2025-12-02 12:19:09', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -709,7 +736,9 @@ INSERT INTO `customers` (`id`, `name`, `email`, `phone`, `address`, `company`, `
 (1, 'Mr Lawal', 'customer1@example.com', '09039988198', 'NO. 4C, ZONE D, MILLIONAIRES QUARTERS, BYAZHIN, KUBWA, ABUJA', 'HEXA', 3, '2025-11-05 09:34:04', NULL, NULL),
 (3, 'Stevo Aluminium', 'stevoaluminum@gmail.com', '08032218808', NULL, 'Stevo Aluminium IG LTD', 5, '2025-11-08 12:56:42', '2025-11-08 13:11:09', NULL),
 (4, 'Usman Madugu', 'omale.ochigbo@obumek360.app', '07071132619', 'Kaduna State', 'Usman Aluminium Ltd', 5, '2025-11-17 12:31:01', '2025-11-17 14:17:29', NULL),
-(5, 'Adams', 'adamjames@yahoo.com', '08055084883', 'Kubwa Abuja', 'Adams Aluminium Ltd', 5, '2025-11-19 08:34:00', NULL, NULL);
+(5, 'Adams', 'adamjames@yahoo.com', '08055084883', 'Kubwa Abuja', 'Adams Aluminium Ltd', 5, '2025-11-19 08:34:00', NULL, NULL),
+(6, 'Elizabeth Enehe', NULL, '08098434014', NULL, NULL, 5, '2025-12-03 08:50:50', NULL, NULL),
+(7, 'MONDAY JOB', NULL, '08098434014', NULL, NULL, 5, '2025-12-03 09:14:01', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -734,9 +763,38 @@ CREATE TABLE `designs` (
 --
 
 INSERT INTO `designs` (`id`, `code`, `name`, `description`, `is_active`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'MILANO', 'Milano', 'Milano roofing tile design', 1, 5, '2025-11-28 20:11:09', NULL, NULL),
-(2, 'SHINGLE', 'Shingle', 'Shingle roofing tile design', 5, 1, '2025-11-28 20:11:09', NULL, NULL),
-(3, 'CORONA', 'Corona', 'Corona roofing tile design', 1, 5, '2025-11-28 20:11:09', NULL, NULL);
+(1, 'MILANO', 'Milano', 'Milano roofing tile design', 1, 5, '2025-11-28 20:11:09', '2025-12-02 09:23:10', '2025-12-02 09:23:10'),
+(2, 'SHINGLE', 'Shingle', 'Shingle roofing tile design', 5, 1, '2025-11-28 20:11:09', '2025-12-02 09:23:14', '2025-12-02 09:23:14'),
+(3, 'CORONA', 'Corona', 'Corona roofing tile design', 1, 5, '2025-11-28 20:11:09', '2025-12-02 09:26:53', '2025-12-02 09:26:53'),
+(4, 'CLS02_02', 'Claret Shingle', 'Claret shingle roofing tiles', 1, 5, '2025-12-02 09:17:01', NULL, NULL),
+(5, 'CBS_03', 'Claret black shingle', 'Claret black shingle roofing tiles', 1, 5, '2025-12-02 09:19:01', '2025-12-02 09:19:32', NULL),
+(6, 'BLS_01', 'Black shingle', 'Black shingle roofing tiles', 1, 5, '2025-12-02 09:20:59', '2025-12-02 09:21:38', NULL),
+(7, 'GS_04', 'Green shingle', 'Green shingle roofing tiles', 1, 5, '2025-12-02 09:22:52', NULL, NULL),
+(8, 'CBS_05', 'Coffe brown shingle', 'coffe brown shingle roofing tiles', 1, 5, '2025-12-02 09:26:30', NULL, NULL),
+(9, 'CBBPS_06', 'Claret Brown and Black patch shingle', 'Claret Brown and Black patch shingle', 1, 5, '2025-12-02 09:37:21', '2025-12-02 09:44:59', NULL),
+(10, 'BRPS_07', 'Black and Red patch Shingle', 'Black and Red patch Shingle Roofing tiles', 1, 5, '2025-12-02 09:43:41', '2025-12-02 09:44:29', NULL),
+(11, 'BM_01', 'Black Milano', 'Black Milano Roofing tiles', 1, 5, '2025-12-02 09:46:11', NULL, NULL),
+(12, 'CBM_02', 'Claret Black Milano', 'Claret Black Milano Roofing Tiles', 1, 5, '2025-12-02 09:47:15', NULL, NULL),
+(13, 'CM_03', 'Claret Milano', 'Claret Milano Roofing Tiles', 1, 5, '2025-12-02 09:48:30', NULL, NULL),
+(14, 'BM_04', 'Blue Milano', 'Blue Milano Roofing Tiles', 1, 5, '2025-12-02 09:49:40', NULL, NULL),
+(15, 'GM_05', 'Green Milano', 'Green Milano Roofing Tiles', 1, 5, '2025-12-02 09:50:38', NULL, NULL),
+(16, 'CBM__6', 'Claret Brown Milano', 'Claret Brown Milano Roofing Tiles', 1, 5, '2025-12-02 09:52:10', NULL, NULL),
+(17, 'CBBM_07', 'Claret Brown Black Milano', 'Claret Brown Black Milano Roofing Tiles', 1, 5, '2025-12-02 09:53:30', NULL, NULL),
+(18, 'BB_01', 'Black Bond', 'Black Bond Roofing Tiles', 1, 5, '2025-12-02 09:54:40', NULL, NULL),
+(19, 'CB_02', 'Claret Bond', 'Claret Bond Roofing Tiles', 1, 5, '2025-12-02 10:27:03', NULL, NULL),
+(20, 'GB_03', 'Green Bond', 'Green Bond Roofing Tiles', 1, 5, '2025-12-02 10:27:58', NULL, NULL),
+(21, 'BBD_04', 'Blue bond', 'Blue bond Roofing Tiles', 1, 5, '2025-12-02 10:29:04', NULL, NULL),
+(22, 'CBD_05', 'Claret Brown Bond', 'Claret Brown Bond', 1, 5, '2025-12-02 10:30:32', NULL, NULL),
+(23, 'RBD_06', 'Red Bond', 'Red Bond Roofing Tiles', 1, 5, '2025-12-02 10:31:42', NULL, NULL),
+(24, 'BC_01', 'Black Classic', 'Black Classic Roofing Tiles', 1, 5, '2025-12-02 10:32:45', NULL, NULL),
+(25, 'CBC_02', 'Claret Brown Classic', 'Claret Brown Classic Roofing Tiles', 1, 5, '2025-12-02 10:34:01', NULL, NULL),
+(26, 'GC_03', 'Green Classic', 'Green Classic Roofing Tiles', 1, 5, '2025-12-02 10:34:57', NULL, NULL),
+(27, 'BCH_01', 'Black Check', 'Black Check Roofing Tiles', 1, 5, '2025-12-02 10:36:21', NULL, NULL),
+(28, 'CCK_02', 'Claret Check', 'Claret Check Roofing Tiles', 1, 5, '2025-12-02 10:37:33', NULL, NULL),
+(29, 'BRM_01', 'Black Romania', 'Black Romania Roofing Tiles', 1, 5, '2025-12-02 10:38:53', NULL, NULL),
+(30, 'CRM_02', 'Claret Romania', 'Claret Romania Roofing Tiles', 1, 5, '2025-12-02 10:39:58', NULL, NULL),
+(31, 'BKRM_03', 'Black and Red Romania', 'Black and Red Romania Roofing Tiles', 1, 5, '2025-12-02 10:41:32', NULL, NULL),
+(32, 'CBRM_04', 'Black and Red Romania', 'Black and Red Romania Roofing Tiles', 1, 5, '2025-12-02 10:43:06', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -890,18 +948,23 @@ CREATE TABLE `stock_entries` (
 --
 
 INSERT INTO `stock_entries` (`id`, `coil_id`, `meters`, `meters_remaining`, `weight_kg`, `weight_kg_remaining`, `meters_used`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(11, 49, 2600.00, 2271.30, NULL, NULL, 0.00, 'factory_use', 2, '2025-11-08 11:38:09', '2025-11-19 13:40:31', '2025-11-19 13:40:31'),
-(12, 50, 2650.00, 1550.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-08 12:25:44', '2025-11-19 13:40:35', '2025-11-19 13:40:35'),
-(13, 51, 2500.00, 1900.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-08 12:45:41', '2025-11-17 14:21:31', '2025-11-17 14:21:31'),
-(14, 52, 2500.00, 0.00, NULL, NULL, 0.00, 'available', 5, '2025-11-08 12:54:10', '2025-11-19 13:40:42', '2025-11-19 13:40:42'),
-(31, 67, 5800.00, 2069273.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-17 12:27:30', '2025-11-17 12:43:18', '2025-11-17 12:43:18'),
-(32, 67, 2073000.00, 0.00, NULL, NULL, 2073000.00, 'sold', 5, '2025-11-17 12:43:55', '2025-11-19 13:40:46', '2025-11-19 13:40:46'),
-(33, 299, 2000.00, 0.00, NULL, NULL, 2000.00, 'sold', 5, '2025-11-18 11:27:31', '2025-11-19 13:40:51', '2025-11-19 13:40:51'),
-(34, 316, 40000.00, 40000.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-18 13:31:46', '2025-11-18 13:31:52', NULL),
-(35, 569, 5000.00, 5000.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-19 08:31:41', '2025-11-19 08:40:19', '2025-11-19 08:40:19'),
-(36, 311, 5000.00, 5000.00, NULL, NULL, 0.00, 'factory_use', 5, '2025-11-19 08:41:07', '2025-11-19 08:50:41', NULL),
-(37, 287, 5000.00, 5000.00, NULL, NULL, 0.00, 'available', 5, '2025-11-19 08:55:10', '2025-11-19 13:25:23', NULL),
-(38, 286, 6000.00, 0.00, NULL, NULL, 6000.00, 'sold', 5, '2025-11-19 09:19:51', '2025-11-19 13:23:23', NULL);
+(11, 49, 2600.00, 2271.30, 20000.00, NULL, 0.00, 'factory_use', 2, '2025-11-08 11:38:09', '2025-12-02 16:24:49', '2025-11-19 13:40:31'),
+(12, 50, 2650.00, 1550.00, 20000.00, NULL, 0.00, 'factory_use', 5, '2025-11-08 12:25:44', '2025-12-02 16:25:56', '2025-11-19 13:40:35'),
+(13, 51, 2500.00, 1900.00, 20000.00, NULL, 0.00, 'factory_use', 5, '2025-11-08 12:45:41', '2025-12-02 16:25:56', '2025-11-17 14:21:31'),
+(14, 52, 2500.00, 0.00, 20000.00, NULL, 0.00, 'available', 5, '2025-11-08 12:54:10', '2025-12-02 16:25:56', '2025-11-19 13:40:42'),
+(31, 67, 5800.00, 2069273.00, 20000.00, NULL, 0.00, 'factory_use', 5, '2025-11-17 12:27:30', '2025-12-02 16:25:56', '2025-11-17 12:43:18'),
+(32, 67, 2073000.00, 0.00, 20000.00, NULL, 2073000.00, 'sold', 5, '2025-11-17 12:43:55', '2025-12-02 16:25:56', '2025-11-19 13:40:46'),
+(33, 299, 2000.00, 0.00, 20000.00, NULL, 2000.00, 'sold', 5, '2025-11-18 11:27:31', '2025-12-02 16:25:56', '2025-11-19 13:40:51'),
+(34, 316, 40000.00, 40000.00, 20000.00, NULL, 0.00, 'factory_use', 5, '2025-11-18 13:31:46', '2025-12-03 09:00:21', '2025-12-03 09:00:21'),
+(35, 569, 5000.00, 5000.00, 20000.00, NULL, 0.00, 'factory_use', 5, '2025-11-19 08:31:41', '2025-12-02 16:25:56', '2025-11-19 08:40:19'),
+(36, 311, 5000.00, 5000.00, 20000.00, NULL, 0.00, 'factory_use', 5, '2025-11-19 08:41:07', '2025-12-03 09:00:16', '2025-12-03 09:00:16'),
+(37, 287, 5000.00, 5000.00, 20000.00, NULL, 0.00, 'available', 5, '2025-11-19 08:55:10', '2025-12-03 09:00:10', '2025-12-03 09:00:10'),
+(38, 286, 6000.00, 0.00, 20000.00, NULL, 6000.00, 'sold', 5, '2025-11-19 09:19:51', '2025-12-03 09:00:04', '2025-12-03 09:00:04'),
+(39, 632, 203000.00, 203000.00, 20000.00, NULL, 0.00, 'available', 2, '2025-12-02 09:19:14', '2025-12-02 16:25:56', '2025-12-02 09:19:21'),
+(40, 632, 20000.00, 20000.00, 45000.00, 45000.00, 0.00, 'available', 2, '2025-12-02 09:19:43', '2025-12-03 08:59:58', '2025-12-03 08:59:58'),
+(41, 70, 0.10, 0.10, 2085.00, 2085.00, 0.00, 'available', 5, '2025-12-02 13:35:46', '2025-12-02 13:36:32', '2025-12-02 13:36:32'),
+(42, 70, 1990.00, 1990.00, 2053.00, 2053.00, 0.00, 'available', 5, '2025-12-03 08:49:43', NULL, NULL),
+(43, 633, 1417.90, 1417.90, NULL, NULL, 0.00, 'factory_use', 5, '2025-12-03 09:12:33', '2025-12-03 09:12:41', NULL);
 
 -- --------------------------------------------------------
 
@@ -952,7 +1015,8 @@ INSERT INTO `stock_ledger` (`id`, `coil_id`, `stock_entry_id`, `transaction_type
 (37, 50, 12, 'outflow', 'Stock moved back to available - Entry #12 (removing 1550m from factory tracking)', 0.00, 1550.00, 0.00, 'status_change', 12, 2, '2025-11-19 13:13:23'),
 (38, 50, 12, 'inflow', 'Stock moved to factory use - Entry #12 (1550.00m available)', 1550.00, 0.00, 1550.00, 'stock_entry', 12, 2, '2025-11-19 13:13:48'),
 (39, 286, 38, 'outflow', 'Stock moved back to available - Entry #38 (removing 6000m from factory tracking)', 0.00, 6000.00, 0.00, 'status_change', 38, 5, '2025-11-19 13:18:44'),
-(40, 287, 37, 'outflow', 'Stock moved back to available - Entry #37 (removing 5000m from factory tracking)', 0.00, 5000.00, 0.00, 'status_change', 37, 5, '2025-11-19 13:25:23');
+(40, 287, 37, 'outflow', 'Stock moved back to available - Entry #37 (removing 5000m from factory tracking)', 0.00, 5000.00, 0.00, 'status_change', 37, 5, '2025-11-19 13:25:23'),
+(41, 633, 43, 'inflow', 'Stock moved to factory use - Entry #43 (1417.90m available)', 1417.90, 0.00, 1417.90, 'stock_entry', 43, 5, '2025-12-03 09:12:41');
 
 -- --------------------------------------------------------
 
@@ -990,6 +1054,14 @@ CREATE TABLE `tile_products` (
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `tile_products`
+--
+
+INSERT INTO `tile_products` (`id`, `code`, `design_id`, `color_id`, `gauge`, `status`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'BB_01-TBLACK-THICK', 18, 12, 'thick', 'available', 5, '2025-12-02 10:53:35', '2025-12-02 12:21:24', NULL),
+(2, 'BM_01-BM_01-LIGHT', 11, 26, 'light', 'available', 5, '2025-12-02 13:39:44', '2025-12-02 13:40:39', NULL);
 
 -- --------------------------------------------------------
 
@@ -1032,6 +1104,15 @@ CREATE TABLE `tile_stock_ledger` (
   `created_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `tile_stock_ledger`
+--
+
+INSERT INTO `tile_stock_ledger` (`id`, `tile_product_id`, `transaction_date`, `transaction_code`, `quantity_in`, `quantity_out`, `balance`, `reference_type`, `reference_id`, `description`, `created_by`, `created_at`) VALUES
+(1, 1, '2025-12-02 10:54:52', '', 2345.00, 0.00, 2345.00, 'stock_in', NULL, 'sales of black bond roofing tiles', 5, '2025-12-02 10:54:52'),
+(2, 1, '2025-12-02 12:21:24', '', 2085.00, 0.00, 4430.00, 'stock_in', NULL, 'sales', 5, '2025-12-02 12:21:24'),
+(3, 2, '2025-12-02 13:40:39', '', 2458.00, 0.00, 2458.00, 'stock_in', NULL, 'sales black milano', 5, '2025-12-02 13:40:39');
 
 -- --------------------------------------------------------
 
@@ -1360,25 +1441,25 @@ ALTER TABLE `audit_log`
 -- AUTO_INCREMENT for table `coils`
 --
 ALTER TABLE `coils`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=633;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=634;
 
 --
 -- AUTO_INCREMENT for table `colors`
 --
 ALTER TABLE `colors`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `designs`
 --
 ALTER TABLE `designs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `invoices`
@@ -1408,13 +1489,13 @@ ALTER TABLE `sales`
 -- AUTO_INCREMENT for table `stock_entries`
 --
 ALTER TABLE `stock_entries`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `stock_ledger`
 --
 ALTER TABLE `stock_ledger`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `supply_delivery`
@@ -1426,7 +1507,7 @@ ALTER TABLE `supply_delivery`
 -- AUTO_INCREMENT for table `tile_products`
 --
 ALTER TABLE `tile_products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `tile_sales`
@@ -1438,7 +1519,7 @@ ALTER TABLE `tile_sales`
 -- AUTO_INCREMENT for table `tile_stock_ledger`
 --
 ALTER TABLE `tile_stock_ledger`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `users`
