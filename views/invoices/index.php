@@ -20,7 +20,7 @@ if (!defined('RECORDS_PER_PAGE')) {
 }
 
 // Initialize variables
-$currentPage = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
+$currentPage = isset($_GET['page_num']) ? max(1, (int) $_GET['page_num']) : 1;
 $statusFilter = isset($_GET['status']) ? trim($_GET['status']) : '';
 
 // Initialize invoice model
@@ -259,13 +259,8 @@ if (!defined('RECORDS_PER_PAGE')) {
                     <ul class="pagination justify-content-center mb-0">
                         <?php if ($paginationData['currentPage'] > 1): ?>
                         <li class="page-item">
-                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData[
-                                'currentPage'
-                            ] -
-                                1 .
-                                ($statusFilter
-                                    ? '&status=' . urlencode($statusFilter)
-                                    : '') ?>" aria-label="Previous">
+                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData['previousPage'] .
+                                ($statusFilter ? '&status=' . urlencode($statusFilter) : '') ?>" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
@@ -276,7 +271,7 @@ if (!defined('RECORDS_PER_PAGE')) {
                             ? 'active'
                             : '' ?>">
                             <a class="page-link" href="?page=invoices&page_num=<?= $i .
-                                ($statusFilter ? '&status=' . urlencode($statusFilter) : '') ?>">
+                                ($statusFilter ? '&status=' . urlencode($statusFilter) : '') ?>" <?= $i === $paginationData['currentPage'] ? 'style="pointer-events: none;"' : '' ?>>
                                 <?= $i ?>
                             </a>
                         </li>
@@ -286,13 +281,8 @@ if (!defined('RECORDS_PER_PAGE')) {
                             $paginationData['currentPage'] < $paginationData['totalPages']
                         ): ?>
                         <li class="page-item">
-                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData[
-                                'currentPage'
-                            ] +
-                                1 .
-                                ($statusFilter
-                                    ? '&status=' . urlencode($statusFilter)
-                                    : '') ?>" aria-label="Next">
+                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData['nextPage'] .
+                                ($statusFilter ? '&status=' . urlencode($statusFilter) : '') ?>" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>
@@ -320,8 +310,10 @@ if (!defined('RECORDS_PER_PAGE')) {
                     
                     <div class="mb-3">
                         <label for="amount" class="form-label">Amount (₦)</label>
-                        <input type="number" step="0.01" min="0" class="form-control" id="amount" name="amount" required>
-                        <div class="form-text">Enter payment amount</div>
+                        <input type="text" class="form-control" id="amount" name="amount" required 
+                               oninput="formatNumber(this)" data-prev-value="">
+                        <input type="hidden" id="amount_raw" name="amount_raw">
+                        <div class="form-text">Enter payment amount (e.g. 1,000,000.00)</div>
                     </div>
                     
                     <div class="mb-3">
@@ -350,9 +342,44 @@ if (!defined('RECORDS_PER_PAGE')) {
 </div>
 
 <script>
+// Format number with commas
+function formatNumber(input) {
+    // Remove all non-digits and decimal points
+    let value = input.value.replace(/[^\d.]/g, '');
+    
+    // Allow only one decimal point
+    const decimalSplit = value.split('.');
+    if (decimalSplit.length > 2) {
+        value = decimalSplit[0] + '.' + decimalSplit.slice(1).join('');
+    }
+    
+    // Format the number with commas
+    if (value) {
+        // Get the part before the decimal
+        const parts = value.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        
+        // Join back with decimal if it exists
+        input.value = parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
+        
+        // Store the raw value (without commas) in a hidden field
+        document.getElementById('amount_raw').value = value.replace(/,/g, '');
+    } else {
+        document.getElementById('amount_raw').value = '';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Handle payment modal
     const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    
+    // Format amount when modal is shown
+    document.getElementById('paymentModal').addEventListener('shown.bs.modal', function() {
+        const amountInput = document.getElementById('amount');
+        if (amountInput.value) {
+            formatNumber(amountInput);
+        }
+    });
     
     document.querySelectorAll('.trigger-payment').forEach(button => {
         button.addEventListener('click', function() {

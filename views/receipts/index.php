@@ -5,6 +5,7 @@
  */
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../models/receipt.php';
+require_once __DIR__ . '/../../models/invoice.php';
 require_once __DIR__ . '/../../utils/helpers.php';
 
 $pageTitle = 'Payment Receipts - ' . APP_NAME;
@@ -20,7 +21,16 @@ $offset = ($currentPage - 1) * $limit;
 // Get receipts with pagination and filters
 $receipts = $receiptModel->getAll($limit, $offset, '', $invoiceFilter);
 $totalReceipts = $receiptModel->count('', $invoiceFilter);
-$paginationData = getPaginationData($totalReceipts, $currentPage);
+// Calculate pagination data
+$totalPages = ceil($totalReceipts / $limit);
+$paginationData = [
+    'currentPage' => $currentPage,
+    'totalPages' => $totalPages,
+    'hasPrevious' => $currentPage > 1,
+    'hasNext' => $currentPage < $totalPages,
+    'previousPage' => $currentPage > 1 ? $currentPage - 1 : 1,
+    'nextPage' => $currentPage < $totalPages ? $currentPage + 1 : $totalPages
+];
 
 // Get unique invoices for filter dropdown
 $invoices = $receiptModel->getInvoicesForFilter();
@@ -117,17 +127,39 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 else: ?>
                 <?php
                 $groupedReceipts = [];
+                
+                // First, get all invoice data
+                $invoiceModel = new Invoice();
+                $invoiceIds = array_unique(array_column($receipts, 'invoice_id'));
+                $invoicesData = [];
+                
+                foreach ($invoiceIds as $invoiceId) {
+                    $invoice = $invoiceModel->findById($invoiceId);
+                    if ($invoice) {
+                        $invoicesData[$invoiceId] = $invoice;
+                    }
+                }
+                
+                // Now group receipts with invoice data
                 foreach ($receipts as $receipt) {
                     $invoiceId = $receipt['invoice_id'];
+                    
                     if (!isset($groupedReceipts[$invoiceId])) {
+                        $invoiceData = $invoicesData[$invoiceId] ?? null;
+                        $invoiceShape = $invoiceData ? json_decode($invoiceData['invoice_shape'] ?? '{}', true) : [];
+                        
+                        // Get customer name from invoice_shape or use a default
+                        $customerName = $invoiceShape['customer']['name'] ?? 'Customer';
+                        
                         $groupedReceipts[$invoiceId] = [
                             'invoice' => [
-                                'id' => $receipt['invoice_id'],
-                                'number' => $receipt['invoice_number'],
-                                'customer' => $receipt['customer_name'] ?? 'N/A',
-                                'total' => $receipt['invoice_total'] ?? 0,
+                                'id' => $invoiceId,
+                                'number' => $invoiceData['invoice_number'] ?? $receipt['invoice_number'],
+                                'customer' => $customerName,
+                                'customer_name' => $customerName,
+                                'total' => $invoiceData['total'] ?? $receipt['invoice_total'] ?? 0,
                                 'paid' => 0,
-                                'status' => $receipt['invoice_status'] ?? 'unpaid',
+                                'status' => $invoiceData['status'] ?? $receipt['invoice_status'] ?? 'unpaid',
                             ],
                             'receipts' => [],
                         ];
@@ -155,14 +187,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-1">
-                                    <a href="/new-stock-system/index.php?page=invoice_view&id=<?= $invoice[
-                                        'id'
-                                    ] ?>">
+                                    <a href="/new-stock-system/index.php?page=invoice_view&id=<?= $invoice['id'] ?>">
                                         <?= htmlspecialchars($invoice['number']) ?>
                                     </a>
                                 </h5>
                                 <p class="mb-0 text-muted">
-                                    Customer: <?= htmlspecialchars($invoice['customer']) ?>
+                                    Customer: <?= !empty($invoice['customer_name']) ? htmlspecialchars($invoice['customer_name']) : 
+                                               (!empty($invoice['customer']) ? htmlspecialchars($invoice['customer']) : 'N/A') ?>
                                 </p>
                             </div>
                             <div class="text-end">
@@ -226,13 +257,11 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                             ) ?>
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="text-muted">
                                         <?php if (!empty($receipt['reference'])): ?>
-                                            <small class="text-muted"><?= htmlspecialchars(
-                                                $receipt['reference'],
-                                            ) ?></small>
+                                            <?= htmlspecialchars($receipt['reference']) ?>
                                         <?php else: ?>
-                                            <small class="text-muted">-</small>
+                                            <span class="text-muted small">(No reference)</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-end receipt-amount text-success">
@@ -278,17 +307,14 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 endforeach; ?>
 
                 <!-- Pagination -->
-                <?php if ($paginationData['total_pages'] > 1): ?>
+                <?php if ($paginationData['totalPages'] > 1): ?>
                 <div class="p-3 border-top">
                     <nav aria-label="Page navigation">
                         <ul class="pagination justify-content-center mb-0">
                             <?php if ($paginationData['currentPage'] > 1): ?>
                             <li class="page-item">
                                 <a class="page-link" 
-                                   href="?page=receipts&page_num=<?= $paginationData[
-                                       'currentPage'
-                                   ] -
-                                       1 .
+                                   href="?page=receipts&page_num=<?= $paginationData['previousPage'] .
                                        ($invoiceFilter
                                            ? '&invoice_id=' . urlencode($invoiceFilter)
                                            : '') ?>" 
@@ -317,10 +343,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             ): ?>
                             <li class="page-item">
                                 <a class="page-link" 
-                                   href="?page=receipts&page_num=<?= $paginationData[
-                                       'currentPage'
-                                   ] +
-                                       1 .
+                                   href="?page=receipts&page_num=<?= $paginationData['nextPage'] .
                                        ($invoiceFilter
                                            ? '&invoice_id=' . urlencode($invoiceFilter)
                                            : '') ?>" 

@@ -20,7 +20,7 @@ $userModel = new User();
 // Get users
 if (!empty($searchQuery)) {
     $users = $userModel->search($searchQuery, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalUsers = count($users); // Simplified, should have a count method
+    $totalUsers = $userModel->countSearch($searchQuery);
 } else {
     $users = $userModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
     $totalUsers = $userModel->count();

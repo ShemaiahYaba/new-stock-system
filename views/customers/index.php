@@ -17,7 +17,7 @@ $customerModel = new Customer();
 
 if (!empty($searchQuery)) {
     $customers = $customerModel->search($searchQuery, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalCustomers = count($customers);
+    $totalCustomers = $customerModel->countSearch($searchQuery);
 } else {
     $customers = $customerModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
     $totalCustomers = $customerModel->count();

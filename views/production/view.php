@@ -40,6 +40,7 @@ if (isset($production['production_paper'])) {
     }
 }
 
+
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';
 ?>
@@ -241,12 +242,49 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <th>Color:</th>
                 <td>
                     <?php 
-                    // Check if color exists in coil data, otherwise show N/A
-                    if (isset($prodPaper['coil']['color'])) {
+                    // Function to get color name
+                    function getColorName($colorCode) {
+                        if (!defined('COIL_COLORS') || !is_array(COIL_COLORS)) {
+                            return $colorCode; // Return as is if COIL_COLORS is not defined
+                        }
+                        return COIL_COLORS[$colorCode] ?? $colorCode;
+                    }
+
+                    // Try to get color from different possible locations
+                    $color = null;
+                    
+                    // 1. Check prodPaper coil data - look for both 'color' and 'color_name'
+                    if (!empty($prodPaper['coil']['color'])) {
                         $color = $prodPaper['coil']['color'];
-                        echo COIL_COLORS[$color] ?? htmlspecialchars($color);
+                    } 
+                    // 1.1 Check for 'color_name' in coil data
+                    elseif (!empty($prodPaper['coil']['color_name'])) {
+                        $color = $prodPaper['coil']['color_name'];
+                    }
+                    // 2. Check invoice_shape if available
+                    elseif (!empty($production['invoice_shape'])) {
+                        $invoiceShape = is_string($production['invoice_shape']) 
+                            ? json_decode($production['invoice_shape'], true) 
+                            : $production['invoice_shape'];
+                        $color = $invoiceShape['coil']['color'] ?? null;
+                    }
+                    
+                    // 3. Check if color is in the main production data
+                    if (empty($color) && !empty($production['color'])) {
+                        $color = $production['color'];
+                    }
+
+                    // Display the color or N/A if not found
+                    if (!empty($color)) {
+                        echo htmlspecialchars(getColorName($color));
                     } else {
-                        echo 'N/A';
+                        echo 'N/A (Color not found in data)';
+                        // Debug output in HTML comment
+                        echo '<!-- Debug Info: ';
+                        echo 'Coil Data: ' . print_r($prodPaper['coil'] ?? 'No coil data', true) . ' | ';
+                        echo 'Has invoice_shape: ' . (!empty($production['invoice_shape']) ? 'Yes' : 'No') . ' | ';
+                        echo 'Production Keys: ' . implode(', ', array_keys($production));
+                        echo ' -->';
                     }
                     ?>
                 </td>

@@ -92,7 +92,7 @@ class User {
             $sql = "SELECT id, email, name, role, created_at, updated_at 
                     FROM {$this->table} 
                     WHERE deleted_at IS NULL 
-                    ORDER BY created_at DESC 
+                    ORDER BY id ASC 
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->db->prepare($sql);
@@ -269,6 +269,66 @@ class User {
         }
     }
     
+    public function countSearch($query, $status = '')
+{
+    $sql = "SELECT COUNT(*) as total
+            FROM {$this->table} p
+            LEFT JOIN warehouses w ON p.warehouse_id = w.id
+            LEFT JOIN (
+                SELECT i.sale_id, i.invoice_number, 
+                       JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.customer.name')) as customer_name,
+                       JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.coil.code')) as coil_code,
+                       JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.coil.name')) as coil_name
+                FROM invoices i
+            ) s ON p.sale_id = s.sale_id
+            WHERE 1=1";
+
+    $params = [];
+    $searchTerm = "%{$query}%";
+    
+    // If the search term starts with PR- followed by numbers, extract just the number
+    $prNumber = null;
+    if (preg_match('/^PR\-(\d+)$/i', $query, $matches)) {
+        $prNumber = $matches[1];
+    } elseif (is_numeric($query)) {
+        // If it's just a number, use it as is
+        $prNumber = $query;
+    }
+
+    $searchConditions = [];
+    
+    // Add search conditions
+    if ($prNumber !== null) {
+        $searchConditions[] = 'p.id = :search_id';
+        $params[':search_id'] = $prNumber;
+    } else {
+        $searchConditions[] = 's.invoice_number LIKE :search_invoice';
+        $searchConditions[] = 's.customer_name LIKE :search_customer';
+        $searchConditions[] = 's.coil_code LIKE :search_coil_code';
+        $searchConditions[] = 's.coil_name LIKE :search_coil_name';
+        
+        $params[':search_invoice'] = $searchTerm;
+        $params[':search_customer'] = $searchTerm;
+        $params[':search_coil_code'] = $searchTerm;
+        $params[':search_coil_name'] = $searchTerm;
+    }
+
+    if (!empty($searchConditions)) {
+        $sql .= ' AND (' . implode(' OR ', $searchConditions) . ')';
+    }
+
+    if (!empty($status)) {
+        $sql .= ' AND p.status = :status';
+        $params[':status'] = $status;
+    }
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute($params);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $result ? (int) $result['total'] : 0;
+}
+    
     /**
      * Search users
      * 
@@ -279,20 +339,29 @@ class User {
      */
     public function search($query, $limit = RECORDS_PER_PAGE, $offset = 0) {
         try {
+            error_log("Searching for: $query");
+            
             $sql = "SELECT id, email, name, role, created_at 
                     FROM {$this->table} 
                     WHERE deleted_at IS NULL 
-                    AND (email LIKE :query OR name LIKE :query)
-                    ORDER BY created_at DESC 
+                    AND (email LIKE :query1 OR name LIKE :query2)
+                    ORDER BY id ASC 
                     LIMIT :limit OFFSET :offset";
             
+            error_log("SQL Query: $sql");
+            
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':query', "%$query%", PDO::PARAM_STR);
+            $searchTerm = "%$query%";
+            $stmt->bindValue(':query1', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query2', $searchTerm, PDO::PARAM_STR);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
             
-            return $stmt->fetchAll();
+            $results = $stmt->fetchAll();
+            error_log("Search results: " . print_r($results, true));
+            
+            return $results;
         } catch (PDOException $e) {
             error_log("User search error: " . $e->getMessage());
             return [];

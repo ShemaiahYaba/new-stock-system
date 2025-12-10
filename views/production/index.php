@@ -25,9 +25,14 @@ $productionModel = new Production();
 $limit = RECORDS_PER_PAGE;
 $offset = ($currentPage - 1) * $limit;
 
-// Get productions (you'll need to add filtering to the model)
-$productions = $productionModel->getAll($limit, $offset);
-$totalProductions = $productionModel->count();
+// Get productions with search and status filtering
+if (!empty($searchQuery) || !empty($statusFilter)) {
+    $productions = $productionModel->search($searchQuery, $limit, $offset, $statusFilter);
+    $totalProductions = $productionModel->countSearch($searchQuery, $statusFilter);
+} else {
+    $productions = $productionModel->getAll($limit, $offset, $statusFilter);
+    $totalProductions = $productionModel->count($statusFilter);
+}
 
 $paginationData = getPaginationData($totalProductions, $currentPage);
 
@@ -117,7 +122,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <div>
                     <i class="bi bi-list"></i> Production Records (<?php echo $totalProductions; ?> total)
                 </div>
-                <div class="text-muted small">
+                <div class=" small">
                     <i class="bi bi-info-circle"></i> Records are immutable once created
                 </div>
             </div>

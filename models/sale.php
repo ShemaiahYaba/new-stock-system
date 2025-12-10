@@ -305,7 +305,7 @@ class Sale {
                     FROM {$this->table} s
                     LEFT JOIN coils co ON s.coil_id = co.id
                     WHERE s.customer_id = ? AND s.deleted_at IS NULL
-                    ORDER BY s.created_at DESC";
+                    ORDER BY s.created_at ASC, s.id ASC";
             
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$customerId]);

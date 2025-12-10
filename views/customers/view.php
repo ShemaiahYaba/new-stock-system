@@ -6,6 +6,7 @@
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../config/constants.php';
 require_once __DIR__ . '/../../models/customer.php';
+require_once __DIR__ . '/../../models/sale.php';
 require_once __DIR__ . '/../../utils/helpers.php';
 
 $pageTitle = 'View Customer - ' . APP_NAME;
@@ -19,7 +20,10 @@ if ($customerId <= 0) {
 }
 
 $customerModel = new Customer();
+$saleModel = new Sale();
+
 $customer = $customerModel->findById($customerId);
+$purchaseHistory = $saleModel->getByCustomer($customerId);
 
 if (!$customer) {
     setFlashMessage('error', 'Customer not found.');
@@ -123,10 +127,66 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <div class="card-header">
                     <i class="bi bi-cart"></i> Purchase History
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> Purchase history will be displayed here once sales are recorded.
-                    </div>
+                <div class="card-body p-0">
+                    <?php if (empty($purchaseHistory)): ?>
+                        <div class="alert alert-info m-3">
+                            <i class="bi bi-info-circle"></i> No purchase history found for this customer.
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Sale ID</th>
+                                        <th>Date</th>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Total Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($purchaseHistory as $sale): ?>
+                                        <tr>
+                                            <td>#<?php echo $sale['id']; ?></td>
+                                            <td><?php echo formatDate($sale['created_at']); ?></td>
+                                            <td>
+                                                <?php 
+                                                    if (!empty($sale['coil_name'])) {
+                                                        echo htmlspecialchars($sale['coil_name']);
+                                                        if (!empty($sale['coil_code'])) {
+                                                            echo ' (' . htmlspecialchars($sale['coil_code']) . ')';
+                                                        }
+                                                    } else {
+                                                        echo 'N/A';
+                                                    }
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <?php 
+                                                    if ($sale['sale_type'] === 'meter') {
+                                                        echo number_format($sale['meters'], 2) . ' meters';
+                                                    } else {
+                                                        echo number_format($sale['weight_kg'], 2) . ' kg';
+                                                    }
+                                                ?>
+                                            </td>
+                                            <td><?php echo number_format($sale['total_amount'], 2); ?></td>
+                                            <td>
+                                                <?php if ($sale['status'] === 'completed'): ?>
+                                                    <span class="badge bg-success">Completed</span>
+                                                <?php elseif ($sale['status'] === 'pending'): ?>
+                                                    <span class="badge bg-warning">Pending</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-secondary"><?php echo ucfirst($sale['status']); ?></span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

@@ -73,7 +73,7 @@ class Warehouse {
         try {
             $sql = "SELECT * FROM {$this->table} 
                     WHERE deleted_at IS NULL 
-                    ORDER BY name ASC 
+                    ORDER BY id ASC 
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->db->prepare($sql);
@@ -174,6 +174,67 @@ class Warehouse {
             return $result['total'] ?? 0;
         } catch (PDOException $e) {
             error_log("Warehouse count error: " . $e->getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Search warehouses by name, location, or contact
+     * 
+     * @param string $query Search query
+     * @param int $limit Number of records to return
+     * @param int $offset Offset for pagination
+     * @return array
+     */
+    public function search($query, $limit = 1000, $offset = 0) {
+        try {
+            $sql = "SELECT * 
+                    FROM {$this->table} 
+                    WHERE deleted_at IS NULL 
+                    AND (name LIKE :query1 OR location LIKE :query2 OR contact LIKE :query3)
+                    ORDER BY id ASC 
+                    LIMIT :limit OFFSET :offset";
+            
+            $stmt = $this->db->prepare($sql);
+            $searchTerm = "%$query%";
+            $stmt->bindValue(':query1', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query2', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query3', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Warehouse search error: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Count total search results
+     * 
+     * @param string $query Search query
+     * @return int
+     */
+    public function countSearch($query) {
+        try {
+            $sql = "SELECT COUNT(*) as total 
+                    FROM {$this->table} 
+                    WHERE deleted_at IS NULL 
+                    AND (name LIKE :query1 OR location LIKE :query2 OR contact LIKE :query3)";
+            
+            $stmt = $this->db->prepare($sql);
+            $searchTerm = "%$query%";
+            $stmt->bindValue(':query1', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query2', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query3', $searchTerm, PDO::PARAM_STR);
+            $stmt->execute();
+            
+            $result = $stmt->fetch();
+            return $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log("Warehouse search count error: " . $e->getMessage());
             return 0;
         }
     }

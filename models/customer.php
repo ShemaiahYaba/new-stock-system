@@ -77,7 +77,7 @@ class Customer {
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
                     WHERE c.deleted_at IS NULL 
-                    ORDER BY c.created_at DESC 
+                    ORDER BY c.id ASC 
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->db->prepare($sql);
@@ -163,6 +163,35 @@ class Customer {
     }
     
     /**
+     * Count search results
+     * 
+     * @param string $query Search query
+     * @return int
+     */
+    public function countSearch($query) {
+        try {
+            $sql = "SELECT COUNT(*) as total 
+                    FROM {$this->table} c
+                    WHERE c.deleted_at IS NULL 
+                    AND (c.name LIKE :query1 OR c.email LIKE :query2 OR c.phone LIKE :query3 OR c.company LIKE :query4)";
+            
+            $stmt = $this->db->prepare($sql);
+            $searchTerm = "%$query%";
+            $stmt->bindValue(':query1', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query2', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query3', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query4', $searchTerm, PDO::PARAM_STR);
+            $stmt->execute();
+            
+            $result = $stmt->fetch();
+            return $result['total'] ?? 0;
+        } catch (PDOException $e) {
+            error_log("Customer search count error: " . $e->getMessage());
+            return 0;
+        }
+    }
+    
+    /**
      * Search customers
      * 
      * @param string $query Search query
@@ -176,12 +205,16 @@ class Customer {
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
                     WHERE c.deleted_at IS NULL 
-                    AND (c.name LIKE :query OR c.email LIKE :query OR c.phone LIKE :query OR c.company LIKE :query)
-                    ORDER BY c.created_at DESC 
+                    AND (c.name LIKE :query1 OR c.email LIKE :query2 OR c.phone LIKE :query3 OR c.company LIKE :query4)
+                    ORDER BY c.id ASC 
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':query', "%$query%", PDO::PARAM_STR);
+            $searchTerm = "%$query%";
+            $stmt->bindValue(':query1', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query2', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query3', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':query4', $searchTerm, PDO::PARAM_STR);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();

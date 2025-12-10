@@ -6,6 +6,7 @@
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../config/constants.php';
 require_once __DIR__ . '/../../models/warehouse.php';
+require_once __DIR__ . '/../../models/production.php';
 require_once __DIR__ . '/../../utils/helpers.php';
 
 $pageTitle = 'View Warehouse - ' . APP_NAME;
@@ -19,7 +20,10 @@ if ($warehouseId <= 0) {
 }
 
 $warehouseModel = new Warehouse();
+$productionModel = new Production();
+
 $warehouse = $warehouseModel->findById($warehouseId);
+$productions = $productionModel->getByWarehouse($warehouseId);
 
 if (!$warehouse) {
     setFlashMessage('error', 'Warehouse not found.');
@@ -133,10 +137,59 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <div class="card-header">
                     <i class="bi bi-box-seam"></i> Production History
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> Production history for this warehouse will be displayed here once production records are created.
-                    </div>
+                <div class="card-body p-0">
+                    <?php if (empty($productions)): ?>
+                        <div class="alert alert-info m-3">
+                            <i class="bi bi-info-circle"></i> No production history found for this warehouse.
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Production ID</th>
+                                        <th>Date</th>
+                                        <th>Invoice #</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($productions as $production): ?>
+                                        <tr>
+                                            <td>#<?php echo $production['id']; ?></td>
+                                            <td><?php echo formatDate($production['created_at']); ?></td>
+                                            <td>
+                                                <?php if (!empty($production['invoice_number'])): ?>
+                                                    <?php echo htmlspecialchars($production['invoice_number']); ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">N/A</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if (!empty($production['customer_name'])): ?>
+                                                    <?php echo htmlspecialchars($production['customer_name']); ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">N/A</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($production['status'] === 'completed'): ?>
+                                                    <span class="badge bg-success">Completed</span>
+                                                <?php elseif ($production['status'] === 'in_progress'): ?>
+                                                    <span class="badge bg-primary">In Progress</span>
+                                                <?php elseif ($production['status'] === 'pending'): ?>
+                                                    <span class="badge bg-warning">Pending</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-secondary"><?php echo ucfirst($production['status']); ?></span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
             

@@ -82,7 +82,7 @@ class Color {
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
                     WHERE c.deleted_at IS NULL 
-                    ORDER BY c.name ASC 
+                    ORDER BY c.id ASC 
                     LIMIT ? OFFSET ?";
             
             $stmt = $this->db->prepare($sql);
@@ -185,7 +185,7 @@ class Color {
                     LEFT JOIN users u ON c.created_by = u.id
                     WHERE c.deleted_at IS NULL 
                     AND (c.code LIKE ? OR c.name LIKE ?)
-                    ORDER BY c.name ASC 
+                    ORDER BY c.id ASC 
                     LIMIT ? OFFSET ?";
             
             $searchParam = "%$query%";

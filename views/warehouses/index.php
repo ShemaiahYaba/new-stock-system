@@ -15,8 +15,13 @@ $searchQuery = $_GET['search'] ?? '';
 
 $warehouseModel = new Warehouse();
 
-$warehouses = $warehouseModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-$totalWarehouses = $warehouseModel->count();
+if (!empty($searchQuery)) {
+    $warehouses = $warehouseModel->search($searchQuery, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
+    $totalWarehouses = $warehouseModel->countSearch($searchQuery);
+} else {
+    $warehouses = $warehouseModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
+    $totalWarehouses = $warehouseModel->count();
+}
 
 $paginationData = getPaginationData($totalWarehouses, $currentPage);
 
