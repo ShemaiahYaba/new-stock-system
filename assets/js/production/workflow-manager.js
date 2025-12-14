@@ -409,6 +409,399 @@ class WorkflowManager {
       invoiceData: this.state.invoiceData,
     };
   }
+  /**
+   * EXTENDED Workflow Manager - ADD-ON INTEGRATION
+   * File: assets/js/production/workflow-manager.js
+   *
+   * ADD these methods to the existing WorkflowManager class
+   */
+
+  // ============================================================
+  // ADD-ON MANAGEMENT METHODS
+  // ============================================================
+
+  /**
+   * Load add-ons for category
+   */
+  async loadAddonsForCategory(category) {
+    try {
+      const response = await fetch(
+        `/new-stock-system/controllers/production_properties/get_by_category.php?category=${category}&include_addons=1`
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Separate production properties from add-ons
+        this.availableAddons = (data.properties || []).filter(
+          (p) => p.is_addon == 1
+        );
+        return this.availableAddons;
+      } else {
+        console.error("Failed to load add-ons:", data.message);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error loading add-ons:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Initialize add-on state
+   */
+  initializeAddonState() {
+    if (!this.state.addons) {
+      this.state.addons = {
+        selected: new Map(), // addonId => inputs
+        calculations: new Map(), // addonId => result
+        totalCharges: 0,
+        totalAdjustments: 0,
+      };
+    }
+  }
+
+  /**
+   * Show add-on selection UI
+   */
+  showAddonSelectionUI() {
+    this.initializeAddonState();
+
+    const container = document.getElementById("addons_container");
+    if (!container) {
+      console.warn("Add-ons container not found");
+      return;
+    }
+
+    // Group add-ons by section
+    const addonGroup = this.availableAddons.filter((a) => !a.is_refundable);
+    const adjustmentGroup = this.availableAddons.filter((a) => a.is_refundable);
+
+    let html = "";
+
+    // Render add-ons section
+    if (addonGroup.length > 0) {
+      html += AddonRenderer.renderAddonSection(addonGroup, "addon");
+    }
+
+    // Render adjustments section
+    if (adjustmentGroup.length > 0) {
+      html += AddonRenderer.renderAddonSection(adjustmentGroup, "adjustment");
+    }
+
+    container.innerHTML =
+      html || '<p class="text-muted">No add-ons available.</p>';
+
+    // Attach event listeners
+    AddonRenderer.attachListeners(
+      (addon, isChecked) => this.handleAddonToggle(addon, isChecked),
+      (addonId) => this.handleAddonInputChange(addonId)
+    );
+
+    // Show the add-ons section
+    const addonsSection = document.getElementById("addons_section");
+    if (addonsSection) {
+      addonsSection.classList.remove("d-none");
+    }
+  }
+
+  /**
+   * Handle add-on checkbox toggle
+   */
+  handleAddonToggle(addon, isChecked) {
+    if (isChecked) {
+      // Add to selected
+      this.state.addons.selected.set(addon.id, {
+        customAmount: null,
+        quantity: 1,
+      });
+
+      // Calculate initial amount
+      this.calculateAddon(addon.id);
+    } else {
+      // Remove from selected
+      this.state.addons.selected.delete(addon.id);
+      this.state.addons.calculations.delete(addon.id);
+    }
+
+    // Recalculate totals
+    this.calculateAllAddons();
+  }
+
+  /**
+   * Handle add-on input change
+   */
+  handleAddonInputChange(addonId) {
+    const inputs = this.state.addons.selected.get(addonId);
+    if (!inputs) return;
+
+    // Get current input values
+    const customAmountInput = document.querySelector(
+      `.addon-custom-amount[data-addon-id="${addonId}"]`
+    );
+    const quantityInput = document.querySelector(
+      `.addon-quantity[data-addon-id="${addonId}"]`
+    );
+
+    if (customAmountInput) {
+      inputs.customAmount = parseFloat(customAmountInput.value) || null;
+    }
+
+    if (quantityInput) {
+      inputs.quantity = parseFloat(quantityInput.value) || 1;
+    }
+
+    // Recalculate
+    this.calculateAddon(addonId);
+    this.calculateAllAddons();
+  }
+
+  /**
+   * Calculate single add-on
+   */
+  calculateAddon(addonId) {
+    const addon = this.availableAddons.find((a) => a.id == addonId);
+    if (!addon) return;
+
+    const inputs = this.state.addons.selected.get(addonId);
+    if (!inputs) return;
+
+    // Get base amount (production subtotal)
+    const baseAmount = this.state.productionSummary.totalAmount;
+
+    // Calculate
+    const result = AddonCalculator.calculateAddon(addon, inputs, baseAmount);
+
+    // Store result
+    this.state.addons.calculations.set(addonId, result);
+
+    // Update display
+    const amountDisplay = document.getElementById(
+      `addon_amount_value_${addonId}`
+    );
+    if (amountDisplay) {
+      amountDisplay.textContent = PropertyCalculator.formatCurrency(
+        result.amount
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * Calculate all add-ons and update totals
+   */
+  calculateAllAddons() {
+    const selectedAddons = [];
+
+    // Collect all selected add-ons with their inputs
+    this.state.addons.selected.forEach((inputs, addonId) => {
+      const addon = this.availableAddons.find((a) => a.id == addonId);
+      if (addon) {
+        selectedAddons.push({ addon, inputs });
+      }
+    });
+
+    // Calculate all
+    const subtotal = this.state.productionSummary.totalAmount;
+    const results = AddonCalculator.calculateAllAddons(
+      selectedAddons,
+      subtotal,
+      subtotal
+    );
+
+    // Update state
+    this.state.addons.totalCharges = results.totalAddonCharges;
+    this.state.addons.totalAdjustments = results.totalAdjustments;
+
+    // Update UI
+    this.updateAddonTotalsDisplay();
+    this.updateGrandTotal();
+  }
+
+  /**
+   * Update add-on totals display
+   */
+  updateAddonTotalsDisplay() {
+    const chargesDisplay = document.getElementById(
+      "total_addon_charges_display"
+    );
+    const adjustmentsDisplay = document.getElementById(
+      "total_adjustments_display"
+    );
+
+    if (chargesDisplay) {
+      chargesDisplay.textContent = PropertyCalculator.formatCurrency(
+        this.state.addons.totalCharges
+      );
+    }
+
+    if (adjustmentsDisplay) {
+      adjustmentsDisplay.textContent = PropertyCalculator.formatCurrency(
+        this.state.addons.totalAdjustments
+      );
+    }
+  }
+
+  /**
+   * Update grand total (production + add-ons + adjustments)
+   */
+  updateGrandTotal() {
+    const productionTotal = this.state.productionSummary.totalAmount;
+    const addonCharges = this.state.addons.totalCharges;
+    const adjustments = this.state.addons.totalAdjustments;
+
+    const grandTotal = productionTotal + addonCharges + adjustments;
+
+    const grandTotalDisplay = document.getElementById("grand_total_display");
+    if (grandTotalDisplay) {
+      grandTotalDisplay.textContent =
+        PropertyCalculator.formatCurrency(grandTotal);
+    }
+
+    // Update state
+    this.state.grandTotal = grandTotal;
+  }
+
+  /**
+   * Get add-ons for invoice generation
+   */
+  getAddonsForInvoice() {
+    const addonItems = [];
+
+    this.state.addons.calculations.forEach((result) => {
+      addonItems.push({
+        description: result.name,
+        quantity: 1,
+        qty_text:
+          result.calculationMethod === "percentage"
+            ? `${result.defaultPrice}%`
+            : "1 item",
+        unit_price: result.amount,
+        subtotal: result.amount,
+        is_addon: true,
+        addon_id: result.addonId,
+        display_section: result.displaySection,
+      });
+    });
+
+    return addonItems;
+  }
+
+  /**
+   * OVERRIDE: Get workflow state for submission (add add-ons)
+   */
+  getWorkflowState() {
+    // Convert properties Map to Array
+    const propertiesArray = [];
+    this.state.properties.forEach((entry, rowId) => {
+      if (entry.calculation) {
+        propertiesArray.push({
+          rowId: rowId,
+          ...entry.calculation,
+        });
+      }
+    });
+
+    // Get add-ons
+    const addonsArray = this.getAddonsForInvoice();
+
+    return {
+      customer: this.state.customer,
+      warehouse: this.state.warehouse,
+      coil: this.state.coil,
+      stockEntry: this.state.stockEntry,
+      properties: propertiesArray,
+      addons: addonsArray, // NEW
+      productionSummary: this.state.productionSummary,
+      addonSummary: {
+        // NEW
+        totalCharges: this.state.addons.totalCharges,
+        totalAdjustments: this.state.addons.totalAdjustments,
+      },
+      grandTotal: this.state.grandTotal, // NEW
+      invoiceData: this.state.invoiceData,
+    };
+  }
+
+  /**
+   * OVERRIDE: Validate production tab (include add-ons check)
+   */
+  validateProductionTab() {
+    const hasCustomer = !!this.state.customer;
+    const hasWarehouse = !!this.state.warehouse;
+    const hasCoil = !!this.state.coil;
+    const hasStockEntry = !!this.state.stockEntry;
+    const hasProperties = this.state.properties.size > 0;
+    const hasValidAmount = this.state.productionSummary?.totalAmount > 0;
+
+    // Add-ons are optional, so they don't affect validation
+
+    const isValid =
+      hasCustomer &&
+      hasWarehouse &&
+      hasCoil &&
+      hasStockEntry &&
+      hasProperties &&
+      hasValidAmount;
+
+    const btn = document.getElementById("proceed_to_invoice_btn");
+    if (btn) {
+      btn.disabled = !isValid;
+    }
+
+    return isValid;
+  }
+
+  /**
+   * OVERRIDE: Calculate production totals (trigger add-on recalc)
+   */
+  calculateProductionTotals() {
+    let totalMeters = 0;
+    let totalAmount = 0;
+
+    this.state.properties.forEach((entry) => {
+      if (entry.calculation) {
+        totalMeters += parseFloat(entry.calculation.meters) || 0;
+        totalAmount += parseFloat(entry.calculation.subtotal) || 0;
+      }
+    });
+
+    this.state.productionSummary = { totalMeters, totalAmount };
+
+    // Update UI
+    const metersDisplay = document.getElementById("total_meters_display");
+    const amountDisplay = document.getElementById("total_amount_display");
+
+    if (metersDisplay) {
+      metersDisplay.textContent =
+        totalMeters > 0 ? totalMeters.toFixed(2) + "m" : "N/A";
+    }
+
+    if (amountDisplay) {
+      amountDisplay.textContent =
+        PropertyCalculator.formatCurrency(totalAmount);
+    }
+
+    // Show/hide summary box
+    const summaryBox = document.getElementById("production_summary");
+    if (summaryBox) {
+      if (this.state.properties.size > 0) {
+        summaryBox.classList.remove("d-none");
+      } else {
+        summaryBox.classList.add("d-none");
+      }
+    }
+
+    // Recalculate add-ons if any are selected
+    if (this.state.addons && this.state.addons.selected.size > 0) {
+      this.calculateAllAddons();
+    } else {
+      this.updateGrandTotal();
+    }
+
+    this.validateProductionTab();
+  }
 }
 
 // Create global instance

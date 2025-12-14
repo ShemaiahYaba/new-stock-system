@@ -168,8 +168,26 @@ try {
                 'row_subtotal' => $prop['subtotal'],
             ];
         }, $productionPaper['properties']),
+        // NEW: Add add-ons to production paper
+        'addons' => isset($productionPaper['addons']) ? array_map(function($addon) {
+            return [
+                'addon_id' => $addon['addon_id'] ?? null,
+                'code' => $addon['code'] ?? '',
+                'name' => $addon['name'] ?? '',
+                'amount' => $addon['amount'] ?? 0,
+                'calculation_method' => $addon['calculation_method'] ?? 'fixed',
+                'display_section' => $addon['display_section'] ?? 'addon'
+            ];
+        }, $productionPaper['addons']) : [],
         'total_meters' => $productionPaper['summary']['totalMeters'],
         'total_amount' => $productionPaper['summary']['totalAmount'],
+        // NEW: Add-on summary
+        'addon_summary' => [
+            'total_charges' => $productionPaper['addonSummary']['totalCharges'] ?? 0,
+            'total_adjustments' => $productionPaper['addonSummary']['totalAdjustments'] ?? 0
+        ],
+        // NEW: Grand total
+        'grand_total' => $productionPaper['grandTotal'] ?? $productionPaper['summary']['totalAmount'],
         'created_at' => date('Y-m-d H:i:s'),
     ];
 
@@ -187,10 +205,28 @@ try {
         throw new Exception('Failed to create production record');
     }
 
-    // ========================================
-    // STEP 3: CREATE INVOICE RECORD (IMMUTABLE)
-    // ========================================
+    // ============================================================
+    // STEP 3: CREATE INVOICE RECORD - ENHANCED WITH ADD-ONS
+    // ============================================================
+    
     $invoiceModel = new Invoice();
+
+    // Merge production items with add-ons for invoice
+    $allInvoiceItems = array_merge(
+        $invoiceData['items'], // Production items
+        $invoiceData['addon_items'] ?? [] // Add-on items
+    );
+    
+    // Calculate totals
+    $productionSubtotal = array_reduce($invoiceData['items'], function($sum, $item) {
+        return $sum + ($item['subtotal'] ?? 0);
+    }, 0);
+    
+    $addonTotal = array_reduce($invoiceData['addon_items'] ?? [], function($sum, $item) {
+        return $sum + ($item['subtotal'] ?? 0);
+    }, 0);
+    
+    $invoiceSubtotal = $productionSubtotal + $addonTotal;
 
     $invoiceShape = [
         'company' => [
@@ -205,7 +241,13 @@ try {
             'ref' => '#SO-' . date('Ymd') . '-' . str_pad($saleId, 6, '0', STR_PAD_LEFT),
             'payment_status' => 'Unpaid',
         ],
-        'items' => $invoiceData['items'],
+        'items' => $allInvoiceItems, // Combined items
+        // NEW: Breakdown
+        'breakdown' => [
+            'production_subtotal' => $productionSubtotal,
+            'addon_charges' => $invoiceData['addon_summary']['total_charges'] ?? 0,
+            'adjustments' => $invoiceData['addon_summary']['total_adjustments'] ?? 0,
+        ],
         'order_tax' => $invoiceData['tax'],
         'discount' => $invoiceData['discount'],
         'shipping' => $invoiceData['shipping'],
@@ -239,7 +281,6 @@ try {
     if (!$invoiceId) {
         throw new Exception('Failed to create invoice record');
     }
-
     // ========================================
     // STEP 4: DEDUCT STOCK METERS (STOCK-BASED CATEGORIES ONLY: ALUSTEEL & ALUMINIUM)
     // ========================================
