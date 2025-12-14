@@ -1,0 +1,123 @@
+/* =========================
+   Global Responsive Styles
+   ========================= */
+
+/* General content wrapper padding for smaller screens */
+@media (max-width: 992px) {
+  .content-wrapper {
+    margin-left: 0; /* Sidebar collapses */
+    padding: 15px;
+  }
+
+  .main-wrapper {
+    flex-direction: column;
+  }
+
+  /* Sidebar adjustments */
+  .sidebar {
+    transform: translateX(-100%);
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 250px;
+    height: calc(100% - 56px);
+    z-index: 1100;
+    transition: transform 0.3s;
+  }
+
+  .sidebar.show {
+    transform: translateX(0);
+  }
+}
+
+/* Mobile navbar toggle button visibility */
+@media (max-width: 992px) {
+  .navbar-toggler {
+    display: block;
+  }
+}
+
+/* Dashboard cards stack vertically */
+@media (max-width: 768px) {
+  .row.g-4 > .col-md-3,
+  .row.g-4 > .col-md-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .card-body h6.card-title {
+    font-size: 0.9rem;
+  }
+
+  .card-body h2 {
+    font-size: 1.5rem;
+  }
+
+  .card i {
+    font-size: 2.5rem !important;
+  }
+
+  .page-header h1.page-title {
+    font-size: 1.5rem;
+  }
+
+  .page-header p.text-muted {
+    font-size: 0.9rem;
+  }
+}
+
+/* Quick link buttons stack on small screens */
+@media (max-width: 576px) {
+  .row.g-4 .col-md-3.mb-3 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .row.g-4 .col-md-3.mb-3 .btn {
+    font-size: 0.9rem;
+    padding: 8px 10px;
+  }
+}
+
+/* Tables responsiveness */
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Quick action buttons */
+.btn-group.btn-group-sm a.btn,
+.btn-group.btn-group-sm button.btn {
+  margin-bottom: 5px;
+}
+
+/* Sidebar nav adjustments */
+@media (max-width: 768px) {
+  .sidebar-nav .nav-item .collapse {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .sidebar-nav .nav-link {
+    padding: 10px 15px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Footer adjustments */
+@media (max-width: 576px) {
+  footer {
+    font-size: 0.75rem;
+    text-align: center;
+  }
+}
+
+/* Optional very small screens */
+@media (max-width: 400px) {
+  .card-body {
+    padding: 10px;
+  }
+
+  .page-header {
+    padding: 15px;
+  }
+}

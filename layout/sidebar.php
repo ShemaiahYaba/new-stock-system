@@ -66,6 +66,15 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         text-align: center;
     }
     
+    .logout-container {
+        position: sticky;
+        bottom: 0;
+        width: 100%;
+        background: var(--primary-color);
+        border-top: 1px solid rgba(255,255,255,0.1);
+        margin-top: auto;
+    }
+    
     @media (max-width: 768px) {
         .sidebar {
             transform: translateX(-100%);
@@ -286,6 +295,18 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         </li>
         <?php endif; ?>
     </ul>
+    
+    <!-- Logout Button -->
+    <div class="logout-container">
+        <ul class="sidebar-nav">
+            <li class="nav-item">
+                <a href="/new-stock-system/logout.php" class="nav-link" style="color: #ff6b6b;">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </div>
 </aside>
 
 <!-- Bootstrap JS for collapse functionality -->

@@ -196,6 +196,11 @@ class Coil
                 $params[':color_id'] = $data['color_id'];
             }
 
+            if (isset($data['category'])) {
+                $fields[] = 'category = :category';
+                $params[':category'] = $data['category'];
+            }
+
             if (isset($data['net_weight'])) {
                 $fields[] = 'net_weight = :net_weight';
                 $params[':net_weight'] = $data['net_weight'];

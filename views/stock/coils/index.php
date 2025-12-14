@@ -170,17 +170,9 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <td>
                                 <?php
                                 $status = $coil['status'] ?? 'available';
-                                $badgeClass = 'badge-secondary';
-                                if ($status === 'available') {
-                                    $badgeClass = 'bg-success';
-                                } elseif ($status === 'factory_use') {
-                                    $badgeClass = 'bg-warning';
-                                } elseif ($status === 'sold') {
-                                    $badgeClass = 'bg-danger';
-                                }
                                 $statusText = STOCK_STATUSES[$status] ?? ucfirst(str_replace('_', ' ', $status));
                                 ?>
-                                <span class="badge <?php echo $badgeClass; ?>">
+                                <span class="badge <?php echo getStatusBadgeClass($status); ?>">
                                     <?php echo $statusText; ?>
                                 </span>
                             </td>

@@ -23,6 +23,9 @@ $currentUser = getCurrentUser();
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="shortcut icon" href="/new-stock-system/assets/logo.png">
+
+    <link rel="stylesheet" href="/new-stock-system/assets/css/responsive.css">
+
     
     <!-- Custom CSS -->
     <style>
@@ -150,11 +153,13 @@ $currentUser = getCurrentUser();
                 <span class="d-none d-md-inline"><?php echo APP_NAME; ?></span>
                 <?php endif; ?>
             </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
+
+            <div class="d-flex align-items-center ms-auto me-2">
+                <button class="btn btn-outline-secondary d-lg-none" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i> <span class="d-none d-sm-inline">Toggle Sidebar</span>
+                </button>
+            </div>
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <?php if ($currentUser): ?>
