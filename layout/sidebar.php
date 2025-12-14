@@ -95,10 +95,7 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         <!-- Dashboard - Available to all authenticated users -->
         <?php if (hasPermission(MODULE_DASHBOARD)): ?>
         <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=dashboard" class="nav-link <?php echo $currentPage ===
-            'dashboard'
-                ? 'active'
-                : ''; ?>">
+            <a href="/new-stock-system/index.php?page=dashboard" class="nav-link <?php echo $currentPage === 'dashboard' ? 'active' : ''; ?>">
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
@@ -108,10 +105,7 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         <!-- User Management -->
         <?php if (hasPermission(MODULE_USER_MANAGEMENT)): ?>
         <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=users" class="nav-link <?php echo $currentPage ===
-            'users'
-                ? 'active'
-                : ''; ?>">
+            <a href="/new-stock-system/index.php?page=users" class="nav-link <?php echo $currentPage === 'users' ? 'active' : ''; ?>">
                 <i class="bi bi-people"></i>
                 <span>User Management</span>
             </a>
@@ -121,24 +115,18 @@ $currentPage = $_GET['page'] ?? 'dashboard';
         <!-- Customer Management -->
         <?php if (hasPermission(MODULE_CUSTOMER_MANAGEMENT)): ?>
         <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=customers" class="nav-link <?php echo $currentPage ===
-            'customers'
-                ? 'active'
-                : ''; ?>">
+            <a href="/new-stock-system/index.php?page=customers" class="nav-link <?php echo $currentPage === 'customers' ? 'active' : ''; ?>">
                 <i class="bi bi-person-badge"></i>
                 <span>Customers</span>
             </a>
         </li>
         <?php endif; ?>
 
-         <!-- Warehouse Management -->
+        <!-- Warehouse Management -->
         <?php if (hasPermission(MODULE_WAREHOUSE_MANAGEMENT)): ?>
         <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=warehouses" class="nav-link <?php echo $currentPage ===
-            'warehouses'
-                ? 'active'
-                : ''; ?>">
-                <i class="bi bi-person-badge"></i>
+            <a href="/new-stock-system/index.php?page=warehouses" class="nav-link <?php echo $currentPage === 'warehouses' ? 'active' : ''; ?>">
+                <i class="bi bi-building"></i>
                 <span>Warehouses</span>
             </a>
         </li>
@@ -153,6 +141,19 @@ $currentPage = $_GET['page'] ?? 'dashboard';
             </a>
         </li>
         <?php endif; ?>
+
+        <!-- ============================================================ -->
+        <!-- PRODUCTION PROPERTIES - NEW MODULE -->
+        <!-- ============================================================ -->
+        <?php if (hasPermission(MODULE_PRODUCTION_PROPERTIES)): ?>
+        <li class="nav-item">
+            <a href="/new-stock-system/index.php?page=production_properties" class="nav-link <?php echo in_array($currentPage, ['production_properties', 'production_properties_create', 'production_properties_edit', 'production_properties_view']) ? 'active' : ''; ?>">
+                <i class="bi bi-gear-fill"></i>
+                <span>Production Properties</span>
+            </a>
+        </li>
+        <?php endif; ?>
+        <!-- ============================================================ -->
         
         <!-- Stock Management -->
         <?php if (hasPermission(MODULE_STOCK_MANAGEMENT)): ?>
@@ -164,10 +165,7 @@ $currentPage = $_GET['page'] ?? 'dashboard';
             </a>
             <ul class="collapse list-unstyled ps-4" id="stockMenu">
                 <li>
-                    <a href="/new-stock-system/index.php?page=coils" class="nav-link <?php echo $currentPage ===
-                    'coils'
-                        ? 'active'
-                        : ''; ?>">
+                    <a href="/new-stock-system/index.php?page=coils" class="nav-link <?php echo $currentPage === 'coils' ? 'active' : ''; ?>">
                         <i class="bi bi-circle"></i> All Coils
                     </a>
                 </li>
@@ -187,108 +185,102 @@ $currentPage = $_GET['page'] ?? 'dashboard';
                     </a>
                 </li>
                 <li>
-                    <a href="/new-stock-system/index.php?page=stock_entries" class="nav-link <?php echo $currentPage ===
-                    'stock_entries'
-                        ? 'active'
-                        : ''; ?>">
+                    <a href="/new-stock-system/index.php?page=stock_entries" class="nav-link <?php echo $currentPage === 'stock_entries' ? 'active' : ''; ?>">
                         <i class="bi bi-circle"></i> Stock Entries
                     </a>
                 </li>
-                
             </ul>
         </li>
         <?php endif; ?>
         
         <!-- Sales Management -->
-<?php if (hasPermission(MODULE_SALES_MANAGEMENT)): ?>
-<li class="nav-item">
-    <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#salesMenu">
-        <i class="bi bi-cart"></i>
-        <span>Sales</span>
-        <i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul class="collapse list-unstyled ps-4" id="salesMenu">
-        <li>
-            <a href="/new-stock-system/index.php?page=sales" class="nav-link">
-                <i class="bi bi-circle"></i> All Sales
+        <?php if (hasPermission(MODULE_SALES_MANAGEMENT)): ?>
+        <li class="nav-item">
+            <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#salesMenu">
+                <i class="bi bi-cart"></i>
+                <span>Sales</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-        </li>
-        <li>
-            <a href="/new-stock-system/index.php?page=production" class="nav-link">
-                <i class="bi bi-circle"></i> Production
-            </a>
-        </li>
-        <li>
-            <a href="/new-stock-system/index.php?page=supply" class="nav-link">
-                <i class="bi bi-circle"></i> Supply / Delivery
-            </a>
-        </li>
-        <li>
-            <a href="/new-stock-system/index.php?page=invoices" class="nav-link">
-                <i class="bi bi-circle"></i> Invoices
-            </a>
-        </li>
-        <li>
-            <a href="/new-stock-system/index.php?page=receipts" class="nav-link">
-                <i class="bi bi-circle"></i> Receipts
-            </a>
-        </li>
-    </ul>
-</li>
-<?php endif; ?>
-<!-- Tile Management -->
-<?php if (hasPermission(MODULE_TILE_MANAGEMENT) || hasPermission(MODULE_TILE_SALES)): ?>
-<li class="nav-item">
-    <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#tilesMenu">
-        <i class="bi bi-grid-3x3"></i>
-        <span>Roofing Tiles</span>
-        <i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul class="collapse list-unstyled ps-4" id="tilesMenu">
-        <?php if (hasPermission(MODULE_DESIGN_MANAGEMENT)): ?>
-        <li>
-            <a href="/new-stock-system/index.php?page=designs" class="nav-link">
-                <i class="bi bi-circle"></i> Designs
-            </a>
+            <ul class="collapse list-unstyled ps-4" id="salesMenu">
+                <li>
+                    <a href="/new-stock-system/index.php?page=sales" class="nav-link">
+                        <i class="bi bi-circle"></i> All Sales
+                    </a>
+                </li>
+                <li>
+                    <a href="/new-stock-system/index.php?page=production" class="nav-link">
+                        <i class="bi bi-circle"></i> Production
+                    </a>
+                </li>
+                <li>
+                    <a href="/new-stock-system/index.php?page=supply" class="nav-link">
+                        <i class="bi bi-circle"></i> Supply / Delivery
+                    </a>
+                </li>
+                <li>
+                    <a href="/new-stock-system/index.php?page=invoices" class="nav-link">
+                        <i class="bi bi-circle"></i> Invoices
+                    </a>
+                </li>
+                <li>
+                    <a href="/new-stock-system/index.php?page=receipts" class="nav-link">
+                        <i class="bi bi-circle"></i> Receipts
+                    </a>
+                </li>
+            </ul>
         </li>
         <?php endif; ?>
-        
-        <?php if (hasPermission(MODULE_TILE_MANAGEMENT)): ?>
-        <li>
-            <a href="/new-stock-system/index.php?page=tile_products" class="nav-link">
-                <i class="bi bi-circle"></i> Products
+
+        <!-- Tile Management -->
+        <?php if (hasPermission(MODULE_TILE_MANAGEMENT) || hasPermission(MODULE_TILE_SALES)): ?>
+        <li class="nav-item">
+            <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#tilesMenu">
+                <i class="bi bi-grid-3x3"></i>
+                <span>Roofing Tiles</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-        </li>
-        <li>
-            <a href="/new-stock-system/index.php?page=tile_stock" class="nav-link">
-                <i class="bi bi-circle"></i> Stock Overview
-            </a>
-        </li>
-        <li>
-            <a href="/new-stock-system/index.php?page=tile_stock_card" class="nav-link">
-                <i class="bi bi-circle"></i> Stock Card
-            </a>
+            <ul class="collapse list-unstyled ps-4" id="tilesMenu">
+                <?php if (hasPermission(MODULE_DESIGN_MANAGEMENT)): ?>
+                <li>
+                    <a href="/new-stock-system/index.php?page=designs" class="nav-link">
+                        <i class="bi bi-circle"></i> Designs
+                    </a>
+                </li>
+                <?php endif; ?>
+                
+                <?php if (hasPermission(MODULE_TILE_MANAGEMENT)): ?>
+                <li>
+                    <a href="/new-stock-system/index.php?page=tile_products" class="nav-link">
+                        <i class="bi bi-circle"></i> Products
+                    </a>
+                </li>
+                <li>
+                    <a href="/new-stock-system/index.php?page=tile_stock" class="nav-link">
+                        <i class="bi bi-circle"></i> Stock Overview
+                    </a>
+                </li>
+                <li>
+                    <a href="/new-stock-system/index.php?page=tile_stock_card" class="nav-link">
+                        <i class="bi bi-circle"></i> Stock Card
+                    </a>
+                </li>
+                <?php endif; ?>
+                
+                <?php if (hasPermission(MODULE_TILE_SALES)): ?>
+                <li>
+                    <a href="/new-stock-system/index.php?page=tile_sales" class="nav-link">
+                        <i class="bi bi-circle"></i> Sales
+                    </a>
+                </li>
+                <?php endif; ?>
+            </ul>
         </li>
         <?php endif; ?>
-        
-        <?php if (hasPermission(MODULE_TILE_SALES)): ?>
-        <li>
-            <a href="/new-stock-system/index.php?page=tile_sales" class="nav-link">
-                <i class="bi bi-circle"></i> Sales
-            </a>
-        </li>
-        <?php endif; ?>
-    </ul>
-</li>
-<?php endif; ?>
         
         <!-- Reports -->
         <?php if (hasPermission(MODULE_REPORTS)): ?>
         <li class="nav-item">
-            <a href="/new-stock-system/index.php?page=reports" class="nav-link <?php echo $currentPage ===
-            'reports'
-                ? 'active'
-                : ''; ?>">
+            <a href="/new-stock-system/index.php?page=reports" class="nav-link <?php echo $currentPage === 'reports' ? 'active' : ''; ?>">
                 <i class="bi bi-graph-up"></i>
                 <span>Reports</span>
             </a>

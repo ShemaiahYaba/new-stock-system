@@ -128,6 +128,18 @@ const COIL_COLORS = [
     'IWhite' => 'I/White',
 ];
 
+
+// Production Property Types
+define('PROPERTY_TYPE_UNIT_BASED', 'unit_based');
+define('PROPERTY_TYPE_METER_BASED', 'meter_based');
+define('PROPERTY_TYPE_BUNDLE_BASED', 'bundle_based');
+
+const PROPERTY_TYPES = [
+    PROPERTY_TYPE_UNIT_BASED => 'Unit Based (e.g., pieces, scraps)',
+    PROPERTY_TYPE_METER_BASED => 'Meter Based (calculated from sheet qty × meter/sheet)',
+    PROPERTY_TYPE_BUNDLE_BASED => 'Bundle Based (contains multiple units)'
+];
+
 // Permission Modules
 define('MODULE_USER_MANAGEMENT', 'user_management');
 define('MODULE_CUSTOMER_MANAGEMENT', 'customer_management');
@@ -144,6 +156,10 @@ define('MODULE_DASHBOARD', 'dashboard');
 define('MODULE_DESIGN_MANAGEMENT', 'design_management'); // NEW
 define('MODULE_TILE_MANAGEMENT', 'tile_management'); // NEW
 define('MODULE_TILE_SALES', 'tile_sales'); // NEW
+   // Module Permission
+define('MODULE_PRODUCTION_PROPERTIES', 'production_properties');
+
+
 
 // Permission Modules Array
 const PERMISSION_MODULES = [
@@ -161,6 +177,7 @@ const PERMISSION_MODULES = [
     MODULE_DESIGN_MANAGEMENT => 'Design Management',
     MODULE_TILE_MANAGEMENT => 'Tile Management',
     MODULE_TILE_SALES => 'Tile Sales',
+    MODULE_PRODUCTION_PROPERTIES => 'Production Properties',
 ];
 
 // Permission Actions
@@ -175,6 +192,60 @@ const PERMISSION_ACTIONS = [
     ACTION_CREATE => 'Create',
     ACTION_EDIT => 'Edit',
     ACTION_DELETE => 'Delete',
+];
+
+// ============================================================
+// EXTENDED PROPERTY TYPES - ADD-ON SUPPORT
+// ============================================================
+
+// Calculation Methods
+define('CALC_METHOD_FIXED', 'fixed');
+define('CALC_METHOD_PERCENTAGE', 'percentage');
+define('CALC_METHOD_PER_UNIT', 'per_unit');
+
+const CALCULATION_METHODS = [
+    CALC_METHOD_FIXED => 'Fixed Amount (₦)',
+    CALC_METHOD_PERCENTAGE => 'Percentage (%)',
+    CALC_METHOD_PER_UNIT => 'Per Unit/Meter'
+];
+
+// Applies To
+define('APPLIES_TO_SUBTOTAL', 'subtotal');
+define('APPLIES_TO_TOTAL', 'total');
+define('APPLIES_TO_PER_ITEM', 'per_item');
+
+const APPLIES_TO_OPTIONS = [
+    APPLIES_TO_SUBTOTAL => 'Subtotal (Before Tax)',
+    APPLIES_TO_TOTAL => 'Total (After Tax)',
+    APPLIES_TO_PER_ITEM => 'Per Item'
+];
+
+// Display Sections
+define('DISPLAY_SECTION_PRODUCTION', 'production');
+define('DISPLAY_SECTION_ADDON', 'addon');
+define('DISPLAY_SECTION_ADJUSTMENT', 'adjustment');
+
+const DISPLAY_SECTIONS = [
+    DISPLAY_SECTION_PRODUCTION => 'Production Items',
+    DISPLAY_SECTION_ADDON => 'Add-On Charges',
+    DISPLAY_SECTION_ADJUSTMENT => 'Adjustments & Refunds'
+];
+
+// Property Categories (for filtering)
+const PROPERTY_CATEGORIES = [
+    'production' => 'Production Properties',
+    'addon' => 'Add-On Charges',
+    'adjustment' => 'Adjustments'
+];
+
+// Common Add-On Property Codes
+const COMMON_ADDONS = [
+    'bending' => 'Bending Service',
+    'loading' => 'Loading Charge',
+    'freight' => 'Freight/Shipping',
+    'accessories' => 'Accessories',
+    'installation' => 'Installation Service',
+    'refund' => 'Refund/Credit'
 ];
 
 // Default Permissions by Role
@@ -194,6 +265,7 @@ const DEFAULT_PERMISSIONS = [
         MODULE_DESIGN_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
         MODULE_TILE_MANAGEMENT => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
         MODULE_TILE_SALES => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE],
+        MODULE_PRODUCTION_PROPERTIES => [ACTION_VIEW, ACTION_CREATE, ACTION_EDIT, ACTION_DELETE]
         
     ],
     ROLE_STOCK_MANAGER => [
