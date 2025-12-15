@@ -672,6 +672,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    const warehouseSelect = document.getElementById('warehouse_id');
+    if (warehouseSelect) {
+        warehouseSelect.addEventListener('change', function() {
+            const option = this.options[this.selectedIndex];
+            if (this.value) {
+                if (workflowManager.setWarehouse) {
+                    workflowManager.setWarehouse({
+                        id: this.value,
+                        name: option.dataset.name || option.textContent.trim(),
+                        location: option.dataset.location || ''
+                    });
+                }
+            } else if (workflowManager.setWarehouse) {
+                workflowManager.setWarehouse(null);
+            }
+        });
+    }
+
     // ============================================================
     // EVENT LISTENERS - COIL & STOCK SELECTION
     // ============================================================
@@ -767,6 +785,12 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     if (workflowManager) {
+        setupButton('add_property_btn', () => {
+            if (workflowManager.addPropertyRowWithSelection) {
+                workflowManager.addPropertyRowWithSelection();
+            }
+        });
+
         setupButton('proceed_to_invoice_btn', () => {
             if (workflowManager.proceedToInvoice) {
                 workflowManager.proceedToInvoice();

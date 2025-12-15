@@ -15,7 +15,7 @@ require_once __DIR__ . '/../../utils/auth_middleware.php';
 header('Content-Type: application/json');
 
 // Check if user is logged in
-if (!isGuest()) {
+if (isGuest()) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit();
 }

@@ -29,52 +29,259 @@ class WorkflowManager {
 
     this.rowCounter = 0;
     this.availableProperties = [];
+    this.availableAddons = [];
     this.currentCategory = null;
+
+    // ✅ CRITICAL: Initialize add-ons state
+    this.initializeAddonState();
   }
 
   /**
-   * Handle coil selection
+   * FIXED handleCoilSelection Method
+   * Replace the existing handleCoilSelection method in workflow-manager.js
+   * Location: Around line 45-90 in workflow-manager.js
+   */
+
+  /**
+   * Handle coil selection - FIXED VERSION
    * @param {Object} coilData - The selected coil data
    */
   async handleCoilSelection(coilData) {
     try {
+      console.log("🔍 handleCoilSelection called with:", coilData);
+
       // Update the state with the selected coil
       this.state.coil = coilData;
+      this.currentCategory = coilData.category.toLowerCase();
 
-      // Clear any existing stock entry
+      // Clear any existing stock entry and properties
       this.state.stockEntry = null;
-      document.getElementById("stock_entry_id").value = "";
+      this.state.properties.clear();
 
-      // Load stock entries for the selected coil
+      const stockEntrySelect = document.getElementById("stock_entry_id");
+      if (!stockEntrySelect) {
+        console.error("❌ Stock entry select element not found");
+        return;
+      }
+
+      // Reset stock entry dropdown
+      stockEntrySelect.innerHTML =
+        '<option value="">-- Select Stock Entry --</option>';
+      stockEntrySelect.disabled = true;
+
+      // Hide properties and add-ons
+      this.hidePropertiesAndAddons();
+
+      // Check if this is KZINC (no stock entries needed)
+      const isKzinc = this.currentCategory === "kzinc";
+
+      if (isKzinc) {
+        console.log("✅ KZINC detected - bypassing stock entry requirement");
+
+        // Hide stock entry dropdown for KZINC
+        const stockEntryCol = stockEntrySelect.closest(".col-md-6");
+        if (stockEntryCol) {
+          stockEntryCol.style.display = "none";
+        }
+
+        // Set dummy stock entry for KZINC
+        this.state.stockEntry = {
+          id: "kzinc_bypass",
+          status: "available",
+          meters_remaining: 0,
+        };
+
+        // Update available meters display
+        const availableEl = document.getElementById("coil_available");
+        if (availableEl) availableEl.textContent = "N/A";
+
+        // Load properties and add-ons for KZINC
+        await this.loadPropertiesForCategory(this.currentCategory);
+        await this.loadAddonsForCategory(this.currentCategory);
+
+        // Show properties immediately for KZINC
+        this.showPropertiesForCategory();
+
+        return; // Exit early for KZINC
+      }
+
+      // ============================================================
+      // STOCK-BASED WORKFLOW (ALUSTEEL & ALUMINUM)
+      // ============================================================
+
+      console.log("📦 Stock-based category detected:", this.currentCategory);
+
+      // Show stock entry dropdown for stock-based categories
+      const stockEntryCol = stockEntrySelect.closest(".col-md-6");
+      if (stockEntryCol) {
+        stockEntryCol.style.display = "block";
+      }
+
+      // Show loading state
+      stockEntrySelect.innerHTML =
+        '<option value="">Loading stock entries...</option>';
+      stockEntrySelect.disabled = true;
+
+      // Fetch stock entries
+      console.log("🔄 Fetching stock entries for coil:", coilData.id);
+
       const response = await fetch(
         `/new-stock-system/controllers/sales/get_stock_entries.php?coil_id=${coilData.id}`
       );
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log("📥 Stock entries response:", data);
 
-      if (data.success) {
-        const stockSelect = document.getElementById("stock_entry_id");
-        stockSelect.innerHTML = '<option value="">Select Stock Entry</option>';
+      if (data.success && data.entries && data.entries.length > 0) {
+        // Reset dropdown with empty option
+        stockEntrySelect.innerHTML =
+          '<option value="">-- Select Stock Entry --</option>';
 
-        data.stockEntries.forEach((entry) => {
-          const option = document.createElement("option");
-          option.value = entry.id;
-          option.textContent = `#${entry.id} - ${entry.meters_remaining}m (${entry.status})`;
-          option.dataset.status = entry.status;
-          option.dataset.meters = entry.meters_remaining;
-          stockSelect.appendChild(option);
+        let totalAvailable = 0;
+        let addedCount = 0;
+
+        // Filter entries with available meters
+        const availableEntries = data.entries.filter((entry) => {
+          const metersRemaining = parseFloat(entry.meters_remaining);
+          return !isNaN(metersRemaining) && metersRemaining > 0;
         });
 
-        stockSelect.disabled = false;
-        document.getElementById("properties_container").classList.add("d-none");
-        this.resetProperties();
+        console.log(
+          `✅ Found ${availableEntries.length} entries with available meters`
+        );
+
+        if (availableEntries.length > 0) {
+          // Add entries to dropdown
+          availableEntries.forEach((entry) => {
+            const metersRemaining = parseFloat(entry.meters_remaining);
+            const opt = document.createElement("option");
+            opt.value = entry.id;
+            opt.textContent = `#${entry.id} - ${metersRemaining.toFixed(2)}m (${
+              entry.status
+            })`;
+            opt.dataset.status = entry.status;
+            opt.dataset.meters = metersRemaining;
+            stockEntrySelect.appendChild(opt);
+
+            totalAvailable += metersRemaining;
+            addedCount++;
+          });
+
+          console.log(`✅ Added ${addedCount} stock entries to dropdown`);
+          console.log(
+            `📊 Total available meters: ${totalAvailable.toFixed(2)}m`
+          );
+
+          // Update available meters display
+          const availableEl = document.getElementById("coil_available");
+          if (availableEl) {
+            availableEl.textContent = totalAvailable.toFixed(2);
+          }
+
+          // ✅ CRITICAL FIX: Enable the dropdown!
+          stockEntrySelect.disabled = false;
+          console.log("✅ Stock entry dropdown ENABLED");
+        } else {
+          // No entries with available meters
+          stockEntrySelect.innerHTML =
+            '<option value="">No stock entries with available meters</option>';
+          stockEntrySelect.disabled = true;
+
+          const availableEl = document.getElementById("coil_available");
+          if (availableEl) availableEl.textContent = "0.00";
+
+          console.warn("⚠️ No stock entries with available meters found");
+        }
       } else {
-        throw new Error(data.message || "Failed to load stock entries");
+        // No stock entries found
+        stockEntrySelect.innerHTML =
+          '<option value="">No available stock entries</option>';
+        stockEntrySelect.disabled = true;
+
+        const availableEl = document.getElementById("coil_available");
+        if (availableEl) availableEl.textContent = "0.00";
+
+        console.warn("⚠️ No stock entries returned from server");
       }
+
+      // Load properties and add-ons for this category
+      await this.loadPropertiesForCategory(this.currentCategory);
+      await this.loadAddonsForCategory(this.currentCategory);
+
+      console.log("✅ Properties and add-ons loaded for", this.currentCategory);
     } catch (error) {
-      console.error("Error handling coil selection:", error);
-      alert("Error: " + error.message);
+      console.error("❌ Error in handleCoilSelection:", error);
+
+      const stockEntrySelect = document.getElementById("stock_entry_id");
+      if (stockEntrySelect) {
+        stockEntrySelect.innerHTML =
+          '<option value="">Error loading entries</option>';
+        stockEntrySelect.disabled = true;
+      }
+
+      alert("Error loading stock entries: " + error.message);
     }
+  }
+
+  /**
+   * Helper method to hide properties and add-ons sections
+   */
+  hidePropertiesAndAddons() {
+    const propertiesContainer = document.getElementById("properties_container");
+    const addonsSection = document.getElementById("addons_section");
+    const summaryBox = document.getElementById("production_summary");
+
+    if (propertiesContainer) propertiesContainer.classList.add("d-none");
+    if (addonsSection) addonsSection.classList.add("d-none");
+    if (summaryBox) summaryBox.classList.add("d-none");
+
+    // Clear property rows
+    const propertyRows = document.getElementById("property_rows");
+    if (propertyRows) propertyRows.innerHTML = "";
+
+    // Clear properties state
+    this.state.properties.clear();
+  }
+
+  /**
+   * Helper method to show properties based on category
+   */
+  showPropertiesForCategory() {
+    console.log(
+      "📋 showPropertiesForCategory called for:",
+      this.currentCategory
+    );
+
+    const propertiesContainer = document.getElementById("properties_container");
+    const addonsSection = document.getElementById("addons_section");
+
+    if (!propertiesContainer) {
+      console.error("❌ Properties container not found");
+      return;
+    }
+
+    // Show properties container
+    propertiesContainer.classList.remove("d-none");
+
+    // Show add-ons section if add-ons are available
+    if (this.availableAddons && this.availableAddons.length > 0) {
+      this.showAddonSelectionUI();
+    }
+
+    // Add first property row if none exist
+    if (
+      this.state.properties.size === 0 &&
+      this.availableProperties.length > 0
+    ) {
+      console.log("➕ Adding initial property row");
+      this.addPropertyRowWithSelection();
+    }
+
+    console.log("✅ Properties section shown");
   }
 
   /**
@@ -84,7 +291,7 @@ class WorkflowManager {
     this.state.properties.clear();
     this.rowCounter = 0;
     document.getElementById("property_rows").innerHTML = "";
-    this.updateProductionSummary();
+    this.calculateProductionTotals();
   }
 
   /**
@@ -253,17 +460,19 @@ class WorkflowManager {
     const row = document.getElementById(`property_row_${rowId}`);
     if (!row) return;
 
-    // Collect inputs based on property type
     const inputs = this.collectRowInputs(row, property.property_type);
 
-    // Validate inputs
-    const validation = PropertyCalculator.validateInputs(property, inputs);
-    if (!validation.valid) {
-      console.warn("Validation errors:", validation.errors);
-      return;
+    // Don't calculate until the required inputs are present
+    if (property.property_type === "meter_based") {
+      if (!inputs.sheetQty || inputs.sheetQty <= 0) return;
+      if (!inputs.sheetMeter || inputs.sheetMeter <= 0) return;
+    } else {
+      if (!inputs.quantity || inputs.quantity <= 0) return;
     }
 
-    // Calculate
+    // Unit price can be blank (calculator will fallback to default_price); only block negatives
+    if (typeof inputs.unitPrice === "number" && inputs.unitPrice < 0) return;
+
     const result = PropertyCalculator.calculate(property, inputs);
 
     // Update UI with results
@@ -291,16 +500,26 @@ class WorkflowManager {
           parseFloat(row.querySelector(".sheet-qty")?.value) || 0;
         inputs.sheetMeter =
           parseFloat(row.querySelector(".sheet-meter")?.value) || 0;
-        inputs.unitPrice =
-          parseFloat(row.querySelector(".unit-price")?.value) || 0;
+        {
+          const raw = row.querySelector(".unit-price")?.value;
+          inputs.unitPrice =
+            raw === "" || raw === undefined || raw === null
+              ? null
+              : parseFloat(raw);
+        }
         break;
 
       case "unit_based":
       case "bundle_based":
         inputs.quantity =
           parseFloat(row.querySelector(".kzinc-quantity")?.value) || 0;
-        inputs.unitPrice =
-          parseFloat(row.querySelector(".kzinc-unit-price")?.value) || 0;
+        {
+          const raw = row.querySelector(".kzinc-unit-price")?.value;
+          inputs.unitPrice =
+            raw === "" || raw === undefined || raw === null
+              ? null
+              : parseFloat(raw);
+        }
         break;
     }
 
@@ -338,6 +557,9 @@ class WorkflowManager {
     }
   }
 
+  // ============================================================
+  // FIX calculateProductionTotals method (around line 1050)
+  // ============================================================
   /**
    * Calculate production totals
    */
@@ -356,7 +578,7 @@ class WorkflowManager {
 
     // Update UI
     const metersDisplay = document.getElementById("total_meters_display");
-    const amountDisplay = document.getElementById("total_amount_display");
+    const amountDisplay = document.getElementById("production_total_display");
 
     if (metersDisplay) {
       metersDisplay.textContent =
@@ -371,16 +593,27 @@ class WorkflowManager {
     // Show/hide summary box
     const summaryBox = document.getElementById("production_summary");
     if (summaryBox) {
-      if (this.state.properties.size > 0) {
+      if (this.state.properties.size > 0 && totalAmount > 0) {
         summaryBox.classList.remove("d-none");
       } else {
         summaryBox.classList.add("d-none");
       }
     }
 
+    // ✅ FIX: Only recalculate add-ons if they exist
+    if (
+      this.state.addons &&
+      this.state.addons.selected &&
+      this.state.addons.selected.size > 0
+    ) {
+      this.calculateAllAddons();
+    } else {
+      // Just update grand total without add-ons
+      this.updateGrandTotal();
+    }
+
     this.validateProductionTab();
   }
-
   /**
    * Remove a property row
    */
@@ -432,11 +665,451 @@ class WorkflowManager {
    * Get properties container based on current category
    */
   getPropertiesContainer() {
-    if (this.currentCategory === "kzinc") {
-      return document.getElementById("kzinc_properties_container");
-    } else {
-      return document.getElementById("properties_container");
+    return document.getElementById("property_rows");
+  }
+
+  resetCoilAndProperties() {
+    this.state.coil = null;
+    this.currentCategory = null;
+    this.state.stockEntry = null;
+    this.hidePropertiesAndAddons();
+
+    const stockEntrySelect = document.getElementById("stock_entry_id");
+    if (stockEntrySelect) {
+      stockEntrySelect.innerHTML =
+        '<option value="">-- Select Stock Entry --</option>';
+      stockEntrySelect.disabled = true;
+      const stockEntryCol = stockEntrySelect.closest(".col-md-6");
+      if (stockEntryCol) stockEntryCol.style.display = "block";
     }
+
+    const availableEl = document.getElementById("coil_available");
+    if (availableEl) availableEl.textContent = "0.00";
+
+    this.calculateProductionTotals();
+  }
+
+  proceedToInvoice() {
+    if (!this.validateProductionTab()) {
+      alert("Please complete the Production tab before proceeding to invoice.");
+      return;
+    }
+
+    const customerNameEl = document.getElementById("invoice_customer");
+    if (customerNameEl) {
+      customerNameEl.textContent = this.state.customer?.name || "-";
+    }
+
+    const companyEl = document.getElementById("customer_company");
+    if (companyEl) {
+      const value = this.state.customer?.company || "";
+      companyEl.textContent = value;
+      companyEl.style.display = value ? "block" : "none";
+    }
+
+    const phoneEl = document.getElementById("customer_phone");
+    if (phoneEl) {
+      const value = this.state.customer?.phone || "";
+      phoneEl.textContent = value;
+      phoneEl.style.display = value ? "block" : "none";
+    }
+
+    const addressEl = document.getElementById("customer_address");
+    if (addressEl) {
+      const value = this.state.customer?.address || "";
+      addressEl.textContent = value;
+      addressEl.style.display = value ? "block" : "none";
+    }
+
+    const warehouseEl = document.getElementById("invoice_warehouse");
+    if (warehouseEl) {
+      warehouseEl.textContent = this.state.warehouse?.name || "-";
+    }
+
+    const invoiceNumberEl = document.getElementById("invoice_number");
+    if (
+      invoiceNumberEl &&
+      (!invoiceNumberEl.textContent || invoiceNumberEl.textContent === "-")
+    ) {
+      invoiceNumberEl.textContent = "DRAFT";
+    }
+
+    const items = this.buildInvoiceItems();
+    this.renderInvoiceItems(items);
+
+    this.updateInvoiceAdjustments({
+      tax_type: document.getElementById("tax_type")?.value || "fixed",
+      tax_value: parseFloat(document.getElementById("tax_value")?.value) || 0,
+      discount_type: document.getElementById("discount_type")?.value || "fixed",
+      discount_value:
+        parseFloat(document.getElementById("discount_value")?.value) || 0,
+      shipping: parseFloat(document.getElementById("shipping")?.value) || 0,
+    });
+
+    const invoiceTabEl = document.getElementById("invoice-tab");
+    if (invoiceTabEl && window.bootstrap?.Tab) {
+      new bootstrap.Tab(invoiceTabEl).show();
+    }
+  }
+
+  updateInvoiceAdjustments(adjustments) {
+    const items = this.buildInvoiceItems();
+    const subtotal = items.reduce((sum, item) => {
+      const qty = parseFloat(item.quantity) || 0;
+      const unit = parseFloat(item.unit_price) || 0;
+      return sum + qty * unit;
+    }, 0);
+
+    const taxType = adjustments?.tax_type || "fixed";
+    const taxValue = parseFloat(adjustments?.tax_value) || 0;
+    const discountType = adjustments?.discount_type || "fixed";
+    const discountValue = parseFloat(adjustments?.discount_value) || 0;
+    const shipping = parseFloat(adjustments?.shipping) || 0;
+
+    const taxAmount =
+      taxType === "percentage" ? (subtotal * taxValue) / 100 : taxValue;
+    const discountAmount =
+      discountType === "percentage"
+        ? (subtotal * discountValue) / 100
+        : discountValue;
+
+    const total = subtotal + taxAmount + shipping - discountAmount;
+
+    this.state.invoiceData.tax = {
+      type: taxType,
+      value: taxValue,
+      amount: taxAmount,
+    };
+    this.state.invoiceData.discount = {
+      type: discountType,
+      value: discountValue,
+      amount: discountAmount,
+    };
+    this.state.invoiceData.shipping = shipping;
+    this.state.invoiceData.grandTotal = total;
+
+    const notesEl = document.getElementById("invoice_notes");
+    this.state.invoiceData.notes = notesEl ? notesEl.value : "";
+
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = PropertyCalculator.formatCurrency(value);
+    };
+
+    setText("subtotal_amount", subtotal);
+    setText("tax_amount", taxAmount);
+    setText("shipping_amount", shipping);
+    setText("total_amount", total);
+
+    const discountEl = document.getElementById("discount_amount");
+    if (discountEl) {
+      discountEl.textContent =
+        "-" + PropertyCalculator.formatCurrency(discountAmount);
+    }
+  }
+
+  proceedToConfirm() {
+    const items = this.buildInvoiceItems();
+    if (items.length === 0) {
+      alert("No invoice items found. Please add production properties first.");
+      return;
+    }
+
+    this.updateInvoiceAdjustments({
+      tax_type: document.getElementById("tax_type")?.value || "fixed",
+      tax_value: parseFloat(document.getElementById("tax_value")?.value) || 0,
+      discount_type: document.getElementById("discount_type")?.value || "fixed",
+      discount_value:
+        parseFloat(document.getElementById("discount_value")?.value) || 0,
+      shipping: parseFloat(document.getElementById("shipping")?.value) || 0,
+    });
+
+    const productionPayload = this.prepareProductionPayload();
+    const invoicePayload = this.prepareInvoicePayload();
+
+    const productionInput = document.getElementById("production_data_input");
+    if (productionInput)
+      productionInput.value = JSON.stringify(productionPayload);
+    const invoiceInput = document.getElementById("invoice_data_input");
+    if (invoiceInput) invoiceInput.value = JSON.stringify(invoicePayload);
+
+    const productionPreview = document.getElementById(
+      "production_paper_preview"
+    );
+    if (productionPreview) {
+      productionPreview.innerHTML = this.renderProductionPreviewHtml(
+        productionPayload.production_paper
+      );
+    }
+
+    const invoicePreview = document.getElementById("invoice_shape_preview");
+    if (invoicePreview) {
+      invoicePreview.innerHTML = this.renderInvoicePreviewHtml(invoicePayload);
+    }
+
+    const confirmTabEl = document.getElementById("confirm-tab");
+    if (confirmTabEl && window.bootstrap?.Tab) {
+      new bootstrap.Tab(confirmTabEl).show();
+    }
+  }
+
+  async submitOrder() {
+    const form = document.getElementById("confirm_order_form");
+    if (!form) {
+      throw new Error("Confirm order form not found");
+    }
+
+    const productionPayload = this.prepareProductionPayload();
+    const invoicePayload = this.prepareInvoicePayload();
+
+    const productionInput = document.getElementById("production_data_input");
+    if (productionInput)
+      productionInput.value = JSON.stringify(productionPayload);
+    const invoiceInput = document.getElementById("invoice_data_input");
+    if (invoiceInput) invoiceInput.value = JSON.stringify(invoicePayload);
+
+    const formData = new FormData(form);
+    formData.set("production_data", productionInput?.value || "{}");
+    formData.set("invoice_data", invoiceInput?.value || "{}");
+
+    const response = await fetch(
+      "/new-stock-system/controllers/sales/create_workflow/index.php",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const data = await response.json();
+    return data;
+  }
+
+  buildInvoiceItems() {
+    const items = [];
+
+    this.state.properties.forEach((entry) => {
+      if (!entry?.calculation) return;
+
+      const calc = entry.calculation;
+      const propertyType = entry.property?.property_type;
+
+      const quantity =
+        propertyType === "meter_based"
+          ? parseFloat(calc.meters) || 0
+          : parseFloat(calc.quantity) || 0;
+
+      items.push({
+        description: calc.propertyName || entry.property?.name || "Item",
+        quantity: quantity,
+        unit_price: parseFloat(calc.unitPrice) || 0,
+        subtotal: parseFloat(calc.subtotal) || 0,
+        is_addon: false,
+      });
+    });
+
+    const addonItems = this.getAddonsForInvoice
+      ? this.getAddonsForInvoice()
+      : [];
+    addonItems.forEach((a) => items.push(a));
+
+    return items;
+  }
+
+  renderInvoiceItems(items) {
+    const tbody = document.getElementById("invoice_items_body");
+    if (!tbody) return;
+
+    if (!items || items.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center text-muted py-4">No items added yet</td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = items
+      .map((item, idx) => {
+        const qty = parseFloat(item.quantity) || 0;
+        const unit = parseFloat(item.unit_price) || 0;
+        const amount = qty * unit;
+
+        return `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${item.description || ""}</td>
+            <td class="text-end">${PropertyCalculator.formatCurrency(unit)}</td>
+            <td class="text-center">${qty.toFixed(2)}</td>
+            <td class="text-end">${PropertyCalculator.formatCurrency(
+              amount
+            )}</td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+
+  prepareProductionPayload() {
+    const properties = [];
+    this.state.properties.forEach((entry) => {
+      if (!entry?.calculation) return;
+      properties.push(entry.calculation);
+    });
+
+    const addons = this.state.addons?.calculations
+      ? Array.from(this.state.addons.calculations.values()).map((a) => ({
+          addon_id: a.addonId,
+          code: a.code,
+          name: a.name,
+          amount: a.amount,
+          calculation_method: a.calculationMethod,
+          display_section: a.displaySection,
+        }))
+      : [];
+
+    return {
+      customer_id: this.state.customer?.id || null,
+      warehouse_id: this.state.warehouse?.id || null,
+      coil_id: this.state.coil?.id || null,
+      stock_entry_id: this.state.stockEntry?.id || null,
+      production_paper: {
+        customer: this.state.customer,
+        warehouse: this.state.warehouse,
+        coil: this.state.coil,
+        properties: properties,
+        addons: addons,
+        addonSummary: {
+          totalCharges: this.state.addons?.totalCharges || 0,
+          totalAdjustments: this.state.addons?.totalAdjustments || 0,
+        },
+        summary: {
+          totalMeters: this.state.productionSummary?.totalMeters || 0,
+          totalAmount: this.state.productionSummary?.totalAmount || 0,
+        },
+        grandTotal:
+          this.state.grandTotal ||
+          this.state.productionSummary?.totalAmount ||
+          0,
+      },
+    };
+  }
+
+  prepareInvoicePayload() {
+    const items = [];
+    const addonItems = [];
+    const combined = this.buildInvoiceItems();
+
+    combined.forEach((item) => {
+      if (item.is_addon) addonItems.push(item);
+      else items.push(item);
+    });
+
+    const taxType = this.state.invoiceData.tax?.type || "fixed";
+    const taxValue = this.state.invoiceData.tax?.value || 0;
+    const discountType = this.state.invoiceData.discount?.type || "fixed";
+    const discountValue = this.state.invoiceData.discount?.value || 0;
+
+    return {
+      customer: {
+        name: this.state.customer?.name || "",
+        company: this.state.customer?.company || "",
+        phone: this.state.customer?.phone || "",
+        address: this.state.customer?.address || "",
+      },
+      items: items,
+      addon_items: addonItems,
+      addon_summary: {
+        total_charges: this.state.addons?.totalCharges || 0,
+        total_adjustments: this.state.addons?.totalAdjustments || 0,
+      },
+      tax: this.state.invoiceData.tax?.amount || 0,
+      tax_type: taxType,
+      tax_value: taxValue,
+      tax_rate: taxValue,
+      discount: this.state.invoiceData.discount?.amount || 0,
+      discount_type: discountType,
+      discount_value: discountValue,
+      discount_rate: discountValue,
+      shipping: this.state.invoiceData.shipping || 0,
+      grandTotal: this.state.invoiceData.grandTotal || 0,
+      notes: this.state.invoiceData.notes || "",
+    };
+  }
+
+  renderProductionPreviewHtml(productionPaper) {
+    const props = productionPaper?.properties || [];
+    const rows = props
+      .map((p, idx) => {
+        const meters = parseFloat(p.meters) || 0;
+        const subtotal = parseFloat(p.subtotal) || 0;
+        return `<div>${idx + 1}. ${p.propertyName || ""} - ${meters.toFixed(
+          2
+        )}m - ${PropertyCalculator.formatCurrency(subtotal)}</div>`;
+      })
+      .join("");
+
+    return `
+      <div><strong>Customer:</strong> ${
+        productionPaper?.customer?.name || ""
+      }</div>
+      <div><strong>Warehouse:</strong> ${
+        productionPaper?.warehouse?.name || ""
+      }</div>
+      <div><strong>Coil:</strong> ${productionPaper?.coil?.name || ""}</div>
+      <hr />
+      <div><strong>Properties</strong></div>
+      ${rows || '<div class="text-muted">No properties</div>'}
+      <hr />
+      <div><strong>Total Meters:</strong> ${(
+        productionPaper?.summary?.totalMeters || 0
+      ).toFixed(2)}m</div>
+      <div><strong>Total Amount:</strong> ${PropertyCalculator.formatCurrency(
+        productionPaper?.summary?.totalAmount || 0
+      )}</div>
+      <div><strong>Grand Total:</strong> ${PropertyCalculator.formatCurrency(
+        productionPaper?.grandTotal ||
+          productionPaper?.summary?.totalAmount ||
+          0
+      )}</div>
+    `;
+  }
+
+  renderInvoicePreviewHtml(invoicePayload) {
+    const rows = (invoicePayload.items || [])
+      .concat(invoicePayload.addon_items || [])
+      .map((item, idx) => {
+        const qty = parseFloat(item.quantity) || 0;
+        const unit = parseFloat(item.unit_price) || 0;
+        const amount = qty * unit;
+        return `<div>${idx + 1}. ${item.description || ""} — ${qty.toFixed(
+          2
+        )} x ${PropertyCalculator.formatCurrency(
+          unit
+        )} = ${PropertyCalculator.formatCurrency(amount)}</div>`;
+      })
+      .join("");
+
+    return `
+      <div><strong>Customer:</strong> ${
+        invoicePayload.customer?.name || ""
+      }</div>
+      <hr />
+      <div><strong>Items</strong></div>
+      ${rows || '<div class="text-muted">No items</div>'}
+      <hr />
+      <div><strong>Tax:</strong> ${PropertyCalculator.formatCurrency(
+        invoicePayload.tax || 0
+      )}</div>
+      <div><strong>Discount:</strong> -${PropertyCalculator.formatCurrency(
+        invoicePayload.discount || 0
+      )}</div>
+      <div><strong>Shipping:</strong> ${PropertyCalculator.formatCurrency(
+        invoicePayload.shipping || 0
+      )}</div>
+      <div><strong>Total:</strong> ${PropertyCalculator.formatCurrency(
+        invoicePayload.grandTotal || 0
+      )}</div>
+    `;
   }
 
   /**
@@ -487,10 +1160,20 @@ class WorkflowManager {
       const data = await response.json();
 
       if (data.success) {
-        // Separate production properties from add-ons
-        this.availableAddons = (data.properties || []).filter(
-          (p) => p.is_addon == 1
-        );
+        // When include_addons=1, backend returns add-ons in `data.addons`
+        // (and production properties in `data.properties`). Keep a fallback
+        // for older response shapes.
+        if (Array.isArray(data.addons)) {
+          this.availableAddons = data.addons;
+        } else if (Array.isArray(data.all)) {
+          this.availableAddons = (data.all || []).filter(
+            (p) => p.is_addon == 1
+          );
+        } else {
+          this.availableAddons = (data.properties || []).filter(
+            (p) => p.is_addon == 1
+          );
+        }
         return this.availableAddons;
       } else {
         console.error("Failed to load add-ons:", data.message);
@@ -564,19 +1247,21 @@ class WorkflowManager {
    * Handle add-on checkbox toggle
    */
   handleAddonToggle(addon, isChecked) {
+    const addonKey = String(addon.id);
+
     if (isChecked) {
       // Add to selected
-      this.state.addons.selected.set(addon.id, {
+      this.state.addons.selected.set(addonKey, {
         customAmount: null,
         quantity: 1,
       });
 
       // Calculate initial amount
-      this.calculateAddon(addon.id);
+      this.calculateAddon(addonKey);
     } else {
       // Remove from selected
-      this.state.addons.selected.delete(addon.id);
-      this.state.addons.calculations.delete(addon.id);
+      this.state.addons.selected.delete(addonKey);
+      this.state.addons.calculations.delete(addonKey);
     }
 
     // Recalculate totals
@@ -587,7 +1272,8 @@ class WorkflowManager {
    * Handle add-on input change
    */
   handleAddonInputChange(addonId) {
-    const inputs = this.state.addons.selected.get(addonId);
+    const addonKey = String(addonId);
+    const inputs = this.state.addons.selected.get(addonKey);
     if (!inputs) return;
 
     // Get current input values
@@ -599,7 +1285,13 @@ class WorkflowManager {
     );
 
     if (customAmountInput) {
-      inputs.customAmount = parseFloat(customAmountInput.value) || null;
+      const raw = customAmountInput.value;
+      if (raw === "") {
+        inputs.customAmount = null;
+      } else {
+        const parsed = parseFloat(raw);
+        inputs.customAmount = Number.isFinite(parsed) ? parsed : null;
+      }
     }
 
     if (quantityInput) {
@@ -607,7 +1299,7 @@ class WorkflowManager {
     }
 
     // Recalculate
-    this.calculateAddon(addonId);
+    this.calculateAddon(addonKey);
     this.calculateAllAddons();
   }
 
@@ -615,10 +1307,11 @@ class WorkflowManager {
    * Calculate single add-on
    */
   calculateAddon(addonId) {
-    const addon = this.availableAddons.find((a) => a.id == addonId);
+    const addonKey = String(addonId);
+    const addon = this.availableAddons.find((a) => a.id == addonKey);
     if (!addon) return;
 
-    const inputs = this.state.addons.selected.get(addonId);
+    const inputs = this.state.addons.selected.get(addonKey);
     if (!inputs) return;
 
     // Get base amount (production subtotal)
@@ -628,11 +1321,11 @@ class WorkflowManager {
     const result = AddonCalculator.calculateAddon(addon, inputs, baseAmount);
 
     // Store result
-    this.state.addons.calculations.set(addonId, result);
+    this.state.addons.calculations.set(addonKey, result);
 
     // Update display
     const amountDisplay = document.getElementById(
-      `addon_amount_value_${addonId}`
+      `addon_amount_value_${addonKey}`
     );
     if (amountDisplay) {
       amountDisplay.textContent = PropertyCalculator.formatCurrency(
@@ -698,13 +1391,18 @@ class WorkflowManager {
     }
   }
 
+  // ============================================================
+  // FIX updateGrandTotal method (around line 900)
+  // ============================================================
   /**
    * Update grand total (production + add-ons + adjustments)
    */
   updateGrandTotal() {
-    const productionTotal = this.state.productionSummary.totalAmount;
-    const addonCharges = this.state.addons.totalCharges;
-    const adjustments = this.state.addons.totalAdjustments;
+    const productionTotal = this.state.productionSummary.totalAmount || 0;
+
+    // ✅ FIX: Safely access add-ons state with fallback
+    const addonCharges = this.state.addons?.totalCharges || 0;
+    const adjustments = this.state.addons?.totalAdjustments || 0;
 
     const grandTotal = productionTotal + addonCharges + adjustments;
 
@@ -712,6 +1410,29 @@ class WorkflowManager {
     if (grandTotalDisplay) {
       grandTotalDisplay.textContent =
         PropertyCalculator.formatCurrency(grandTotal);
+    }
+
+    // Also update production total display
+    const productionTotalDisplay = document.getElementById(
+      "production_total_display"
+    );
+    if (productionTotalDisplay) {
+      productionTotalDisplay.textContent =
+        PropertyCalculator.formatCurrency(productionTotal);
+    }
+
+    // Update add-ons display
+    const addonsTotalDisplay = document.getElementById("addons_total_display");
+    if (addonsTotalDisplay) {
+      addonsTotalDisplay.textContent = PropertyCalculator.formatCurrency(
+        addonCharges + adjustments
+      );
+    }
+
+    // Update production count
+    const productionCountDisplay = document.getElementById("production_count");
+    if (productionCountDisplay) {
+      productionCountDisplay.textContent = this.state.properties.size;
     }
 
     // Update state
@@ -826,7 +1547,7 @@ class WorkflowManager {
 
     // Update UI
     const metersDisplay = document.getElementById("total_meters_display");
-    const amountDisplay = document.getElementById("total_amount_display");
+    const amountDisplay = document.getElementById("production_total_display");
 
     if (metersDisplay) {
       metersDisplay.textContent =
@@ -856,6 +1577,50 @@ class WorkflowManager {
     }
 
     this.validateProductionTab();
+  }
+
+  /**
+   * Set stock entry
+   */
+  setStockEntry(stockEntryData) {
+    this.state.stockEntry = stockEntryData;
+    console.log("✅ Stock entry set:", stockEntryData);
+    this.validateProductionTab();
+  }
+
+  /**
+   * Set customer
+   */
+  setCustomer(customerData) {
+    this.state.customer = customerData;
+    this.updateSelectionSummary();
+    this.validateProductionTab();
+  }
+
+  /**
+   * Set warehouse
+   */
+  setWarehouse(warehouseData) {
+    this.state.warehouse = warehouseData;
+    this.updateSelectionSummary();
+    this.validateProductionTab();
+  }
+
+  /**
+   * Update selection summary display
+   */
+  updateSelectionSummary() {
+    const summaryEl = document.getElementById("selection_summary");
+    const textEl = document.getElementById("selection_text");
+
+    if (!summaryEl || !textEl) return;
+
+    if (this.state.customer && this.state.warehouse) {
+      textEl.textContent = `Customer: ${this.state.customer.name} | Warehouse: ${this.state.warehouse.name}`;
+      summaryEl.classList.remove("d-none");
+    } else {
+      summaryEl.classList.add("d-none");
+    }
   }
 }
 

@@ -40,8 +40,10 @@ class PropertyCalculator {
   static calculateMeterBased(property, inputs) {
     const sheetQty = parseFloat(inputs.sheetQty) || 0;
     const sheetMeter = parseFloat(inputs.sheetMeter) || 0;
-    const unitPrice =
-      parseFloat(inputs.unitPrice) || parseFloat(property.default_price) || 0;
+    const inputUnitPrice = parseFloat(inputs.unitPrice);
+    const unitPrice = Number.isFinite(inputUnitPrice)
+      ? inputUnitPrice
+      : parseFloat(property.default_price) || 0;
 
     const meters = sheetQty * sheetMeter;
     const subtotal = meters * unitPrice;
@@ -65,8 +67,10 @@ class PropertyCalculator {
    */
   static calculateUnitBased(property, inputs) {
     const quantity = parseFloat(inputs.quantity) || 0;
-    const unitPrice =
-      parseFloat(inputs.unitPrice) || parseFloat(property.default_price) || 0;
+    const inputUnitPrice = parseFloat(inputs.unitPrice);
+    const unitPrice = Number.isFinite(inputUnitPrice)
+      ? inputUnitPrice
+      : parseFloat(property.default_price) || 0;
 
     const subtotal = quantity * unitPrice;
 
@@ -87,8 +91,10 @@ class PropertyCalculator {
    */
   static calculateBundleBased(property, inputs) {
     const bundles = parseFloat(inputs.quantity) || 0;
-    const unitPrice =
-      parseFloat(inputs.unitPrice) || parseFloat(property.default_price) || 0;
+    const inputUnitPrice = parseFloat(inputs.unitPrice);
+    const unitPrice = Number.isFinite(inputUnitPrice)
+      ? inputUnitPrice
+      : parseFloat(property.default_price) || 0;
 
     // Get pieces per bundle from property metadata
     const piecesPerBundle = property.metadata?.pieces_per_bundle || 15;
@@ -145,8 +151,17 @@ class PropertyCalculator {
         break;
     }
 
-    if (!inputs.unitPrice || inputs.unitPrice < 0) {
-      errors.push("Unit price cannot be negative");
+    if (
+      inputs.unitPrice !== undefined &&
+      inputs.unitPrice !== null &&
+      inputs.unitPrice !== ""
+    ) {
+      const unitPrice = parseFloat(inputs.unitPrice);
+      if (isNaN(unitPrice)) {
+        errors.push("Invalid unit price format");
+      } else if (unitPrice < 0) {
+        errors.push("Unit price cannot be negative");
+      }
     }
 
     return {

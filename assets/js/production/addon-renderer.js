@@ -170,13 +170,14 @@ class AddonRenderer {
     const method = addon.calculation_method || "fixed";
 
     if (method === "percentage") {
-      return `${price}%`;
-    } else if (method === "per_unit") {
-      return `₦${price.toLocaleString("en-US", {
+      return `${price.toLocaleString("en-US", {
         minimumFractionDigits: 2,
-      })} per unit`;
+        maximumFractionDigits: 2,
+      })}%`;
+    } else if (method === "per_unit") {
+      return `${PropertyCalculator.formatCurrency(price)} per unit`;
     } else {
-      return `₦${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+      return PropertyCalculator.formatCurrency(price);
     }
   }
 
@@ -189,10 +190,14 @@ class AddonRenderer {
   static getCalculationDescription(addon) {
     const method = addon.calculation_method || "fixed";
     const appliesTo = addon.applies_to || "total";
+    const price = parseFloat(addon.default_price) || 0;
 
     const descriptions = {
       fixed: "Fixed amount",
-      percentage: `${addon.default_price}% of ${appliesTo}`,
+      percentage: `${price.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}% of ${appliesTo}`,
       per_unit: "Calculated per unit",
     };
 

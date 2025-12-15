@@ -469,7 +469,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="amount" class="form-label">Amount (₦)</label>
-                        <input type="number" step="0.01" min="0" class="form-control" 
+                        <input type="text" inputmode="decimal" class="form-control" 
                                id="amount" name="amount" required>
                         <div class="form-text">Maximum: ₦<span id="maxAmount">0.00</span></div>
                     </div>
@@ -507,6 +507,46 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentInvoiceId = null;
     let currentBalance = 0;
 
+    const amountInput = document.getElementById('amount');
+
+    const parseMoney = (value) => {
+        const normalized = String(value || '').replace(/,/g, '').trim();
+        const num = parseFloat(normalized);
+        return Number.isFinite(num) ? num : 0;
+    };
+
+    const formatMoney = (value) => {
+        const num = typeof value === 'number' ? value : parseMoney(value);
+        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const formatMoneyInput = (rawValue) => {
+        const str = String(rawValue ?? '');
+        if (str === '') return '';
+
+        const cleaned = str.replace(/[^0-9.]/g, '');
+        const parts = cleaned.split('.');
+        const intPart = parts[0] || '0';
+        const decPart = parts.length > 1 ? parts.slice(1).join('') : '';
+        const formattedInt = parseInt(intPart, 10).toLocaleString('en-US');
+        const trimmedDec = decPart.slice(0, 2);
+
+        return parts.length > 1 ? `${formattedInt}.${trimmedDec}` : formattedInt;
+    };
+
+    if (amountInput) {
+        amountInput.addEventListener('input', function() {
+            const formatted = formatMoneyInput(this.value);
+            this.value = formatted;
+        });
+
+        amountInput.addEventListener('blur', function() {
+            const numeric = parseMoney(this.value);
+            const clamped = Math.min(numeric, currentBalance || numeric);
+            this.value = formatMoney(clamped);
+        });
+    }
+
     // Set up payment buttons
     document.querySelectorAll('.trigger-payment').forEach(button => {
         button.addEventListener('click', function() {
@@ -514,9 +554,8 @@ document.addEventListener('DOMContentLoaded', function() {
             currentBalance = parseFloat(this.getAttribute('data-invoice-balance'));
             
             document.getElementById('invoice_id').value = currentInvoiceId;
-            document.getElementById('amount').max = currentBalance;
-            document.getElementById('maxAmount').textContent = currentBalance.toFixed(2);
-            document.getElementById('amount').value = currentBalance.toFixed(2);
+            document.getElementById('maxAmount').textContent = formatMoney(currentBalance);
+            if (amountInput) amountInput.value = formatMoney(currentBalance);
             
             paymentModal.show();
         });
@@ -525,6 +564,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle form submission
     document.getElementById('paymentForm').addEventListener('submit', function(e) {
         e.preventDefault();
+
+        if (amountInput) {
+            const numericAmount = parseMoney(amountInput.value);
+            if (numericAmount > currentBalance) {
+                amountInput.value = formatMoney(currentBalance);
+                alert('Amount cannot be greater than the outstanding balance.');
+                return;
+            }
+            amountInput.value = numericAmount.toFixed(2);
+        }
         
         // Add loading state
         const submitBtn = this.querySelector('button[type="submit"]');

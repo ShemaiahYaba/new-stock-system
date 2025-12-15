@@ -15,15 +15,21 @@ class AddonCalculator extends PropertyCalculator {
    * @returns {Object} Calculation results
    */
   static calculateAddon(addon, inputs, baseAmount = 0) {
-    const customAmount = parseFloat(inputs.customAmount);
+    const hasCustomAmount =
+      inputs.customAmount !== undefined &&
+      inputs.customAmount !== null &&
+      inputs.customAmount !== "";
+    const customAmount = hasCustomAmount
+      ? parseFloat(inputs.customAmount)
+      : NaN;
     const defaultPrice = parseFloat(addon.default_price) || 0;
     const calculationMethod = addon.calculation_method || "fixed";
     const isRefund = addon.is_refundable == 1;
 
     let amount = 0;
 
-    // If custom amount provided, use it
-    if (!isNaN(customAmount) && customAmount !== 0) {
+    // If custom amount provided, use it (including 0)
+    if (hasCustomAmount && !isNaN(customAmount)) {
       amount = customAmount;
     } else {
       // Calculate based on method
@@ -57,7 +63,8 @@ class AddonCalculator extends PropertyCalculator {
       name: addon.name,
       calculationMethod: calculationMethod,
       defaultPrice: defaultPrice,
-      customAmount: customAmount || null,
+      customAmount:
+        hasCustomAmount && !isNaN(customAmount) ? customAmount : null,
       baseAmount: baseAmount,
       amount: amount,
       isRefund: isRefund,
