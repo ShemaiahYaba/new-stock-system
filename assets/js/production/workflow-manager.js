@@ -33,6 +33,61 @@ class WorkflowManager {
   }
 
   /**
+   * Handle coil selection
+   * @param {Object} coilData - The selected coil data
+   */
+  async handleCoilSelection(coilData) {
+    try {
+      // Update the state with the selected coil
+      this.state.coil = coilData;
+
+      // Clear any existing stock entry
+      this.state.stockEntry = null;
+      document.getElementById("stock_entry_id").value = "";
+
+      // Load stock entries for the selected coil
+      const response = await fetch(
+        `/new-stock-system/controllers/sales/get_stock_entries.php?coil_id=${coilData.id}`
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        const stockSelect = document.getElementById("stock_entry_id");
+        stockSelect.innerHTML = '<option value="">Select Stock Entry</option>';
+
+        data.stockEntries.forEach((entry) => {
+          const option = document.createElement("option");
+          option.value = entry.id;
+          option.textContent = `#${entry.id} - ${entry.meters_remaining}m (${entry.status})`;
+          option.dataset.status = entry.status;
+          option.dataset.meters = entry.meters_remaining;
+          stockSelect.appendChild(option);
+        });
+
+        stockSelect.disabled = false;
+        document.getElementById("properties_container").classList.add("d-none");
+        this.resetProperties();
+      } else {
+        throw new Error(data.message || "Failed to load stock entries");
+      }
+    } catch (error) {
+      console.error("Error handling coil selection:", error);
+      alert("Error: " + error.message);
+    }
+  }
+
+  /**
+   * Reset all properties and UI elements
+   */
+  resetProperties() {
+    this.state.properties.clear();
+    this.rowCounter = 0;
+    document.getElementById("property_rows").innerHTML = "";
+    this.updateProductionSummary();
+  }
+
+  /**
    * Load properties for a specific category
    */
   async loadPropertiesForCategory(category) {
@@ -804,10 +859,13 @@ class WorkflowManager {
   }
 }
 
-// Create global instance
-const workflowManager = new WorkflowManager();
+// Create and expose global instance
+window.workflowManager = new WorkflowManager();
 
-// Export for use in other modules
+// For CommonJS environments (Node.js)
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = WorkflowManager;
+  module.exports = {
+    WorkflowManager,
+    workflowManager: window.workflowManager,
+  };
 }

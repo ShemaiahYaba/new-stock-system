@@ -19,22 +19,22 @@ $filterType = $_GET['filter_type'] ?? 'all'; // all, production, addon
 $propertyModel = new ProductionProperty();
 
 // Build filter conditions
-$whereConditions = ['deleted_at IS NULL'];
+$whereConditions = [];
 $params = [];
 
 if (!empty($searchQuery)) {
-    $whereConditions[] = '(code LIKE ? OR name LIKE ?)';
+    $whereConditions[] = '(pp.code LIKE ? OR pp.name LIKE ?)';
     $params[] = "%$searchQuery%";
     $params[] = "%$searchQuery%";
 }
 
 if ($filterType === 'production') {
-    $whereConditions[] = 'is_addon = 0';
+    $whereConditions[] = 'pp.is_addon = 0';
 } elseif ($filterType === 'addon') {
-    $whereConditions[] = 'is_addon = 1';
+    $whereConditions[] = 'pp.is_addon = 1';
 }
 
-$whereClause = 'WHERE ' . implode(' AND ', $whereConditions);
+$whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
 
 // Get paginated results
 $sql = "SELECT pp.*, u.name as created_by_name 
@@ -51,7 +51,7 @@ $stmt->execute($allParams);
 $properties = $stmt->fetchAll();
 
 // Count total
-$countSql = "SELECT COUNT(*) as total FROM production_properties $whereClause";
+$countSql = "SELECT COUNT(*) as total FROM production_properties pp $whereClause";
 $countStmt = $db->prepare($countSql);
 $countStmt->execute($params);
 $totalProperties = $countStmt->fetch()['total'];

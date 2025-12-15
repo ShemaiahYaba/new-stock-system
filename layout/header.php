@@ -29,7 +29,7 @@ $currentUser = getCurrentUser();
     
     <!-- Custom CSS -->
     <style>
-        .alert {
+        .alert-container {
             position: fixed;
             top: 80px;
             left: 50%;
@@ -37,8 +37,16 @@ $currentUser = getCurrentUser();
             z-index: 1100;
             min-width: 300px;
             max-width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .alert {
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
+            margin: 0;
+            width: 100%;
         }
         
         .navbar {
@@ -191,20 +199,31 @@ $currentUser = getCurrentUser();
 if (hasFlashMessage()) {
 
         $flash = getFlashMessage();
-        $alertClass =
-            [
-                'success' => 'alert-success',
-                'error' => 'alert-danger',
-                'warning' => 'alert-warning',
-                'info' => 'alert-info',
-            ][$flash['type']] ?? 'alert-info';
+        $alertClass = match ($flash['type']) {
+            'success' => 'alert-success',
+            'error' => 'alert-danger',
+            'warning' => 'alert-warning',
+            default => 'alert-info',
+        };
         ?>
-        <div class="container-fluid">
-            <div class="alert <?php echo $alertClass; ?> alert-dismissible fade show d-inline-block" role="alert" style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 1100;">
-                <?php echo htmlspecialchars($flash['message']); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="alert-container">
+            <div class="alert <?php echo $alertClass; ?> alert-dismissible fade show" role="alert">
+                <?php echo $flash['message']; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         </div>
+        <!-- <script>
+            // Auto-dismiss alerts after 5 seconds
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    const alerts = document.querySelectorAll('.alert');
+                    alerts.forEach(function(alert) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    });
+                }, 5000);
+            });
+        </script> -->
         <?php
     }
 ?>
