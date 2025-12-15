@@ -25,18 +25,18 @@ CREATE TABLE IF NOT EXISTS production_properties (
 
 -- 2. Seed default Alusteel/Aluminum properties
 INSERT INTO production_properties (code, name, category, property_type, default_price, sort_order, created_by) VALUES
-('mainsheet', 'Mainsheet', 'alusteel', 'meter_based', 10300.00, 1, 1),
-('flatsheet', 'Flatsheet', 'alusteel', 'meter_based', 9800.00, 2, 1),
-('cladding', 'Cladding', 'alusteel', 'meter_based', 11200.00, 3, 1),
-('mainsheet_alu', 'Mainsheet', 'aluminum', 'meter_based', 10300.00, 1, 1),
-('flatsheet_alu', 'Flatsheet', 'aluminum', 'meter_based', 9800.00, 2, 1),
-('cladding_alu', 'Cladding', 'aluminum', 'meter_based', 11200.00, 3, 1);
+('mainsheet', 'Mainsheet', 'alusteel', 'meter_based', 10300.00, 1, 2),
+('flatsheet', 'Flatsheet', 'alusteel', 'meter_based', 9800.00, 2, 2),
+('cladding', 'Cladding', 'alusteel', 'meter_based', 11200.00, 3, 2),
+('mainsheet_alu', 'Mainsheet', 'aluminum', 'meter_based', 10300.00, 1, 2),
+('flatsheet_alu', 'Flatsheet', 'aluminum', 'meter_based', 9800.00, 2, 2),
+('cladding_alu', 'Cladding', 'aluminum', 'meter_based', 11200.00, 3, 2);
 
 -- 3. Seed default KZINC properties
 INSERT INTO production_properties (code, name, category, property_type, default_price, metadata, sort_order, created_by) VALUES
-('scraps', 'Scraps', 'kzinc', 'unit_based', 2500.00, NULL, 1, 1),
-('pieces', 'Pieces', 'kzinc', 'unit_based', 4500.00, NULL, 2, 1),
-('bundles', 'Bundles', 'kzinc', 'bundle_based', 64000.00, JSON_OBJECT('pieces_per_bundle', 15), 3, 1);
+('scraps', 'Scraps', 'kzinc', 'unit_based', 2500.00, NULL, 1, 2),
+('pieces', 'Pieces', 'kzinc', 'unit_based', 4500.00, NULL, 2, 2),
+('bundles', 'Bundles', 'kzinc', 'bundle_based', 64000.00, JSON_OBJECT('pieces_per_bundle', 15), 3, 2);
 
 -- 4. Add index for better query performance
 ALTER TABLE production_properties ADD INDEX idx_code (code);
