@@ -36,7 +36,7 @@
                 setTimeout(function() {
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
-                }, 5000);
+                }, 10000);
             });
         });
         

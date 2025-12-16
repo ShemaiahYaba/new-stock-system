@@ -43,17 +43,16 @@ class Invoice
     }
 
     private function generateInvoiceNumber()
-    {
-        $prefix = 'INV-' . date('Y');
-        $sql = "SELECT COUNT(*) as count FROM {$this->table} 
-                WHERE invoice_number LIKE :prefix";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':prefix' => $prefix . '%']);
-        $result = $stmt->fetch();
-        $count = $result['count'] + 1;
-
-        return $prefix . '-' . str_pad($count, 6, '0', STR_PAD_LEFT);
-    }
+{
+    $prefix = 'INV-' . date('Y');
+    // Get the next auto-increment ID from the database
+    $sql = "SHOW TABLE STATUS LIKE 'invoices'";
+    $stmt = $this->db->query($sql);
+    $result = $stmt->fetch();
+    $nextId = $result['Auto_increment'];
+    
+    return $prefix . '-' . str_pad($nextId, 6, '0', STR_PAD_LEFT);
+}
 
     private function generateImmutableHash($data)
     {

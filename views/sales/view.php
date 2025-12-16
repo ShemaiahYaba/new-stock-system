@@ -1,6 +1,6 @@
 <?php
 /**
- * View Sale Details - FIXED
+ * View Sale Details - UPDATED FOR CASCADE DELETE
  */
 
 require_once __DIR__ . '/../../config/db.php';
@@ -37,6 +37,18 @@ $stockEntry = $sale['stock_entry_id'] ? $stockEntryModel->findById($sale['stock_
 
 // Get invoice information
 $invoice = $saleModel->getInvoice($sale['id']);
+
+// Get payment receipts if invoice exists
+$db = Database::getInstance()->getConnection();
+$receipts = [];
+$totalPaid = 0;
+if ($invoice) {
+    $receiptsSql = "SELECT * FROM receipts WHERE invoice_id = ? ORDER BY created_at DESC";
+    $receiptsStmt = $db->prepare($receiptsSql);
+    $receiptsStmt->execute([$invoice['id']]);
+    $receipts = $receiptsStmt->fetchAll();
+    $totalPaid = array_sum(array_column($receipts, 'amount_paid'));
+}
 
 $pageTitle = 'View Sale - ' . APP_NAME;
 require_once __DIR__ . '/../../layout/header.php';
@@ -151,10 +163,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <td>
                                         <?php 
                                         if ($sale['weight_kg'] !== null && $sale['weight_kg'] > 0) {
-                                            // Sale was made in KG
                                             echo number_format($sale['weight_kg'], 2) . ' kg';
                                         } else {
-                                            // Sale was made in meters
                                             echo number_format($sale['meters'], 2) . ' m';
                                         }
                                         ?>
@@ -162,10 +172,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <td>
                                         <?php 
                                         if ($sale['price_per_kg'] !== null && $sale['price_per_kg'] > 0) {
-                                            // Price per KG
                                             echo '₦' . number_format($sale['price_per_kg'], 2) . '/kg';
                                         } else {
-                                            // Price per meter
                                             echo '₦' . number_format($sale['price_per_meter'], 2) . '/m';
                                         }
                                         ?>
@@ -228,6 +236,43 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     </table>
                                 </div>
                             </div>
+                            
+                            <?php if (!empty($receipts)): ?>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h5>Payment History</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Amount</th>
+                                                    <th>Method</th>
+                                                    <th>Reference</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($receipts as $receipt): ?>
+                                                <tr>
+                                                    <td><?php echo formatDate($receipt['created_at']); ?></td>
+                                                    <td>₦<?php echo number_format($receipt['amount_paid'], 2); ?></td>
+                                                    <td><?php echo ucfirst($receipt['payment_method']); ?></td>
+                                                    <td><?php echo htmlspecialchars($receipt['reference'] ?: 'N/A'); ?></td>
+                                                </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="table-light">
+                                                    <th>Total Paid:</th>
+                                                    <th>₦<?php echo number_format($totalPaid, 2); ?></th>
+                                                    <th colspan="2"></th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -275,26 +320,41 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="deleteModalLabel">
-                    <i class="bi bi-exclamation-triangle"></i> Confirm Deletion
+                    <i class="bi bi-exclamation-triangle"></i> Confirm Permanent Deletion
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-circle"></i>
-                    <strong>Warning:</strong> This action cannot be undone!
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>DANGER:</strong> This will PERMANENTLY delete this sale and ALL related records!
                 </div>
-                <p>Are you sure you want to delete this sale?</p>
+                
+                <p><strong>The following will be deleted:</strong></p>
+                <ul>
+                    <li><i class="bi bi-check2"></i> Sale record #<?php echo $sale['id']; ?></li>
+                    <?php if ($invoice): ?>
+                    <li><i class="bi bi-check2"></i> Invoice <?php echo $invoice['invoice_number']; ?></li>
+                    <?php endif; ?>
+                    <?php if (!empty($receipts)): ?>
+                    <li><i class="bi bi-check2"></i> <?php echo count($receipts); ?> payment record(s) totaling ₦<?php echo number_format($totalPaid, 2); ?></li>
+                    <?php endif; ?>
+                    <li><i class="bi bi-check2"></i> Production records (if any)</li>
+                    <li><i class="bi bi-check2"></i> Stock ledger entries</li>
+                </ul>
+                
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Note:</strong> Stock meters will be restored to the stock entry.
+                </div>
+                
+                <hr>
+                
+                <p class="mb-0"><strong>Sale Details:</strong></p>
                 <ul class="mb-0">
-                    <li>Sale ID: <strong>#<?php echo $sale['id']; ?></strong></li>
                     <li>Customer: <strong><?php echo htmlspecialchars($customer['name'] ?? 'N/A'); ?></strong></li>
                     <li>Amount: <strong>₦<?php echo number_format($sale['total_amount'], 2); ?></strong></li>
-                    <?php if ($invoice && $invoice['paid_amount'] > 0): ?>
-                    <li class="text-danger">
-                        <strong>Note:</strong> This sale has payments recorded (₦<?php echo number_format($invoice['paid_amount'], 2); ?>). 
-                        Deletion will be blocked.
-                    </li>
-                    <?php endif; ?>
+                    <li>Date: <strong><?php echo formatDate($sale['created_at']); ?></strong></li>
                 </ul>
             </div>
             <div class="modal-footer">
@@ -304,9 +364,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <form action="/new-stock-system/controllers/sales/delete/index.php" method="POST" style="display: inline;">
                     <input type="hidden" name="id" value="<?php echo $sale['id']; ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
-                    <button type="submit" class="btn btn-danger" 
-                            <?php echo ($invoice && $invoice['paid_amount'] > 0) ? 'disabled' : ''; ?>>
-                        <i class="bi bi-trash"></i> Delete Sale
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Yes, Delete Everything
                     </button>
                 </form>
             </div>
