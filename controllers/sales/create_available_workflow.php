@@ -1,6 +1,7 @@
 <?php
 /**
  * Handle creation of sales from available stock (KG-based)
+ * FIXED: Removed duplicate sale creation
  */
 
 require_once __DIR__ . '/../../config/db.php';
@@ -154,25 +155,19 @@ try {
             'notes' => $_POST['notes'] ?? null,
         ];
 
-        // Add this RIGHT BEFORE the $saleId = $saleModel->create($saleData); line
+        // DEBUG LOGGING
+        error_log('=== ATTEMPTING TO CREATE SALE ===');
+        error_log('Sale Data: ' . print_r($saleData, true));
 
-error_log('=== ATTEMPTING TO CREATE SALE ===');
-error_log('Sale Data: ' . print_r($saleData, true));
-
-$saleId = $saleModel->create($saleData);
-
-error_log('Sale ID Result: ' . ($saleId ? $saleId : 'FALSE'));
-
-if (!$saleId) {
-    // Get PDO error info
-    $errorInfo = $db->errorInfo();
-    error_log('PDO Error Info: ' . print_r($errorInfo, true));
-    throw new Exception('Failed to create sale record. Check error logs for details.');
-}
         $saleId = $saleModel->create($saleData);
 
+        error_log('Sale ID Result: ' . ($saleId ? $saleId : 'FALSE'));
+
         if (!$saleId) {
-            throw new Exception('Failed to create sale record');
+            // Get PDO error info
+            $errorInfo = $db->errorInfo();
+            error_log('PDO Error Info: ' . print_r($errorInfo, true));
+            throw new Exception('Failed to create sale record. Check error logs for details.');
         }
 
         // Store first sale ID for reference

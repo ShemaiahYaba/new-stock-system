@@ -1,6 +1,6 @@
 <?php
 /**
- * View Sale Details
+ * View Sale Details - FIXED
  */
 
 require_once __DIR__ . '/../../config/db.php';
@@ -33,7 +33,10 @@ $stockEntryModel = new StockEntry();
 
 $customer = $customerModel->findById($sale['customer_id']);
 $coil = $coilModel->findById($sale['coil_id']);
-$stockEntry = $stockEntryModel->findById($sale['stock_entry_id']);
+$stockEntry = $sale['stock_entry_id'] ? $stockEntryModel->findById($sale['stock_entry_id']) : null;
+
+// Get invoice information
+$invoice = $saleModel->getInvoice($sale['id']);
 
 $pageTitle = 'View Sale - ' . APP_NAME;
 require_once __DIR__ . '/../../layout/header.php';
@@ -80,18 +83,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         </tr>
                         <tr>
                             <th>Sale Type:</th>
-                            <td><?php echo ucfirst($sale['sale_type']); ?></td>
+                            <td><?php echo ucfirst(str_replace('_', ' ', $sale['sale_type'])); ?></td>
                         </tr>
-                        <?php
-                        // Get invoice information
-                        $invoice = $saleModel->getInvoice($sale['id']);
-                        if ($invoice): ?>
+                        <?php if ($invoice): ?>
                         <tr>
                             <th>Invoice:</th>
                             <td>
-                                <a href="/new-stock-system/index.php?page=invoice_view&id=<?php echo $invoice[
-                                    'id'
-                                ]; ?>" 
+                                <a href="/new-stock-system/index.php?page=invoice_view&id=<?php echo $invoice['id']; ?>" 
                                    class="btn btn-sm btn-outline-primary">
                                     View Invoice #<?php echo $invoice['invoice_number']; ?>
                                 </a>
@@ -100,8 +98,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 </span>
                             </td>
                         </tr>
-                        <?php endif;
-                        ?>
+                        <?php endif; ?>
                     </table>
                 </div>
                 <div class="col-md-6">
@@ -114,21 +111,15 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             </tr>
                             <tr>
                                 <th>Company:</th>
-                                <td><?php echo htmlspecialchars(
-                                    $customer['company'] ?? 'N/A',
-                                ); ?></td>
+                                <td><?php echo htmlspecialchars($customer['company'] ?? 'N/A'); ?></td>
                             </tr>
                             <tr>
                                 <th>Email:</th>
-                                <td><?php echo htmlspecialchars(
-                                    $customer['email'] ?? 'N/A',
-                                ); ?></td>
+                                <td><?php echo htmlspecialchars($customer['email'] ?? 'N/A'); ?></td>
                             </tr>
                             <tr>
                                 <th>Phone:</th>
-                                <td><?php echo htmlspecialchars(
-                                    $customer['phone'] ?? 'N/A',
-                                ); ?></td>
+                                <td><?php echo htmlspecialchars($customer['phone'] ?? 'N/A'); ?></td>
                             </tr>
                         </table>
                     <?php else: ?>
@@ -137,55 +128,55 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 </div>
             </div>
 
-<div class="row mb-4">
-    <div class="col-12">
-        <h4>Product Details</h4>
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead class="table-light">
-                    <tr>
-                        <th>Coil Code</th>
-                        <th>Coil Name</th>
-                        <th>Stock Entry</th>
-                        <th>Quantity Sold</th>
-                        <th>Unit Price</th>
-                        <th>Total Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><?php echo htmlspecialchars($coil['code'] ?? 'N/A'); ?></td>
-                        <td><?php echo htmlspecialchars($coil['name'] ?? 'N/A'); ?></td>
-                        <td>#<?php echo $stockEntry ? $stockEntry['id'] : 'N/A'; ?></td>
-                        <td>
-                            <?php 
-                            if ($sale['weight_kg'] !== null && $sale['weight_kg'] > 0) {
-                                // Sale was made in KG
-                                echo number_format($sale['weight_kg'], 2) . ' kg';
-                            } else {
-                                // Sale was made in meters
-                                echo number_format($sale['meters'], 2) . ' m';
-                            }
-                            ?>
-                        </td>
-                        <td>
-                            <?php 
-                            if ($sale['price_per_kg'] !== null && $sale['price_per_kg'] > 0) {
-                                // Price per KG
-                                echo '₦' . number_format($sale['price_per_kg'], 2) . '/kg';
-                            } else {
-                                // Price per meter
-                                echo '₦' . number_format($sale['price_per_meter'], 2) . '/m';
-                            }
-                            ?>
-                        </td>
-                        <td>₦<?php echo number_format($sale['total_amount'], 2); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4>Product Details</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Coil Code</th>
+                                    <th>Coil Name</th>
+                                    <th>Stock Entry</th>
+                                    <th>Quantity Sold</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($coil['code'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($coil['name'] ?? 'N/A'); ?></td>
+                                    <td><?php echo $stockEntry ? '#' . $stockEntry['id'] : 'N/A'; ?></td>
+                                    <td>
+                                        <?php 
+                                        if ($sale['weight_kg'] !== null && $sale['weight_kg'] > 0) {
+                                            // Sale was made in KG
+                                            echo number_format($sale['weight_kg'], 2) . ' kg';
+                                        } else {
+                                            // Sale was made in meters
+                                            echo number_format($sale['meters'], 2) . ' m';
+                                        }
+                                        ?>
+                                    </td>
+                                    <td>
+                                        <?php 
+                                        if ($sale['price_per_kg'] !== null && $sale['price_per_kg'] > 0) {
+                                            // Price per KG
+                                            echo '₦' . number_format($sale['price_per_kg'], 2) . '/kg';
+                                        } else {
+                                            // Price per meter
+                                            echo '₦' . number_format($sale['price_per_meter'], 2) . '/m';
+                                        }
+                                        ?>
+                                    </td>
+                                    <td>₦<?php echo number_format($sale['total_amount'], 2); ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
             <?php if ($invoice): ?>
             <div class="row mt-4">
@@ -204,15 +195,12 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                         </tr>
                                         <tr>
                                             <th>Date:</th>
-                                            <td><?php echo formatDate(
-                                                $invoice['created_at'],
-                                            ); ?></td>
+                                            <td><?php echo formatDate($invoice['created_at']); ?></td>
                                         </tr>
                                         <tr>
                                             <th>Status:</th>
                                             <td>
-                                                <span class="badge <?php echo $invoice['status'] ===
-                                                'paid'
+                                                <span class="badge <?php echo $invoice['status'] === 'paid'
                                                     ? 'bg-success'
                                                     : ($invoice['status'] === 'cancelled'
                                                         ? 'bg-danger'
@@ -227,21 +215,15 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <table class="table table-bordered">
                                         <tr>
                                             <th style="width: 40%;">Total Amount:</th>
-                                            <td><?php echo formatCurrency(
-                                                $invoice['total'],
-                                            ); ?></td>
+                                            <td><?php echo formatCurrency($invoice['total']); ?></td>
                                         </tr>
                                         <tr>
                                             <th>Paid Amount:</th>
-                                            <td><?php echo formatCurrency(
-                                                $invoice['paid_amount'],
-                                            ); ?></td>
+                                            <td><?php echo formatCurrency($invoice['paid_amount']); ?></td>
                                         </tr>
                                         <tr>
                                             <th>Balance Due:</th>
-                                            <td><?php echo formatCurrency(
-                                                $invoice['total'] - $invoice['paid_amount'],
-                                            ); ?></td>
+                                            <td><?php echo formatCurrency($invoice['total'] - $invoice['paid_amount']); ?></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -259,21 +241,19 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <i class="bi bi-arrow-left"></i> Back to Sales
                         </a>
                         <div>
-                            <?php if (hasPermission(MODULE_SALES, ACTION_EDIT)): ?>
-                                <a href="/new-stock-system/index.php?page=sales_edit&id=<?php echo $sale[
-                                    'id'
-                                ]; ?>" 
+                            <?php if (hasPermission(MODULE_SALES, ACTION_EDIT) && $sale['status'] !== 'cancelled'): ?>
+                                <a href="/new-stock-system/index.php?page=sales_edit&id=<?php echo $sale['id']; ?>" 
                                    class="btn btn-primary">
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>
                             <?php endif; ?>
                             
-                            <a href="/new-stock-system/index.php?page=invoice_view&id=<?php echo $invoice[
-                                    'id'
-                                ]; ?>"
+                            <?php if ($invoice): ?>
+                            <a href="/new-stock-system/index.php?page=invoice_view&id=<?php echo $invoice['id']; ?>"
                                class="btn btn-success">
-                                <i class="bi bi-file-pdf"></i> Go to Invoice
+                                <i class="bi bi-file-pdf"></i> View Invoice
                             </a>
+                            <?php endif; ?>
                             
                             <?php if (hasPermission(MODULE_SALES, ACTION_DELETE)): ?>
                                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" 
@@ -293,19 +273,39 @@ require_once __DIR__ . '/../../layout/sidebar.php';
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this sale? This action cannot be undone.</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+                <p>Are you sure you want to delete this sale?</p>
+                <ul class="mb-0">
+                    <li>Sale ID: <strong>#<?php echo $sale['id']; ?></strong></li>
+                    <li>Customer: <strong><?php echo htmlspecialchars($customer['name'] ?? 'N/A'); ?></strong></li>
+                    <li>Amount: <strong>₦<?php echo number_format($sale['total_amount'], 2); ?></strong></li>
+                    <?php if ($invoice && $invoice['paid_amount'] > 0): ?>
+                    <li class="text-danger">
+                        <strong>Note:</strong> This sale has payments recorded (₦<?php echo number_format($invoice['paid_amount'], 2); ?>). 
+                        Deletion will be blocked.
+                    </li>
+                    <?php endif; ?>
+                </ul>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
                 <form action="/new-stock-system/controllers/sales/delete/index.php" method="POST" style="display: inline;">
                     <input type="hidden" name="id" value="<?php echo $sale['id']; ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-danger" 
+                            <?php echo ($invoice && $invoice['paid_amount'] > 0) ? 'disabled' : ''; ?>>
                         <i class="bi bi-trash"></i> Delete Sale
                     </button>
                 </form>
