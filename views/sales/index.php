@@ -79,6 +79,8 @@ foreach ($sales as &$sale) {
     }
 }
 
+unset($sale);
+
 $paginationData = getPaginationData($totalSales, $currentPage);
 
 require_once __DIR__ . '/../../layout/header.php';

@@ -266,16 +266,46 @@ if (!defined('RECORDS_PER_PAGE')) {
                         </li>
                         <?php endif; ?>
                         
-                        <?php for ($i = 1; $i <= $paginationData['totalPages']; $i++): ?>
-                        <li class="page-item <?= $i === $paginationData['currentPage']
-                            ? 'active'
-                            : '' ?>">
-                            <a class="page-link" href="?page=invoices&page_num=<?= $i .
-                                ($statusFilter ? '&status=' . urlencode($statusFilter) : '') ?>" <?= $i === $paginationData['currentPage'] ? 'style="pointer-events: none;"' : '' ?>>
+                        <?php
+                        $range = 2;
+                        $start = max(1, $paginationData['currentPage'] - $range);
+                        $end = min($paginationData['totalPages'], $paginationData['currentPage'] + $range);
+
+                        if ($start > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=invoices&page_num=1<?= $statusFilter
+                                ? '&status=' . urlencode($statusFilter)
+                                : '' ?>">1</a>
+                        </li>
+                        <?php if ($start > 2): ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">&hellip;</span>
+                        </li>
+                        <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <?php for ($i = $start; $i <= $end; $i++): ?>
+                        <li class="page-item <?= $i === $paginationData['currentPage'] ? 'active' : '' ?>">
+                            <a class="page-link" href="?page=invoices&page_num=<?= $i ?><?= $statusFilter
+                                ? '&status=' . urlencode($statusFilter)
+                                : '' ?>" <?= $i === $paginationData['currentPage'] ? 'style="pointer-events: none;"' : '' ?>>
                                 <?= $i ?>
                             </a>
                         </li>
                         <?php endfor; ?>
+                        
+                        <?php if ($end < $paginationData['totalPages']): ?>
+                        <?php if ($end < $paginationData['totalPages'] - 1): ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">&hellip;</span>
+                        </li>
+                        <?php endif; ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData['totalPages'] ?><?= $statusFilter
+                                ? '&status=' . urlencode($statusFilter)
+                                : '' ?>"><?= $paginationData['totalPages'] ?></a>
+                        </li>
+                        <?php endif; ?>
                         
                         <?php if (
                             $paginationData['currentPage'] < $paginationData['totalPages']
