@@ -49,12 +49,14 @@ define('STOCK_CATEGORY_ALUSTEEL', 'alusteel');
 define('STOCK_CATEGORY_ALLOY_STEEL', STOCK_CATEGORY_ALUSTEEL); // backward compatibility
 define('STOCK_CATEGORY_ALUMINUM', 'aluminum');
 define('STOCK_CATEGORY_KZINC', 'kzinc');
+define('STOCK_CATEGORY_TILE', 'tile'); // NEW
 
 // Stock Categories Array
 const STOCK_CATEGORIES = [
     STOCK_CATEGORY_ALUSTEEL => 'Alusteel',
     STOCK_CATEGORY_ALUMINUM => 'Aluminum',
     STOCK_CATEGORY_KZINC => 'K-Zinc',
+    STOCK_CATEGORY_TILE => 'Tile',
 ];
 
 // Sale Types

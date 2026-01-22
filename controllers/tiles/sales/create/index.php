@@ -1,8 +1,9 @@
 <?php
 /**
  * ============================================
- * FILE: controllers/tiles/sales/create/index.php
- * UPDATED: Now generates invoices automatically
+ * ENHANCED: Tile Sale Creation with Add-Ons Support
+ * File: controllers/tiles/sales/create/index.php
+ * REPLACE existing file with this version
  * ============================================
  */
 session_start();
@@ -14,6 +15,7 @@ require_once __DIR__ . '/../../../../models/tile_product.php';
 require_once __DIR__ . '/../../../../models/tile_stock_ledger.php';
 require_once __DIR__ . '/../../../../models/customer.php';
 require_once __DIR__ . '/../../../../models/invoice.php';
+require_once __DIR__ . '/../../../../models/production_property.php'; // NEW
 require_once __DIR__ . '/../../../../utils/helpers.php';
 require_once __DIR__ . '/../../../../utils/auth_middleware.php';
 
@@ -31,6 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity = floatval($_POST['quantity'] ?? 0);
     $unitPrice = floatval($_POST['unit_price'] ?? 0);
     $notes = sanitize($_POST['notes'] ?? '');
+    
+    // NEW: Parse add-on data
+    $addonData = isset($_POST['addon_data']) ? json_decode($_POST['addon_data'], true) : [];
+    
+    // Debug logging
+    error_log('📥 Received addon_data: ' . $_POST['addon_data']);
+    error_log('📋 Parsed addon data: ' . print_r($addonData, true));
     
     $errors = [];
     
@@ -50,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ledgerModel = new TileStockLedger();
     $customerModel = new Customer();
     $invoiceModel = new Invoice();
+    $propertyModel = new ProductionProperty(); // NEW
     
     // Verify customer and product exist
     $customer = $customerModel->findById($customerId);
@@ -70,7 +80,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     $currentUser = getCurrentUser();
-    $totalAmount = $quantity * $unitPrice;
+    $productSubtotal = $quantity * $unitPrice;
+    
+    // ========================================
+    // NEW: Process Add-Ons
+    // ========================================
+    $addonItems = [];
+    $totalAddonCharges = 0;
+    $totalAdjustments = 0;
+    
+    if (!empty($addonData)) {
+        foreach ($addonData as $addonItem) {
+            $addonId = $addonItem['addon_id'] ?? null;
+            $customAmount = $addonItem['customAmount'] ?? null;
+            
+            if (!$addonId) continue;
+            
+            $addon = $propertyModel->findById($addonId);
+            if (!$addon || $addon['category'] !== 'tile') continue;
+            
+            // Calculate add-on amount
+            $amount = $propertyModel->calculateAddonAmount(
+                $addon, 
+                $productSubtotal, 
+                $customAmount
+            );
+            
+            // Apply refund logic (make negative)
+            if ($addon['is_refundable'] == 1 && $amount > 0) {
+                $amount = -$amount;
+            }
+            
+            // Track totals
+            if ($addon['is_refundable'] || $amount < 0) {
+                $totalAdjustments += $amount;
+            } else {
+                $totalAddonCharges += $amount;
+            }
+            
+            // Store add-on for invoice
+            $addonItems[] = [
+                'addon_id' => $addonId,
+                'code' => $addon['code'],
+                'name' => $addon['name'],
+                'amount' => $amount,
+                'calculation_method' => $addon['calculation_method'],
+                'display_section' => $addon['display_section']
+            ];
+        }
+    }
+    
+    // Calculate grand total
+    $grandTotal = $productSubtotal + $totalAddonCharges + $totalAdjustments;
     
     try {
         $db = Database::getInstance()->getConnection();
@@ -82,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'tile_product_id' => $productId,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
-            'total_amount' => $totalAmount,
+            'total_amount' => $grandTotal, // Updated to include add-ons
             'status' => 'completed',
             'notes' => $notes,
             'created_by' => $currentUser['id']
@@ -94,7 +155,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Failed to create sale record');
         }
         
-        // 2. Build invoice shape with tile-specific details
+        // 2. Build invoice items array
+        $invoiceItems = [[
+            'product_code' => $product['code'],
+            'description' => "Roofing Tile - {$product['design_name']}",
+            'details' => "Color: {$product['color_name']}\nGauge: " . ucfirst($product['gauge']) . "\nDesign: {$product['design_code']}",
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'subtotal' => $productSubtotal
+        ]];
+        
+        // 3. Add add-on items to invoice
+        foreach ($addonItems as $addon) {
+            $invoiceItems[] = [
+                'description' => $addon['name'],
+                'details' => $addon['calculation_method'] === 'percentage' 
+                    ? "Calculated as percentage" 
+                    : "Add-on charge",
+                'quantity' => 1,
+                'unit_price' => $addon['amount'],
+                'subtotal' => $addon['amount'],
+                'is_addon' => true
+            ];
+        }
+        
+        // 4. Build invoice shape with add-ons
         $invoiceShape = [
             'company' => [
                 'name' => INVOICE_COMPANY_NAME,
@@ -108,13 +193,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'address' => $customer['address'] ?? '',
                 'email' => $customer['email'] ?? ''
             ],
-            'items' => [[
-                'product_code' => $product['code'],
-                'description' => "Roofing Tile - {$product['design_name']}",
-                'details' => "Color: {$product['color_name']}\nGauge: " . ucfirst($product['gauge']) . "\nDesign: {$product['design_code']}",
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice
-            ]],
+            'items' => $invoiceItems,
+            'breakdown' => [
+                'product_subtotal' => $productSubtotal,
+                'addon_charges' => $totalAddonCharges,
+                'adjustments' => $totalAdjustments,
+            ],
             'tax' => 0,
             'shipping' => 0,
             'discount' => 0,
@@ -131,16 +215,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'design' => $product['design_name'],
                     'color' => $product['color_name'],
                     'gauge' => $product['gauge']
-                ]
+                ],
+                'addons' => $addonItems
             ]
         ];
         
-        // 3. Create invoice with polymorphic reference
+        // 5. Create invoice with polymorphic reference
         $invoiceId = $invoiceModel->create([
             'sale_type' => 'tile_sale',
             'sale_reference_id' => $saleId,
             'invoice_shape' => $invoiceShape,
-            'total' => $totalAmount,
+            'total' => $grandTotal,
             'tax' => 0,
             'shipping' => 0,
             'paid_amount' => 0,
@@ -153,10 +238,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $db->commit();
         
-        logActivity('Tile sale created with invoice', "Sale ID: $saleId, Invoice ID: $invoiceId, Product: {$product['code']}, Customer: {$customer['name']}, Quantity: $quantity");
-        setFlashMessage('success', 'Sale created successfully! Invoice generated.');
+        logActivity(
+            'Tile sale created with add-ons', 
+            "Sale ID: $saleId, Invoice ID: $invoiceId, Product: {$product['code']}, " .
+            "Customer: {$customer['name']}, Quantity: $quantity, Add-ons: " . count($addonItems)
+        );
         
-        // Redirect to invoice view directly (as per requirement)
+        setFlashMessage('success', 'Sale created successfully with add-ons! Invoice generated.');
+        
+        // Redirect to invoice view
         header("Location: /new-stock-system/index.php?page=invoice_view&id=$invoiceId");
         
     } catch (Exception $e) {

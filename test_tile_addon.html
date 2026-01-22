@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Tile Add-Ons Diagnostics</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2>🔍 Tile Add-Ons Diagnostics</h2>
+      <p class="text-muted">
+        This page will help diagnose why add-ons aren't showing
+      </p>
+
+      <div class="card mt-4">
+        <div class="card-header">
+          <strong>Test Results</strong>
+        </div>
+        <div class="card-body">
+          <div id="results">
+            <p>Running diagnostics...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-4">
+        <div class="card-header">
+          <strong>Raw API Response</strong>
+        </div>
+        <div class="card-body">
+          <pre
+            id="raw_response"
+            class="bg-light p-3"
+            style="max-height: 400px; overflow-y: auto"
+          >
+Loading...</pre
+          >
+        </div>
+      </div>
+    </div>
+
+    <script>
+      async function runDiagnostics() {
+        const resultsDiv = document.getElementById("results");
+        const rawDiv = document.getElementById("raw_response");
+
+        resultsDiv.innerHTML =
+          '<div class="spinner-border text-primary" role="status"></div> Running tests...';
+
+        try {
+          // Test 1: Check if endpoint is reachable
+          resultsDiv.innerHTML += "<p>✓ Testing API endpoint...</p>";
+
+          const response = await fetch(
+            "/new-stock-system/controllers/production_properties/get_by_category.php?category=tile&include_addons=1",
+          );
+
+          resultsDiv.innerHTML += `<p>✓ Response Status: ${response.status} ${response.statusText}</p>`;
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          rawDiv.textContent = JSON.stringify(data, null, 2);
+
+          // Test 2: Check response structure
+          let html = "<h5>Diagnostic Results:</h5><ul>";
+
+          html += `<li><strong>API Success:</strong> ${data.success ? "✅ Yes" : "❌ No"}</li>`;
+          html += `<li><strong>Category:</strong> ${data.category || "N/A"}</li>`;
+          html += `<li><strong>Production Properties:</strong> ${data.properties ? data.properties.length : 0} found</li>`;
+          html += `<li><strong>Add-Ons:</strong> ${data.addons ? data.addons.length : 0} found</li>`;
+
+          if (data.addons && data.addons.length > 0) {
+            html += "<li><strong>Add-Ons List:</strong><ul>";
+            data.addons.forEach((addon) => {
+              html += `<li>${addon.name} (${addon.code}) - ${addon.is_active == 1 ? "✅ Active" : "❌ Inactive"}</li>`;
+            });
+            html += "</ul></li>";
+          } else {
+            html +=
+              '<li class="text-danger"><strong>⚠️ No add-ons found!</strong></li>';
+            html += '<li class="text-warning">Possible causes:<ul>';
+            html += "<li>Migration not run</li>";
+            html += "<li>Add-ons marked as inactive</li>";
+            html += "<li>Category mismatch</li>";
+            html += "</ul></li>";
+          }
+
+          html += "</ul>";
+
+          // Test 3: Check JavaScript modules
+          html += '<h5 class="mt-3">JavaScript Module Status:</h5><ul>';
+          html += `<li><strong>PropertyCalculator:</strong> ${typeof PropertyCalculator !== "undefined" ? "✅ Loaded" : "❌ Not loaded"}</li>`;
+          html += `<li><strong>AddonCalculator:</strong> ${typeof AddonCalculator !== "undefined" ? "✅ Loaded" : "❌ Not loaded"}</li>`;
+          html += `<li><strong>AddonRenderer:</strong> ${typeof AddonRenderer !== "undefined" ? "✅ Loaded" : "❌ Not loaded"}</li>`;
+          html += "</ul>";
+
+          resultsDiv.innerHTML = html;
+        } catch (error) {
+          resultsDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>❌ Error:</h5>
+                        <p>${error.message}</p>
+                        <hr>
+                        <p><strong>Troubleshooting:</strong></p>
+                        <ul>
+                            <li>Check if the API endpoint exists</li>
+                            <li>Verify user has permission to access production properties</li>
+                            <li>Check browser console for detailed errors</li>
+                            <li>Ensure migration was run successfully</li>
+                        </ul>
+                    </div>
+                `;
+          rawDiv.textContent = error.stack || error.message;
+        }
+      }
+
+      // Run diagnostics on page load
+      document.addEventListener("DOMContentLoaded", runDiagnostics);
+    </script>
+
+    <!-- Load addon modules to test (in correct order) -->
+    <script src="/new-stock-system/assets/js/production/property-calculator.js"></script>
+    <script src="/new-stock-system/assets/js/production/addon-calculator.js"></script>
+    <script src="/new-stock-system/assets/js/production/addon-renderer.js"></script>
+  </body>
+</html>

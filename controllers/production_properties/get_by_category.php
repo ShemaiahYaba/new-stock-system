@@ -34,7 +34,7 @@ if (empty($category)) {
     exit();
 }
 
-if (!in_array($category, ['alusteel', 'aluminum', 'kzinc'])) {
+if (!in_array($category, ['alusteel', 'aluminum', 'kzinc', 'tile'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid category']);
     exit();
 }

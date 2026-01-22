@@ -2,7 +2,7 @@
 /**
  * ============================================
  * FILE: views/tiles/sales/view.php
- * UPDATED: Now shows invoice and payment info
+ * UPDATED: Now shows add-ons breakdown from invoice
  * ============================================
  */
 require_once __DIR__ . '/../../../config/db.php';
@@ -43,9 +43,24 @@ if ($hasInvoice) {
     $isPaid = $balance <= 0;
     $isPartial = !$isPaid && $paidAmount > 0;
     
+    // Parse invoice shape to get add-ons
+    $invoiceShape = is_array($invoice['invoice_shape']) ? $invoice['invoice_shape'] : json_decode($invoice['invoice_shape'], true);
+    $breakdown = $invoiceShape['breakdown'] ?? [];
+    $addonItems = $invoiceShape['meta']['addons'] ?? [];
+    
+    $productSubtotal = $breakdown['product_subtotal'] ?? ($sale['quantity'] * $sale['unit_price']);
+    $addonCharges = $breakdown['addon_charges'] ?? 0;
+    $adjustments = $breakdown['adjustments'] ?? 0;
+    
     // Get payment history
     $receiptModel = new Receipt();
     $payments = $receiptModel->findByInvoiceId($invoice['id']);
+} else {
+    // Legacy sale without invoice
+    $productSubtotal = $sale['quantity'] * $sale['unit_price'];
+    $addonCharges = 0;
+    $adjustments = 0;
+    $addonItems = [];
 }
 
 require_once __DIR__ . '/../../../layout/header.php';
@@ -63,6 +78,22 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
 .status-paid { background-color: #d1e7dd; color: #0f5132; }
 .status-partial { background-color: #fff3cd; color: #856404; }
 .status-unpaid { background-color: #f8d7da; color: #842029; }
+
+.addon-item {
+    background-color: #f8f9fa;
+    border-left: 3px solid #0d6efd;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.adjustment-item {
+    background-color: #fff3cd;
+    border-left: 3px solid #ffc107;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
 </style>
 
 <div class="content-wrapper">
@@ -255,30 +286,126 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             </div>
             <?php endif; ?>
             
-            <!-- Amount Breakdown -->
+            <!-- Amount Breakdown with Add-Ons -->
             <div class="card mt-3">
                 <div class="card-header">
                     <i class="bi bi-calculator"></i> Amount Breakdown
                 </div>
                 <div class="card-body">
-                    <table class="table table-sm">
+                    <!-- Product Subtotal -->
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Product Sale</h6>
+                        <table class="table table-sm table-bordered">
+                            <tr>
+                                <td>Quantity:</td>
+                                <td class="text-end"><?= number_format($sale['quantity'], 2) ?> pieces</td>
+                            </tr>
+                            <tr>
+                                <td>Unit Price:</td>
+                                <td class="text-end">₦<?= number_format($sale['unit_price'], 2) ?></td>
+                            </tr>
+                            <tr>
+                                <td>Calculation:</td>
+                                <td class="text-end">
+                                    <?= number_format($sale['quantity'], 2) ?> × 
+                                    ₦<?= number_format($sale['unit_price'], 2) ?>
+                                </td>
+                            </tr>
+                            <tr class="table-light">
+                                <th>Product Subtotal:</th>
+                                <th class="text-end">₦<?= number_format($productSubtotal, 2) ?></th>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <!-- Add-Ons Section -->
+                    <?php if (!empty($addonItems)): ?>
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">
+                            <i class="bi bi-plus-square text-info"></i> Additional Charges & Adjustments
+                        </h6>
+                        
+                        <?php 
+                        $addonChargesItems = array_filter($addonItems, function($item) {
+                            return !isset($item['is_refundable']) || $item['amount'] >= 0;
+                        });
+                        $adjustmentItems = array_filter($addonItems, function($item) {
+                            return isset($item['is_refundable']) && $item['amount'] < 0;
+                        });
+                        ?>
+                        
+                        <?php if (!empty($addonChargesItems)): ?>
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1"><strong>Add-On Charges:</strong></small>
+                            <?php foreach ($addonChargesItems as $addon): ?>
+                            <div class="addon-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong><?= htmlspecialchars($addon['name']) ?></strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            <?= ucwords(str_replace('_', ' ', $addon['calculation_method'])) ?>
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong class="text-primary">
+                                            ₦<?= number_format($addon['amount'], 2) ?>
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($adjustmentItems)): ?>
+                        <div class="mb-2">
+                            <small class="text-muted d-block mb-1"><strong>Adjustments:</strong></small>
+                            <?php foreach ($adjustmentItems as $adjustment): ?>
+                            <div class="adjustment-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong><?= htmlspecialchars($adjustment['name']) ?></strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            <?= ucwords(str_replace('_', ' ', $adjustment['calculation_method'])) ?>
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong class="text-warning">
+                                            -₦<?= number_format(abs($adjustment['amount']), 2) ?>
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <!-- Grand Total Summary -->
+                    <table class="table table-sm table-bordered mb-0">
                         <tr>
-                            <td>Quantity:</td>
-                            <td class="text-end"><?= number_format($sale['quantity'], 2) ?> pieces</td>
+                            <th>Product Subtotal:</th>
+                            <th class="text-end">₦<?= number_format($productSubtotal, 2) ?></th>
                         </tr>
+                        <?php if ($addonCharges > 0): ?>
                         <tr>
-                            <td>Unit Price:</td>
-                            <td class="text-end">₦<?= number_format($sale['unit_price'], 2) ?></td>
+                            <th>Add-On Charges:</th>
+                            <th class="text-end text-primary">+₦<?= number_format($addonCharges, 2) ?></th>
                         </tr>
+                        <?php endif; ?>
+                        <?php if ($adjustments != 0): ?>
                         <tr>
-                            <td>Calculation:</td>
-                            <td class="text-end">
-                                <?= number_format($sale['quantity'], 2) ?> × 
-                                ₦<?= number_format($sale['unit_price'], 2) ?>
-                            </td>
+                            <th>Adjustments:</th>
+                            <th class="text-end text-warning">
+                                <?= $adjustments < 0 ? '-' : '+' ?>₦<?= number_format(abs($adjustments), 2) ?>
+                            </th>
                         </tr>
+                        <?php endif; ?>
                         <tr class="table-success">
-                            <th>Total Amount:</th>
+                            <th>Grand Total:</th>
                             <th class="text-end fs-5">₦<?= number_format($sale['total_amount'], 2) ?></th>
                         </tr>
                     </table>
@@ -317,7 +444,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 <div class="card-body">
                     <table class="table table-sm table-borderless mb-0">
                         <tr>
-                        <th>Sale ID:</th>
+                            <th>Sale ID:</th>
                             <td>#<?= $sale['id'] ?></td>
                         </tr>
                         <tr>

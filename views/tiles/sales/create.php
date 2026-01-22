@@ -1,10 +1,12 @@
+<!-- 
+=============================================
+COMPLETE FIXED: Tile Sales Form with Add-Ons
+File: views/tiles/sales/create.php
+REPLACE your entire file with this version
+============================================= 
+-->
+
 <?php
-/**
- * ============================================
- * FIXED: views/tiles/sales/create.php
- * Quick Calculator now updates in real-time!
- * ============================================
- */
 require_once __DIR__ . '/../../../config/db.php';
 require_once __DIR__ . '/../../../config/constants.php';
 require_once __DIR__ . '/../../../models/tile_product.php';
@@ -25,12 +27,36 @@ require_once __DIR__ . '/../../../layout/header.php';
 require_once __DIR__ . '/../../../layout/sidebar.php';
 ?>
 
+<style>
+.addon-card {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.addon-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+}
+
+.addon-card.selected {
+    border-color: #007bff;
+    background-color: #e7f3ff;
+}
+
+.addon-card .form-check-input {
+    width: 20px;
+    height: 20px;
+}
+</style>
+
 <div class="content-wrapper">
     <div class="page-header">
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h1 class="page-title">Create Tile Sale</h1>
-                <p class="text-muted">Process a new tile product sale</p>
+                <p class="text-muted">Process a new tile product sale with optional add-ons</p>
             </div>
             <a href="/new-stock-system/index.php?page=tile_sales" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Back to Sales
@@ -62,9 +88,9 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     </div>
                     <?php else: ?>
                     
-                    <form action="/new-stock-system/controllers/tiles/sales/create/index.php" 
-                          method="POST" class="needs-validation" novalidate id="saleForm">
+                    <form id="tileSaleForm" class="needs-validation" novalidate>
                         <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+                        <input type="hidden" name="addon_data" id="addon_data_input">
                         
                         <div class="mb-3">
                             <label for="customer_id" class="form-label">Customer <span class="text-danger">*</span></label>
@@ -128,10 +154,10 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         </div>
                         
                         <div class="mb-3">
-                            <div class="alert alert-success" id="totalDisplay" style="display: none;">
+                            <div class="alert alert-success" id="subtotalDisplay" style="display: none;">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span><strong>Total Amount:</strong></span>
-                                    <span class="fs-4"><strong>₦<span id="totalAmount">0.00</span></strong></span>
+                                    <span><strong>Product Subtotal:</strong></span>
+                                    <span class="fs-5"><strong>₦<span id="subtotalAmount">0.00</span></strong></span>
                                 </div>
                             </div>
                         </div>
@@ -141,25 +167,51 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <textarea class="form-control" id="notes" name="notes" 
                                       rows="2" placeholder="Optional notes about this sale"></textarea>
                         </div>
-                        
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle"></i> 
-                            <strong>Note:</strong> Stock will be automatically deducted when this sale is completed.
-                        </div>
-                        
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="/new-stock-system/index.php?page=tile_sales" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary" id="submitBtn">
-                                <i class="bi bi-check-circle"></i> Create Sale
-                            </button>
-                        </div>
                     </form>
                     
                     <?php endif; ?>
                 </div>
             </div>
+            
+            <!-- Add-Ons Section -->
+            <?php if (!empty($availableProducts) && !empty($customers)): ?>
+            <div class="card mt-3" id="addons_section" style="display: none;">
+                <div class="card-header bg-info text-white">
+                    <strong><i class="bi bi-plus-square"></i> Additional Charges & Services</strong>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Add optional services and charges to this sale</p>
+                    <div id="addons_container">
+                        <!-- Add-ons will be loaded here via JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Grand Total Display -->
+            <div class="card mt-3" id="grand_total_card" style="display: none;">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Product Subtotal:</strong> <span id="final_subtotal">₦0.00</span></p>
+                            <p class="mb-1"><strong>Add-On Charges:</strong> <span id="final_addons">₦0.00</span></p>
+                            <p class="mb-0"><strong>Adjustments:</strong> <span id="final_adjustments">₦0.00</span></p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <h4 class="mb-0">
+                                <strong>Grand Total:</strong> 
+                                <span class="text-success">₦<span id="grand_total_amount">0.00</span></span>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3 text-end">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" form="tileSaleForm">
+                    <i class="bi bi-check-circle"></i> Create Sale
+                </button>
+            </div>
+            <?php endif; ?>
         </div>
         
         <div class="col-md-4">
@@ -171,19 +223,11 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     <h6>What Happens?</h6>
                     <ol class="small">
                         <li>Sale record is created</li>
+                        <li>Add-ons are calculated and applied</li>
                         <li>Stock is deducted from product</li>
                         <li>Transaction logged in stock card</li>
-                        <li>Product status updated if out of stock</li>
+                        <li>Invoice is generated automatically</li>
                     </ol>
-                    
-                    <h6 class="mt-3">Important</h6>
-                    <ul class="small">
-                        <li>Verify stock availability</li>
-                        <li>Check unit price carefully</li>
-                        <li>Cannot exceed available stock</li>
-                        <li>Transaction is immediate</li>
-                        <li>Accepts decimal quantities</li>
-                    </ul>
                 </div>
             </div>
             
@@ -202,8 +246,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     </div>
                     <hr>
                     <div>
-                        <small class="text-muted">Total Amount:</small>
-                        <div id="calcTotal" class="fw-bold text-success" style="font-size: 1.5rem;">₦0.00</div>
+                        <small class="text-muted">Subtotal:</small>
+                        <div id="calcSubtotal" class="fw-bold text-success" style="font-size: 1.5rem;">₦0.00</div>
                     </div>
                 </div>
             </div>
@@ -211,30 +255,293 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     </div>
 </div>
 
-<script>
-let availableStock = 0;
+<!-- Load Add-On Modules -->
+<script src="/new-stock-system/assets/js/production/property-calculator.js"></script>
+<script src="/new-stock-system/assets/js/production/addon-calculator.js"></script>
+<script src="/new-stock-system/assets/js/production/addon-renderer.js"></script>
 
-// Update stock info when product changes
-document.getElementById('product_id').addEventListener('change', function() {
-    const selected = this.selectedOptions[0];
-    availableStock = parseFloat(selected?.getAttribute('data-stock') || 0);
+<script>
+// ============================================
+// TILE SALES WITH ADD-ONS - FIXED VERSION
+// ============================================
+
+let availableStock = 0;
+let productSubtotal = 0;
+let availableAddons = [];
+let selectedAddons = new Map();
+let addonCalculations = new Map();
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadTileAddons();
     
-    if (this.value) {
-        document.getElementById('availableStock').textContent = availableStock.toLocaleString('en-NG', {
+    document.getElementById('product_id').addEventListener('change', function() {
+        const selected = this.selectedOptions[0];
+        availableStock = parseFloat(selected?.getAttribute('data-stock') || 0);
+        
+        if (this.value) {
+            document.getElementById('availableStock').textContent = availableStock.toLocaleString('en-NG', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            document.getElementById('stockInfo').style.display = 'block';
+        } else {
+            document.getElementById('stockInfo').style.display = 'none';
+            availableStock = 0;
+        }
+        
+        updateCalculator();
+        checkQuantity();
+    });
+    
+    ['quantity', 'unit_price'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            updateCalculator();
+            if (id === 'quantity') checkQuantity();
+        });
+    });
+    
+    document.getElementById('tileSaleForm').addEventListener('submit', handleSubmit);
+});
+
+async function loadTileAddons() {
+    try {
+        const response = await fetch('/new-stock-system/controllers/production_properties/get_by_category.php?category=tile&include_addons=1');
+        const data = await response.json();
+        
+        console.log('📥 API Response:', data);
+        
+        if (data.success && data.addons) {
+            availableAddons = data.addons;
+            console.log('✅ Loaded', availableAddons.length, 'tile add-ons');
+            renderAddons();
+            document.getElementById('addons_section').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading tile add-ons:', error);
+    }
+}
+
+function renderAddons() {
+    if (availableAddons.length === 0) return;
+    
+    const container = document.getElementById('addons_container');
+    const addonGroup = availableAddons.filter(a => !a.is_refundable);
+    const adjustmentGroup = availableAddons.filter(a => a.is_refundable);
+    
+    let html = '';
+    
+    if (addonGroup.length > 0) {
+        html += AddonRenderer.renderAddonSection(addonGroup, 'addon');
+    }
+    
+    if (adjustmentGroup.length > 0) {
+        html += AddonRenderer.renderAddonSection(adjustmentGroup, 'adjustment');
+    }
+    
+    container.innerHTML = html;
+    
+    setTimeout(() => {
+        attachAddonListeners();
+    }, 100);
+}
+
+function attachAddonListeners() {
+    const checkboxes = document.querySelectorAll('.addon-checkbox');
+    console.log('🔗 Attaching listeners to', checkboxes.length, 'checkboxes');
+    
+    checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', function() {
+            const addonData = JSON.parse(this.dataset.addonData);
+            const isChecked = this.checked;
+            const addonId = this.dataset.addonId;
+            
+            const inputContainer = document.getElementById(`addon_input_${addonId}`);
+            const amountContainer = document.getElementById(`addon_amount_${addonId}`);
+            
+            if (isChecked) {
+                inputContainer?.classList.remove('d-none');
+                amountContainer?.classList.remove('d-none');
+            } else {
+                inputContainer?.classList.add('d-none');
+                amountContainer?.classList.add('d-none');
+            }
+            
+            handleAddonToggle(addonData, isChecked);
+        });
+    });
+    
+    const inputs = document.querySelectorAll('.addon-custom-amount, .addon-quantity');
+    console.log('🔗 Attaching listeners to', inputs.length, 'input fields');
+    
+    inputs.forEach((input) => {
+        input.addEventListener('input', function() {
+            handleAddonInputChange(this.dataset.addonId);
+        });
+    });
+}
+
+function handleAddonToggle(addon, isChecked) {
+    const addonKey = String(addon.id);
+    console.log('🔄 Add-on toggled:', addon.name, 'Checked:', isChecked);
+    
+    if (isChecked) {
+        selectedAddons.set(addonKey, {
+            addon_id: addon.id,
+            customAmount: null  // FIXED: camelCase
+        });
+        calculateAddon(addonKey);
+    } else {
+        selectedAddons.delete(addonKey);
+        addonCalculations.delete(addonKey);
+    }
+    
+    calculateAllAddons();
+}
+
+function handleAddonInputChange(addonId) {
+    const addonKey = String(addonId);
+    const inputs = selectedAddons.get(addonKey);
+    if (!inputs) return;
+    
+    const customAmountInput = document.querySelector(`.addon-custom-amount[data-addon-id="${addonId}"]`);
+    
+    if (customAmountInput) {
+        const raw = customAmountInput.value;
+        inputs.customAmount = raw === '' ? null : parseFloat(raw);  // FIXED: camelCase
+        console.log('📝 Custom amount updated:', addonId, inputs.customAmount);
+    }
+    
+    calculateAddon(addonKey);
+    calculateAllAddons();
+}
+
+function calculateAddon(addonId) {
+    const addonKey = String(addonId);
+    const addon = availableAddons.find(a => a.id == addonKey);
+    if (!addon) {
+        console.error('❌ Add-on not found:', addonId);
+        return;
+    }
+    
+    const inputs = selectedAddons.get(addonKey);
+    if (!inputs) {
+        console.error('❌ Inputs not found for add-on:', addonId);
+        return;
+    }
+    
+    console.log('🧮 Calculating add-on:', addon.name, 'Base amount:', productSubtotal, 'Custom:', inputs.customAmount);
+    console.log('📋 Add-on config:', {
+        calculation_method: addon.calculation_method,
+        default_price: addon.default_price,
+        is_refundable: addon.is_refundable
+    });
+    console.log('📥 Inputs being passed:', inputs);
+    
+    const result = AddonCalculator.calculateAddon(addon, inputs, productSubtotal);
+    addonCalculations.set(addonKey, result);
+    
+    console.log('✅ Result:', result.amount);
+    console.log('📤 Full result object:', result);
+    
+    const amountDisplay = document.getElementById(`addon_amount_value_${addonKey}`);
+    if (amountDisplay) {
+        amountDisplay.textContent = '₦' + result.amount.toLocaleString('en-NG', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
-        document.getElementById('stockInfo').style.display = 'block';
-    } else {
-        document.getElementById('stockInfo').style.display = 'none';
-        availableStock = 0;
+    }
+}
+
+function calculateAllAddons() {
+    let totalCharges = 0;
+    let totalAdjustments = 0;
+    
+    addonCalculations.forEach((result) => {
+        if (result.isRefund || result.amount < 0) {
+            totalAdjustments += result.amount;
+        } else {
+            totalCharges += result.amount;
+        }
+    });
+    
+    const grandTotal = productSubtotal + totalCharges + totalAdjustments;
+    
+    console.log('💰 Totals - Subtotal:', productSubtotal, 'Charges:', totalCharges, 'Adjustments:', totalAdjustments, 'Grand:', grandTotal);
+    
+    document.getElementById('final_subtotal').textContent = '₦' + productSubtotal.toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    document.getElementById('final_addons').textContent = '₦' + totalCharges.toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    document.getElementById('final_adjustments').textContent = '₦' + totalAdjustments.toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    document.getElementById('grand_total_amount').textContent = grandTotal.toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    document.getElementById('grand_total_card').style.display = selectedAddons.size > 0 ? 'block' : 'none';
+}
+
+function updateCalculator() {
+    const quantity = parseFloat(document.getElementById('quantity').value || 0);
+    const unitPrice = parseFloat(document.getElementById('unit_price').value || 0);
+    productSubtotal = quantity * unitPrice;
+    
+    console.log('💵 Product subtotal updated:', productSubtotal);
+    
+    const calcQtyEl = document.getElementById('calcQty');
+    if (calcQtyEl) {
+        calcQtyEl.textContent = quantity > 0 
+            ? quantity.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' pcs' 
+            : '-';
     }
     
-    updateCalculator();
-    checkQuantity();
-});
+    const calcPriceEl = document.getElementById('calcPrice');
+    if (calcPriceEl) {
+        calcPriceEl.textContent = unitPrice > 0 
+            ? '₦' + unitPrice.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2}) 
+            : '-';
+    }
+    
+    const calcSubtotalEl = document.getElementById('calcSubtotal');
+    if (calcSubtotalEl) {
+        calcSubtotalEl.textContent = '₦' + productSubtotal.toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+    
+    const subtotalAmountEl = document.getElementById('subtotalAmount');
+    const subtotalDisplayEl = document.getElementById('subtotalDisplay');
+    
+    if (quantity > 0 && unitPrice > 0 && subtotalAmountEl && subtotalDisplayEl) {
+        subtotalAmountEl.textContent = productSubtotal.toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        subtotalDisplayEl.style.display = 'block';
+    } else if (subtotalDisplayEl) {
+        subtotalDisplayEl.style.display = 'none';
+    }
+    
+    if (selectedAddons.size > 0) {
+        console.log('🔄 Recalculating', selectedAddons.size, 'add-ons with new subtotal');
+        selectedAddons.forEach((inputs, addonId) => {
+            calculateAddon(addonId);
+        });
+        calculateAllAddons();
+    }
+}
 
-// Check if quantity exceeds stock
 function checkQuantity() {
     const quantity = parseFloat(document.getElementById('quantity').value || 0);
     const warning = document.getElementById('quantityWarning');
@@ -249,68 +556,39 @@ function checkQuantity() {
     }
 }
 
-// Update calculator in real-time
-function updateCalculator() {
-    const quantity = parseFloat(document.getElementById('quantity').value || 0);
-    const unitPrice = parseFloat(document.getElementById('unit_price').value || 0);
-    const total = quantity * unitPrice;
+function handleSubmit(e) {
+    e.preventDefault();
     
-    // Update quantity display
-    if (quantity > 0) {
-        document.getElementById('calcQty').textContent = quantity.toLocaleString('en-NG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }) + ' pcs';
-    } else {
-        document.getElementById('calcQty').textContent = '-';
+    if (!this.checkValidity()) {
+        e.stopPropagation();
+        this.classList.add('was-validated');
+        return;
     }
     
-    // Update unit price display
-    if (unitPrice > 0) {
-        document.getElementById('calcPrice').textContent = '₦' + unitPrice.toLocaleString('en-NG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    } else {
-        document.getElementById('calcPrice').textContent = '-';
-    }
+    const addonData = [];
+    selectedAddons.forEach((inputs) => {
+        addonData.push(inputs);
+    });
     
-    // Update total display
-    if (quantity > 0 && unitPrice > 0) {
-        document.getElementById('calcTotal').textContent = '₦' + total.toLocaleString('en-NG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        
-        // Also update main total display
-        document.getElementById('totalAmount').textContent = total.toLocaleString('en-NG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        document.getElementById('totalDisplay').style.display = 'block';
-    } else {
-        document.getElementById('calcTotal').textContent = '₦0.00';
-        document.getElementById('totalDisplay').style.display = 'none';
-    }
-}
-
-// Add event listeners for real-time updates
-document.getElementById('quantity').addEventListener('input', function() {
-    checkQuantity();
-    updateCalculator();
-});
-
-document.getElementById('quantity').addEventListener('keyup', function() {
-    checkQuantity();
-    updateCalculator();
-});
-
-document.getElementById('unit_price').addEventListener('input', updateCalculator);
-document.getElementById('unit_price').addEventListener('keyup', updateCalculator);
-
-// Trigger on page load if product is preselected
-if (document.getElementById('product_id').value) {
-    document.getElementById('product_id').dispatchEvent(new Event('change'));
+    console.log('📤 Submitting with add-ons:', addonData);
+    
+    document.getElementById('addon_data_input').value = JSON.stringify(addonData);
+    
+    const formData = new FormData(this);
+    
+    fetch('/new-stock-system/controllers/tiles/sales/create/index.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+        }
+    })
+    .catch(error => {
+        console.error('Submission error:', error);
+        alert('Error creating sale: ' + error.message);
+    });
 }
 </script>
 
