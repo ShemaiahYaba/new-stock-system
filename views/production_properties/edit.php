@@ -84,6 +84,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <option value="alusteel" <?php echo $property['category'] === 'alusteel' ? 'selected' : ''; ?>>Alusteel</option>
                                     <option value="aluminum" <?php echo $property['category'] === 'aluminum' ? 'selected' : ''; ?>>Aluminum</option>
                                     <option value="kzinc" <?php echo $property['category'] === 'kzinc' ? 'selected' : ''; ?>>K-Zinc</option>
+                                    <option value="tile" <?php echo $property['category'] === 'tile' ? 'selected' : ''; ?>>Tile</option>
                                 </select>
                                 <div class="invalid-feedback">Please select a category.</div>
                             </div>

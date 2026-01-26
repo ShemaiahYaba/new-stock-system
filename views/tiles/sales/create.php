@@ -65,7 +65,23 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     </div>
     
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-12">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-info-circle"></i> Sale Process
+                </div>
+                <div class="card-body">
+                    <h6>What Happens?</h6>
+                    <ol class="small">
+                        <li>Sale record is created</li>
+                        <li>Add-ons are calculated and applied</li>
+                        <li>Stock is deducted from product</li>
+                        <li>Transaction logged in stock card</li>
+                        <li>Invoice is generated automatically</li>
+                    </ol>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <i class="bi bi-cart-plus"></i> Sale Information
@@ -91,6 +107,9 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     <form id="tileSaleForm" class="needs-validation" novalidate>
                         <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
                         <input type="hidden" name="addon_data" id="addon_data_input">
+                        <input type="hidden" name="config_data" id="config_data_input">
+                        <input type="hidden" name="quantity" id="quantity">
+                        <input type="hidden" name="unit_price" id="unit_price">
                         
                         <div class="mb-3">
                             <label for="customer_id" class="form-label">Customer <span class="text-danger">*</span></label>
@@ -136,21 +155,57 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         </div>
                         
                         <div class="mb-3">
-                            <label for="quantity" class="form-label">Quantity (pieces) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="quantity" name="quantity" 
-                                   step="0.01" min="0.01" placeholder="e.g., 500 or 750.5" required>
-                            <div class="invalid-feedback">Please enter quantity.</div>
-                            <small class="text-muted">Accepts decimal values (e.g., 500.5)</small>
-                            <div id="quantityWarning" class="text-danger small mt-1" style="display: none;">
-                                ⚠️ Quantity exceeds available stock!
+                            <label class="form-label">Sale Mode</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="sale_mode" id="sale_mode_config" value="config" checked>
+                                    <label class="form-check-label" for="sale_mode_config">Configuration</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="sale_mode" id="sale_mode_simple" value="simple">
+                                    <label class="form-check-label" for="sale_mode_simple">Simple Quantity/Price</label>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="unit_price" class="form-label">Unit Price (₦/piece) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="unit_price" name="unit_price" 
-                                   step="0.01" min="0.01" placeholder="e.g., 850.00" required>
-                            <div class="invalid-feedback">Please enter unit price.</div>
+
+                        <div class="mb-3" id="simple_section" style="display: none;">
+                            <label class="form-label">Simple Sale</label>
+                            <div class="border rounded p-3 bg-light">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Quantity (pieces)</label>
+                                        <input type="number" class="form-control" id="simple_quantity" min="0.01" step="0.01" placeholder="e.g., 500">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Unit Price (&#8358;/piece)</label>
+                                        <input type="number" class="form-control" id="simple_unit_price" min="0.01" step="0.01" placeholder="e.g., 850.00">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="config_section" style="display: none;">
+                            <label class="form-label">Configuration (Mainsheet / Flatsheet)</label>
+                            <div class="border rounded p-3 bg-light">
+                                <div id="configs_container"></div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="add_config_btn">
+                                        <i class="bi bi-plus"></i> Add Configuration
+                                    </button>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Total Pieces</label>
+                                        <input type="text" class="form-control" id="total_quantity_display" readonly>
+                                    </div>
+                                </div>
+                                <div id="quantityWarning" class="text-danger small mt-2" style="display: none;">
+                                    Warning: Quantity exceeds available stock!
+                                </div>
+                                <div id="configLoadWarning" class="text-danger small mt-2" style="display: none;">
+                                    Configuration options failed to load. Please refresh the page.
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
@@ -213,45 +268,6 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             </div>
             <?php endif; ?>
         </div>
-        
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <i class="bi bi-info-circle"></i> Sale Process
-                </div>
-                <div class="card-body">
-                    <h6>What Happens?</h6>
-                    <ol class="small">
-                        <li>Sale record is created</li>
-                        <li>Add-ons are calculated and applied</li>
-                        <li>Stock is deducted from product</li>
-                        <li>Transaction logged in stock card</li>
-                        <li>Invoice is generated automatically</li>
-                    </ol>
-                </div>
-            </div>
-            
-            <div class="card mt-3">
-                <div class="card-header bg-success text-white">
-                    <i class="bi bi-calculator"></i> Quick Calculator
-                </div>
-                <div class="card-body">
-                    <div class="mb-2">
-                        <small class="text-muted">Quantity:</small>
-                        <div id="calcQty" class="fw-bold fs-5 text-primary">-</div>
-                    </div>
-                    <div class="mb-2">
-                        <small class="text-muted">Unit Price:</small>
-                        <div id="calcPrice" class="fw-bold fs-5 text-primary">-</div>
-                    </div>
-                    <hr>
-                    <div>
-                        <small class="text-muted">Subtotal:</small>
-                        <div id="calcSubtotal" class="fw-bold text-success" style="font-size: 1.5rem;">₦0.00</div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -262,17 +278,22 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
 
 <script>
 // ============================================
-// TILE SALES WITH ADD-ONS - FIXED VERSION
+// TILE SALES WITH CONFIGURATIONS + ADD-ONS
 // ============================================
+
+const currency = '\u20A6';
 
 let availableStock = 0;
 let productSubtotal = 0;
 let availableAddons = [];
+let availableConfigs = [];
 let selectedAddons = new Map();
 let addonCalculations = new Map();
+let currentTotalQuantity = 0;
+let currentConfigData = [];
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadTileAddons();
+    loadTileProperties();
     
     document.getElementById('product_id').addEventListener('change', function() {
         const selected = this.selectedOptions[0];
@@ -289,35 +310,277 @@ document.addEventListener('DOMContentLoaded', function() {
             availableStock = 0;
         }
         
-        updateCalculator();
         checkQuantity();
     });
     
-    ['quantity', 'unit_price'].forEach(id => {
-        document.getElementById(id).addEventListener('input', function() {
-            updateCalculator();
-            if (id === 'quantity') checkQuantity();
-        });
-    });
-    
     document.getElementById('tileSaleForm').addEventListener('submit', handleSubmit);
+
+    document.getElementById('sale_mode_config')?.addEventListener('change', updateSaleMode);
+    document.getElementById('sale_mode_simple')?.addEventListener('change', updateSaleMode);
+    document.getElementById('simple_quantity')?.addEventListener('input', updateSimpleTotals);
+    document.getElementById('simple_unit_price')?.addEventListener('input', updateSimpleTotals);
 });
 
-async function loadTileAddons() {
+function updateSaleMode() {
+    const isSimple = document.getElementById('sale_mode_simple')?.checked;
+    const configSection = document.getElementById('config_section');
+    const simpleSection = document.getElementById('simple_section');
+
+    if (isSimple) {
+        if (configSection) configSection.style.display = 'none';
+        if (simpleSection) simpleSection.style.display = 'block';
+        currentConfigData = [];
+        productSubtotal = 0;
+        updateSimpleTotals();
+    } else {
+        if (configSection) configSection.style.display = 'block';
+        if (simpleSection) simpleSection.style.display = 'none';
+        updateConfigTotals();
+    }
+}
+
+function updateSimpleTotals() {
+    const quantity = parseFloat(document.getElementById('simple_quantity')?.value || 0);
+    const unitPrice = parseFloat(document.getElementById('simple_unit_price')?.value || 0);
+    const subtotal = quantity * unitPrice;
+
+    currentTotalQuantity = quantity;
+    productSubtotal = subtotal;
+    currentConfigData = [];
+
+    document.getElementById('quantity').value = quantity > 0 ? quantity : '';
+    document.getElementById('unit_price').value = unitPrice > 0 ? unitPrice.toFixed(2) : '';
+
+    const qtyDisplay = document.getElementById('total_quantity_display');
+    if (qtyDisplay) {
+        qtyDisplay.value = quantity > 0
+            ? quantity.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : '';
+    }
+
+    updateCalculatorDisplay(quantity, subtotal);
+    updateSubtotalDisplay(subtotal);
+
+    if (selectedAddons.size > 0) {
+        selectedAddons.forEach((inputs, addonId) => {
+            calculateAddon(addonId);
+        });
+    }
+    calculateAllAddons();
+    checkQuantity();
+}
+
+
+async function loadTileProperties() {
     try {
-        const response = await fetch('/new-stock-system/controllers/production_properties/get_by_category.php?category=tile&include_addons=1');
+        const response = await fetch('/new-stock-system/controllers/production_properties/get_by_category.php?category=tile&include_addons=1&include_configs=1');
         const data = await response.json();
         
-        console.log('📥 API Response:', data);
-        
-        if (data.success && data.addons) {
-            availableAddons = data.addons;
-            console.log('✅ Loaded', availableAddons.length, 'tile add-ons');
-            renderAddons();
-            document.getElementById('addons_section').style.display = 'block';
+        if (data.success) {
+            availableAddons = data.addons || [];
+            availableConfigs = data.configs || [];
+            
+            if (availableConfigs.length > 0) {
+                renderConfigs();
+            } else {
+                const warn = document.getElementById('configLoadWarning');
+                if (warn) warn.style.display = 'block';
+            }
+            updateSaleMode();
+            
+            if (availableAddons.length > 0) {
+                renderAddons();
+                document.getElementById('addons_section').style.display = 'block';
+            }
         }
     } catch (error) {
-        console.error('Error loading tile add-ons:', error);
+        console.error('Error loading tile properties:', error);
+    }
+}
+
+function renderConfigs() {
+    const container = document.getElementById('configs_container');
+    container.innerHTML = '';
+    addConfigRow();
+
+    const addBtn = document.getElementById('add_config_btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', addConfigRow);
+    }
+
+    updateConfigTotals();
+}
+
+function addConfigRow() {
+    const container = document.getElementById('configs_container');
+    const rowId = `config_row_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    const options = availableConfigs.map((config) => {
+        return `<option value="${config.id}" data-default-price="${config.default_price || 0}">${config.name}</option>`;
+    }).join('');
+
+    const html = `
+        <div class="row align-items-end mb-3 config-row" data-row-id="${rowId}">
+            <div class="col-md-4">
+                <label class="form-label mb-1">Configuration</label>
+                <select class="form-select config-select" data-row-id="${rowId}">
+                    <option value="">-- Select --</option>
+                    ${options}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label mb-1">Quantity</label>
+                <input type="number" class="form-control config-quantity" data-row-id="${rowId}" min="0" step="0.01" placeholder="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label mb-1">Unit Price (&#8358;)</label>
+                <input type="number" class="form-control config-unit-price" data-row-id="${rowId}" min="0" step="0.01" placeholder="0.00">
+                <div class="text-end small mt-1">Line Total: &#8358;<span id="config_total_${rowId}">0.00</span></div>
+            </div>
+            <div class="col-md-2 text-end">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-config" data-row-id="${rowId}">
+                    <i class="bi bi-x"></i> Remove
+                </button>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', html);
+
+    const row = container.querySelector(`[data-row-id="${rowId}"]`);
+    if (!row) return;
+
+    row.querySelector('.config-select')?.addEventListener('change', () => handleConfigSelect(rowId));
+    row.querySelector('.config-quantity')?.addEventListener('input', updateConfigTotals);
+    row.querySelector('.config-unit-price')?.addEventListener('input', updateConfigTotals);
+    row.querySelector('.remove-config')?.addEventListener('click', () => {
+        row.remove();
+        updateConfigTotals();
+    });
+}
+
+function handleConfigSelect(rowId) {
+    const row = document.querySelector(`[data-row-id="${rowId}"]`);
+    if (!row) return;
+
+    const select = row.querySelector('.config-select');
+    const priceInput = row.querySelector('.config-unit-price');
+    const selectedOption = select?.options[select.selectedIndex];
+    const defaultPrice = parseFloat(selectedOption?.getAttribute('data-default-price') || 0);
+
+    if (priceInput && !priceInput.value && defaultPrice > 0) {
+        priceInput.value = defaultPrice.toFixed(2);
+    }
+
+    updateConfigTotals();
+}
+
+function updateConfigTotals() {
+    const rows = document.querySelectorAll('.config-row');
+    let totalQuantity = 0;
+    let subtotal = 0;
+    const configData = [];
+
+    rows.forEach((row) => {
+        const rowId = row.dataset.rowId;
+        const select = row.querySelector('.config-select');
+        const configId = select?.value || '';
+        const property = availableConfigs.find((item) => String(item.id) === String(configId));
+        const qtyInput = row.querySelector('.config-quantity');
+        const priceInput = row.querySelector('.config-unit-price');
+        const quantity = parseFloat(qtyInput?.value || 0);
+        const unitPrice = parseFloat(priceInput?.value || 0);
+        let amount = 0;
+        let pieces = 0;
+
+        if (configId && property) {
+            const result = PropertyCalculator.calculate(property, {
+                quantity: quantity,
+                unitPrice: unitPrice
+            });
+            amount = result.subtotal || 0;
+            pieces = result.pieces > 0 ? result.pieces : (result.quantity || 0);
+        }
+
+        const totalEl = document.getElementById(`config_total_${rowId}`);
+        if (totalEl) {
+            totalEl.textContent = amount.toLocaleString('en-NG', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        if (configId && quantity > 0 && unitPrice > 0) {
+            totalQuantity += pieces || quantity;
+            subtotal += amount;
+            configData.push({
+                config_id: parseInt(configId, 10),
+                quantity: pieces || quantity,
+                unit_price: unitPrice,
+                amount: amount
+            });
+        }
+    });
+
+    currentTotalQuantity = totalQuantity;
+    productSubtotal = subtotal;
+    currentConfigData = configData;
+
+    document.getElementById('quantity').value = totalQuantity > 0 ? totalQuantity : '';
+    document.getElementById('unit_price').value = '';
+
+    const qtyDisplay = document.getElementById('total_quantity_display');
+    if (qtyDisplay) {
+        qtyDisplay.value = totalQuantity > 0
+            ? totalQuantity.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : '';
+    }
+
+    updateCalculatorDisplay(totalQuantity, subtotal);
+    updateSubtotalDisplay(subtotal);
+
+    if (selectedAddons.size > 0) {
+        selectedAddons.forEach((inputs, addonId) => {
+            calculateAddon(addonId);
+        });
+    }
+    calculateAllAddons();
+    checkQuantity();
+}
+
+function updateCalculatorDisplay(quantity, subtotal) {
+    const calcQtyEl = document.getElementById('calcQty');
+    if (calcQtyEl) {
+        calcQtyEl.textContent = quantity > 0
+            ? quantity.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' pcs'
+            : '-';
+    }
+
+    const calcPriceEl = document.getElementById('calcPrice');
+    if (calcPriceEl) {
+        calcPriceEl.textContent = '-';
+    }
+
+    const calcSubtotalEl = document.getElementById('calcSubtotal');
+    if (calcSubtotalEl) {
+        calcSubtotalEl.textContent = currency + subtotal.toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+}
+
+function updateSubtotalDisplay(subtotal) {
+    const subtotalAmountEl = document.getElementById('subtotalAmount');
+    const subtotalDisplayEl = document.getElementById('subtotalDisplay');
+    
+    if (subtotal > 0 && subtotalAmountEl && subtotalDisplayEl) {
+        subtotalAmountEl.textContent = subtotal.toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        subtotalDisplayEl.style.display = 'block';
+    } else if (subtotalDisplayEl) {
+        subtotalDisplayEl.style.display = 'none';
     }
 }
 
@@ -347,7 +610,6 @@ function renderAddons() {
 
 function attachAddonListeners() {
     const checkboxes = document.querySelectorAll('.addon-checkbox');
-    console.log('🔗 Attaching listeners to', checkboxes.length, 'checkboxes');
     
     checkboxes.forEach((checkbox) => {
         checkbox.addEventListener('change', function() {
@@ -371,7 +633,6 @@ function attachAddonListeners() {
     });
     
     const inputs = document.querySelectorAll('.addon-custom-amount, .addon-quantity');
-    console.log('🔗 Attaching listeners to', inputs.length, 'input fields');
     
     inputs.forEach((input) => {
         input.addEventListener('input', function() {
@@ -382,12 +643,11 @@ function attachAddonListeners() {
 
 function handleAddonToggle(addon, isChecked) {
     const addonKey = String(addon.id);
-    console.log('🔄 Add-on toggled:', addon.name, 'Checked:', isChecked);
     
     if (isChecked) {
         selectedAddons.set(addonKey, {
             addon_id: addon.id,
-            customAmount: null  // FIXED: camelCase
+            customAmount: null
         });
         calculateAddon(addonKey);
     } else {
@@ -407,8 +667,7 @@ function handleAddonInputChange(addonId) {
     
     if (customAmountInput) {
         const raw = customAmountInput.value;
-        inputs.customAmount = raw === '' ? null : parseFloat(raw);  // FIXED: camelCase
-        console.log('📝 Custom amount updated:', addonId, inputs.customAmount);
+        inputs.customAmount = raw === '' ? null : parseFloat(raw);
     }
     
     calculateAddon(addonKey);
@@ -419,33 +678,20 @@ function calculateAddon(addonId) {
     const addonKey = String(addonId);
     const addon = availableAddons.find(a => a.id == addonKey);
     if (!addon) {
-        console.error('❌ Add-on not found:', addonId);
         return;
     }
     
     const inputs = selectedAddons.get(addonKey);
     if (!inputs) {
-        console.error('❌ Inputs not found for add-on:', addonId);
         return;
     }
-    
-    console.log('🧮 Calculating add-on:', addon.name, 'Base amount:', productSubtotal, 'Custom:', inputs.customAmount);
-    console.log('📋 Add-on config:', {
-        calculation_method: addon.calculation_method,
-        default_price: addon.default_price,
-        is_refundable: addon.is_refundable
-    });
-    console.log('📥 Inputs being passed:', inputs);
     
     const result = AddonCalculator.calculateAddon(addon, inputs, productSubtotal);
     addonCalculations.set(addonKey, result);
     
-    console.log('✅ Result:', result.amount);
-    console.log('📤 Full result object:', result);
-    
     const amountDisplay = document.getElementById(`addon_amount_value_${addonKey}`);
     if (amountDisplay) {
-        amountDisplay.textContent = '₦' + result.amount.toLocaleString('en-NG', {
+        amountDisplay.textContent = currency + result.amount.toLocaleString('en-NG', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
@@ -466,19 +712,17 @@ function calculateAllAddons() {
     
     const grandTotal = productSubtotal + totalCharges + totalAdjustments;
     
-    console.log('💰 Totals - Subtotal:', productSubtotal, 'Charges:', totalCharges, 'Adjustments:', totalAdjustments, 'Grand:', grandTotal);
-    
-    document.getElementById('final_subtotal').textContent = '₦' + productSubtotal.toLocaleString('en-NG', {
+    document.getElementById('final_subtotal').textContent = currency + productSubtotal.toLocaleString('en-NG', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
     
-    document.getElementById('final_addons').textContent = '₦' + totalCharges.toLocaleString('en-NG', {
+    document.getElementById('final_addons').textContent = currency + totalCharges.toLocaleString('en-NG', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
     
-    document.getElementById('final_adjustments').textContent = '₦' + totalAdjustments.toLocaleString('en-NG', {
+    document.getElementById('final_adjustments').textContent = currency + totalAdjustments.toLocaleString('en-NG', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
@@ -488,72 +732,41 @@ function calculateAllAddons() {
         maximumFractionDigits: 2
     });
     
-    document.getElementById('grand_total_card').style.display = selectedAddons.size > 0 ? 'block' : 'none';
-}
-
-function updateCalculator() {
-    const quantity = parseFloat(document.getElementById('quantity').value || 0);
-    const unitPrice = parseFloat(document.getElementById('unit_price').value || 0);
-    productSubtotal = quantity * unitPrice;
-    
-    console.log('💵 Product subtotal updated:', productSubtotal);
-    
-    const calcQtyEl = document.getElementById('calcQty');
-    if (calcQtyEl) {
-        calcQtyEl.textContent = quantity > 0 
-            ? quantity.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' pcs' 
-            : '-';
-    }
-    
-    const calcPriceEl = document.getElementById('calcPrice');
-    if (calcPriceEl) {
-        calcPriceEl.textContent = unitPrice > 0 
-            ? '₦' + unitPrice.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2}) 
-            : '-';
-    }
-    
-    const calcSubtotalEl = document.getElementById('calcSubtotal');
-    if (calcSubtotalEl) {
-        calcSubtotalEl.textContent = '₦' + productSubtotal.toLocaleString('en-NG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
-    
-    const subtotalAmountEl = document.getElementById('subtotalAmount');
-    const subtotalDisplayEl = document.getElementById('subtotalDisplay');
-    
-    if (quantity > 0 && unitPrice > 0 && subtotalAmountEl && subtotalDisplayEl) {
-        subtotalAmountEl.textContent = productSubtotal.toLocaleString('en-NG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        subtotalDisplayEl.style.display = 'block';
-    } else if (subtotalDisplayEl) {
-        subtotalDisplayEl.style.display = 'none';
-    }
-    
-    if (selectedAddons.size > 0) {
-        console.log('🔄 Recalculating', selectedAddons.size, 'add-ons with new subtotal');
-        selectedAddons.forEach((inputs, addonId) => {
-            calculateAddon(addonId);
-        });
-        calculateAllAddons();
-    }
+    document.getElementById('grand_total_card').style.display = (productSubtotal > 0 || selectedAddons.size > 0) ? 'block' : 'none';
 }
 
 function checkQuantity() {
-    const quantity = parseFloat(document.getElementById('quantity').value || 0);
     const warning = document.getElementById('quantityWarning');
     const submitBtn = document.getElementById('submitBtn');
     
-    if (quantity > availableStock && availableStock > 0) {
+    if (currentTotalQuantity > availableStock && availableStock > 0) {
         warning.style.display = 'block';
         submitBtn.disabled = true;
     } else {
         warning.style.display = 'none';
         submitBtn.disabled = false;
     }
+}
+
+function validateConfigInputs() {
+    const rows = document.querySelectorAll('.config-row');
+    let hasSelection = false;
+    for (const row of rows) {
+        const select = row.querySelector('.config-select');
+        const configId = select?.value || '';
+        const qtyInput = row.querySelector('.config-quantity');
+        const priceInput = row.querySelector('.config-unit-price');
+        const quantity = parseFloat(qtyInput?.value || 0);
+        const unitPrice = parseFloat(priceInput?.value || 0);
+
+        if (configId) {
+            hasSelection = true;
+            if (quantity <= 0 || unitPrice <= 0) {
+                return false;
+            }
+        }
+    }
+    return hasSelection;
 }
 
 function handleSubmit(e) {
@@ -565,12 +778,37 @@ function handleSubmit(e) {
         return;
     }
     
+    const isSimple = document.getElementById('sale_mode_simple')?.checked;
+    if (!isSimple) {
+        if (!validateConfigInputs()) {
+            alert('Please enter both quantity and unit price for each configuration you use.');
+            return;
+        }
+
+        if (!currentConfigData || currentConfigData.length === 0) {
+            alert('Please enter at least one configuration.');
+            return;
+        }
+    } else {
+        const simpleQty = parseFloat(document.getElementById('simple_quantity')?.value || 0);
+        const simplePrice = parseFloat(document.getElementById('simple_unit_price')?.value || 0);
+        if (simpleQty <= 0 || simplePrice <= 0) {
+            alert('Please enter quantity and unit price for the simple sale.');
+            return;
+        }
+    }
+    
+    if (currentTotalQuantity > availableStock && availableStock > 0) {
+        alert('Quantity exceeds available stock.');
+        return;
+    }
+    
+    document.getElementById('config_data_input').value = JSON.stringify(currentConfigData);
+    
     const addonData = [];
     selectedAddons.forEach((inputs) => {
         addonData.push(inputs);
     });
-    
-    console.log('📤 Submitting with add-ons:', addonData);
     
     document.getElementById('addon_data_input').value = JSON.stringify(addonData);
     

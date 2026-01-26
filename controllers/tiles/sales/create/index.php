@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // NEW: Parse add-on data
     $addonData = isset($_POST['addon_data']) ? json_decode($_POST['addon_data'], true) : [];
+    $configData = isset($_POST['config_data']) ? json_decode($_POST['config_data'], true) : [];
     
     // Debug logging
     error_log('📥 Received addon_data: ' . $_POST['addon_data']);
@@ -45,8 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($customerId <= 0) $errors[] = 'Please select a customer.';
     if ($productId <= 0) $errors[] = 'Please select a product.';
-    if ($quantity <= 0) $errors[] = 'Quantity must be greater than 0.';
-    if ($unitPrice <= 0) $errors[] = 'Unit price must be greater than 0.';
     
     if (!empty($errors)) {
         setFlashMessage('error', implode(' ', $errors));
@@ -71,6 +70,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
     
+    $productSubtotal = 0;
+    $configItems = [];
+    $totalQuantity = 0;
+
+    if (!empty($configData)) {
+        foreach ($configData as $configItem) {
+            $configId = $configItem['config_id'] ?? null;
+            $configQty = floatval($configItem['quantity'] ?? 0);
+            $configUnitPrice = floatval($configItem['unit_price'] ?? 0);
+
+            if (!$configId || $configQty <= 0 || $configUnitPrice <= 0) {
+                continue;
+            }
+
+            $config = $propertyModel->findById($configId);
+            if (!$config || $config['category'] !== 'tile' || (int)$config['is_addon'] !== 0) {
+                continue;
+            }
+
+            $amount = $configQty * $configUnitPrice;
+            $totalQuantity += $configQty;
+            $productSubtotal += $amount;
+
+            $configItems[] = [
+                'config_id' => $configId,
+                'name' => $config['name'],
+                'quantity' => $configQty,
+                'unit_price' => $configUnitPrice,
+                'amount' => $amount
+            ];
+        }
+
+        if ($totalQuantity <= 0 || $productSubtotal <= 0) {
+            $errors[] = 'Please enter mainsheet/flatsheet quantities and prices.';
+        } else {
+            $quantity = $totalQuantity;
+            $unitPrice = 0;
+        }
+    } else {
+        if ($quantity <= 0) $errors[] = 'Quantity must be greater than 0.';
+        if ($unitPrice <= 0) $errors[] = 'Unit price must be greater than 0.';
+        $productSubtotal = $quantity * $unitPrice;
+    }
+
+    if (!empty($errors)) {
+        setFlashMessage('error', implode(' ', $errors));
+        header('Location: /new-stock-system/index.php?page=tile_sales_create');
+        exit();
+    }
+    
     // Check stock availability
     if (!$ledgerModel->canDeductStock($productId, $quantity)) {
         $available = $ledgerModel->getCurrentBalance($productId);
@@ -80,7 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     $currentUser = getCurrentUser();
-    $productSubtotal = $quantity * $unitPrice;
     
     // ========================================
     // NEW: Process Add-Ons
@@ -156,14 +204,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // 2. Build invoice items array
-        $invoiceItems = [[
-            'product_code' => $product['code'],
-            'description' => "Roofing Tile - {$product['design_name']}",
-            'details' => "Color: {$product['color_name']}\nGauge: " . ucfirst($product['gauge']) . "\nDesign: {$product['design_code']}",
-            'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-            'subtotal' => $productSubtotal
-        ]];
+        $invoiceItems = [];
+
+        if (!empty($configItems)) {
+            foreach ($configItems as $config) {
+                $invoiceItems[] = [
+                    'product_code' => $product['code'],
+                    'description' => "{$config['name']} - {$product['design_name']}",
+                    'details' => "Color: {$product['color_name']}\nGauge: " . ucfirst($product['gauge']) . "\nDesign: {$product['design_code']}",
+                    'quantity' => $config['quantity'],
+                    'unit_price' => $config['unit_price'],
+                    'subtotal' => $config['amount']
+                ];
+            }
+        } else {
+            $invoiceItems[] = [
+                'product_code' => $product['code'],
+                'description' => "Roofing Tile - {$product['design_name']}",
+                'details' => "Color: {$product['color_name']}\nGauge: " . ucfirst($product['gauge']) . "\nDesign: {$product['design_code']}",
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'subtotal' => $productSubtotal
+            ];
+        }
         
         // 3. Add add-on items to invoice
         foreach ($addonItems as $addon) {
@@ -216,7 +279,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'color' => $product['color_name'],
                     'gauge' => $product['gauge']
                 ],
-                'addons' => $addonItems
+                'addons' => $addonItems,
+                'configurations' => $configItems
             ]
         ];
         

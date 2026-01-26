@@ -85,6 +85,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <option value="alusteel">Alusteel</option>
                                     <option value="aluminum">Aluminum</option>
                                     <option value="kzinc">K-Zinc</option>
+                                    <option value="tile">Tile</option>
                                 </select>
                             </div>
                             

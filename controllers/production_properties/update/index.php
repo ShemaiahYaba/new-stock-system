@@ -46,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($category)) $errors[] = 'Category is required.';
     if (empty($propertyType)) $errors[] = 'Property type is required.';
     if ($defaultPrice < 0) $errors[] = 'Default price cannot be negative.';
+    if (!in_array($category, ['alusteel', 'aluminum', 'kzinc', 'tile'])) {
+        $errors[] = 'Invalid category.';
+    }
     
     if (!empty($errors)) {
         setFlashMessage('error', implode(' ', $errors));

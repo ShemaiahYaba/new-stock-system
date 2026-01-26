@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($defaultPrice < 0) $errors[] = 'Default price cannot be negative.';
     
-    if (!in_array($category, ['alusteel', 'aluminum', 'kzinc'])) {
+    if (!in_array($category, ['alusteel', 'aluminum', 'kzinc', 'tile'])) {
         $errors[] = 'Invalid category.';
     }
     

@@ -47,6 +47,7 @@ if ($hasInvoice) {
     $invoiceShape = is_array($invoice['invoice_shape']) ? $invoice['invoice_shape'] : json_decode($invoice['invoice_shape'], true);
     $breakdown = $invoiceShape['breakdown'] ?? [];
     $addonItems = $invoiceShape['meta']['addons'] ?? [];
+    $configItems = $invoiceShape['meta']['configurations'] ?? [];
     
     $productSubtotal = $breakdown['product_subtotal'] ?? ($sale['quantity'] * $sale['unit_price']);
     $addonCharges = $breakdown['addon_charges'] ?? 0;
@@ -61,6 +62,7 @@ if ($hasInvoice) {
     $addonCharges = 0;
     $adjustments = 0;
     $addonItems = [];
+    $configItems = [];
 }
 
 require_once __DIR__ . '/../../../layout/header.php';
@@ -147,7 +149,11 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         </div>
                         <div class="col-md-4 mb-3">
                             <h6 class="text-muted">Unit Price</h6>
+                            <?php if (!empty($configItems)): ?>
+                            <h4>Multiple rates</h4>
+                            <?php else: ?>
                             <h4>₦<?= number_format($sale['unit_price'], 2) ?></h4>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-4 mb-3">
                             <h6 class="text-muted">Total Amount</h6>
@@ -295,6 +301,33 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     <!-- Product Subtotal -->
                     <div class="mb-3">
                         <h6 class="text-muted mb-2">Product Sale</h6>
+                        <?php if (!empty($configItems)): ?>
+                        <table class="table table-sm table-bordered">
+                            <?php
+                            $configTotalQty = 0;
+                            foreach ($configItems as $config) {
+                                $configTotalQty += $config['quantity'] ?? 0;
+                            }
+                            ?>
+                            <?php foreach ($configItems as $config): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($config['name']) ?></td>
+                                <td class="text-end">
+                                    <?= number_format($config['quantity'], 2) ?> pcs @ ₦<?= number_format($config['unit_price'], 2) ?>
+                                </td>
+                                <td class="text-end">₦<?= number_format($config['amount'], 2) ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                            <tr class="table-light">
+                                <th>Total Pieces:</th>
+                                <th colspan="2" class="text-end"><?= number_format($configTotalQty, 2) ?> pcs</th>
+                            </tr>
+                            <tr class="table-light">
+                                <th>Product Subtotal:</th>
+                                <th colspan="2" class="text-end">₦<?= number_format($productSubtotal, 2) ?></th>
+                            </tr>
+                        </table>
+                        <?php else: ?>
                         <table class="table table-sm table-bordered">
                             <tr>
                                 <td>Quantity:</td>
@@ -307,8 +340,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <tr>
                                 <td>Calculation:</td>
                                 <td class="text-end">
-                                    <?= number_format($sale['quantity'], 2) ?> × 
-                                    ₦<?= number_format($sale['unit_price'], 2) ?>
+                                    <?= number_format($sale['quantity'], 2) ?> @ ₦<?= number_format($sale['unit_price'], 2) ?>
                                 </td>
                             </tr>
                             <tr class="table-light">
@@ -316,6 +348,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 <th class="text-end">₦<?= number_format($productSubtotal, 2) ?></th>
                             </tr>
                         </table>
+                        <?php endif; ?>
                     </div>
                     
                     <!-- Add-Ons Section -->

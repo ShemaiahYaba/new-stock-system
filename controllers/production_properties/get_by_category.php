@@ -28,6 +28,7 @@ if (!hasPermission(MODULE_PRODUCTION_MANAGEMENT, ACTION_VIEW)) {
 
 $category = $_GET['category'] ?? '';
 $includeAddons = isset($_GET['include_addons']) && $_GET['include_addons'] == '1';
+$includeConfigs = isset($_GET['include_configs']) && $_GET['include_configs'] == '1';
 
 if (empty($category)) {
     echo json_encode(['success' => false, 'message' => 'Category is required']);
@@ -42,7 +43,7 @@ if (!in_array($category, ['alusteel', 'aluminum', 'kzinc', 'tile'])) {
 try {
     $propertyModel = new ProductionProperty();
     
-    if ($includeAddons) {
+    if ($includeAddons || $includeConfigs) {
         // Get ALL properties (production + add-ons) for this category
         $properties = $propertyModel->getWorkflowProperties($category);
     } else {
@@ -65,7 +66,7 @@ try {
     }
     
     // Group properties if requested
-    if ($includeAddons) {
+    if ($includeAddons || $includeConfigs) {
         // Separate into production and add-ons
         $productionProps = array_filter($properties, function($p) {
             return $p['is_addon'] == 0;
@@ -75,13 +76,21 @@ try {
             return $p['is_addon'] == 1;
         });
         
-        echo json_encode([
+        $configProps = $productionProps;
+
+        $response = [
             'success' => true,
             'category' => $category,
             'properties' => array_values($productionProps),
             'addons' => array_values($addonProps),
             'all' => $properties
-        ]);
+        ];
+
+        if ($includeConfigs) {
+            $response['configs'] = array_values($configProps);
+        }
+
+        echo json_encode($response);
     } else {
         echo json_encode([
             'success' => true,
