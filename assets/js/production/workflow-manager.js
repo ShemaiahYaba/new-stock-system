@@ -972,6 +972,9 @@ class WorkflowManager {
       warehouse_id: this.state.warehouse?.id || null,
       coil_id: this.state.coil?.id || null,
       stock_entry_id: this.state.stockEntry?.id || null,
+      sale_date:
+        document.getElementById("sale_date")?.value ||
+        new Date().toISOString().slice(0, 10),
       production_paper: {
         customer: this.state.customer,
         warehouse: this.state.warehouse,

@@ -263,6 +263,14 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             </div>
                         </div>
                         
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sale_date" class="form-label">Sale Date</label>
+                                <input type="date" class="form-control" id="sale_date" name="sale_date" value="<?php echo date('Y-m-d'); ?>">
+                                <small class="text-muted">Defaults to today if not selected</small>
+                            </div>
+                        </div>
+                        
                         <div id="selection_summary" class="alert alert-info d-none">
                             <strong>Selected:</strong> <span id="selection_text"></span>
                         </div>

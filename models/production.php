@@ -16,8 +16,8 @@ class Production
         $hash = $this->generateImmutableHash($data);
 
         $sql = "INSERT INTO {$this->table} 
-                (sale_id, warehouse_id, production_paper, status, created_by, immutable_hash) 
-                VALUES (:sale_id, :warehouse_id, :production_paper, :status, :created_by, :hash)";
+                (sale_id, warehouse_id, production_paper, status, created_by, immutable_hash, created_at) 
+                VALUES (:sale_id, :warehouse_id, :production_paper, :status, :created_by, :hash, :created_at)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -27,6 +27,7 @@ class Production
             ':status' => $data['status'] ?? PRODUCTION_STATUS_PENDING,
             ':created_by' => $data['created_by'],
             ':hash' => $hash,
+            ':created_at' => $data['created_at'] ?? date('Y-m-d H:i:s'),
         ]);
 
         return $this->db->lastInsertId();

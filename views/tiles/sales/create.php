@@ -65,23 +65,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     </div>
     
     <div class="row">
-        <div class="col-12">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <i class="bi bi-info-circle"></i> Sale Process
-                </div>
-                <div class="card-body">
-                    <h6>What Happens?</h6>
-                    <ol class="small">
-                        <li>Sale record is created</li>
-                        <li>Add-ons are calculated and applied</li>
-                        <li>Stock is deducted from product</li>
-                        <li>Transaction logged in stock card</li>
-                        <li>Invoice is generated automatically</li>
-                    </ol>
-                </div>
-            </div>
-
+        <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
                     <i class="bi bi-cart-plus"></i> Sale Information
@@ -153,22 +137,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
-                            <label class="form-label">Sale Mode</label>
-                            <div class="d-flex gap-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="sale_mode" id="sale_mode_config" value="config" checked>
-                                    <label class="form-check-label" for="sale_mode_config">Configuration</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="sale_mode" id="sale_mode_simple" value="simple">
-                                    <label class="form-check-label" for="sale_mode_simple">Simple Quantity/Price</label>
-                                </div>
-                            </div>
+                            <label for="sale_date" class="form-label">Sale Date</label>
+                            <input type="date" class="form-control" id="sale_date" name="sale_date" value="<?= date('Y-m-d') ?>">
+                            <small class="text-muted">Defaults to today if not selected</small>
                         </div>
 
-                        <div class="mb-3" id="simple_section" style="display: none;">
+                        <div class="mb-3" id="simple_section">
                             <label class="form-label">Simple Sale</label>
                             <div class="border rounded p-3 bg-light">
                                 <div class="row">
@@ -268,6 +244,23 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             </div>
             <?php endif; ?>
         </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-info-circle"></i> Sale Process
+                </div>
+                <div class="card-body">
+                    <h6>What Happens?</h6>
+                    <ol class="small">
+                        <li>Sale record is created</li>
+                        <li>Add-ons are calculated and applied</li>
+                        <li>Stock is deducted from product</li>
+                        <li>Transaction logged in stock card</li>
+                        <li>Invoice is generated automatically</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -285,6 +278,7 @@ const currency = '\u20A6';
 
 let availableStock = 0;
 let productSubtotal = 0;
+let configSubtotal = 0;
 let availableAddons = [];
 let availableConfigs = [];
 let selectedAddons = new Map();
@@ -315,29 +309,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('tileSaleForm').addEventListener('submit', handleSubmit);
 
-    document.getElementById('sale_mode_config')?.addEventListener('change', updateSaleMode);
-    document.getElementById('sale_mode_simple')?.addEventListener('change', updateSaleMode);
     document.getElementById('simple_quantity')?.addEventListener('input', updateSimpleTotals);
     document.getElementById('simple_unit_price')?.addEventListener('input', updateSimpleTotals);
+    updateSimpleTotals();
 });
-
-function updateSaleMode() {
-    const isSimple = document.getElementById('sale_mode_simple')?.checked;
-    const configSection = document.getElementById('config_section');
-    const simpleSection = document.getElementById('simple_section');
-
-    if (isSimple) {
-        if (configSection) configSection.style.display = 'none';
-        if (simpleSection) simpleSection.style.display = 'block';
-        currentConfigData = [];
-        productSubtotal = 0;
-        updateSimpleTotals();
-    } else {
-        if (configSection) configSection.style.display = 'block';
-        if (simpleSection) simpleSection.style.display = 'none';
-        updateConfigTotals();
-    }
-}
 
 function updateSimpleTotals() {
     const quantity = parseFloat(document.getElementById('simple_quantity')?.value || 0);
@@ -345,8 +320,8 @@ function updateSimpleTotals() {
     const subtotal = quantity * unitPrice;
 
     currentTotalQuantity = quantity;
-    productSubtotal = subtotal;
-    currentConfigData = [];
+    productSubtotal = subtotal + configSubtotal;
+    
 
     document.getElementById('quantity').value = quantity > 0 ? quantity : '';
     document.getElementById('unit_price').value = unitPrice > 0 ? unitPrice.toFixed(2) : '';
@@ -358,8 +333,8 @@ function updateSimpleTotals() {
             : '';
     }
 
-    updateCalculatorDisplay(quantity, subtotal);
-    updateSubtotalDisplay(subtotal);
+    updateCalculatorDisplay(quantity, productSubtotal);
+    updateSubtotalDisplay(productSubtotal);
 
     if (selectedAddons.size > 0) {
         selectedAddons.forEach((inputs, addonId) => {
@@ -380,13 +355,13 @@ async function loadTileProperties() {
             availableAddons = data.addons || [];
             availableConfigs = data.configs || [];
             
+            document.getElementById('config_section').style.display = 'block';
             if (availableConfigs.length > 0) {
                 renderConfigs();
             } else {
                 const warn = document.getElementById('configLoadWarning');
                 if (warn) warn.style.display = 'block';
             }
-            updateSaleMode();
             
             if (availableAddons.length > 0) {
                 renderAddons();
@@ -476,7 +451,6 @@ function handleConfigSelect(rowId) {
 
 function updateConfigTotals() {
     const rows = document.querySelectorAll('.config-row');
-    let totalQuantity = 0;
     let subtotal = 0;
     const configData = [];
 
@@ -484,22 +458,11 @@ function updateConfigTotals() {
         const rowId = row.dataset.rowId;
         const select = row.querySelector('.config-select');
         const configId = select?.value || '';
-        const property = availableConfigs.find((item) => String(item.id) === String(configId));
         const qtyInput = row.querySelector('.config-quantity');
         const priceInput = row.querySelector('.config-unit-price');
         const quantity = parseFloat(qtyInput?.value || 0);
         const unitPrice = parseFloat(priceInput?.value || 0);
-        let amount = 0;
-        let pieces = 0;
-
-        if (configId && property) {
-            const result = PropertyCalculator.calculate(property, {
-                quantity: quantity,
-                unitPrice: unitPrice
-            });
-            amount = result.subtotal || 0;
-            pieces = result.pieces > 0 ? result.pieces : (result.quantity || 0);
-        }
+        const amount = quantity * unitPrice;
 
         const totalEl = document.getElementById(`config_total_${rowId}`);
         if (totalEl) {
@@ -510,33 +473,22 @@ function updateConfigTotals() {
         }
 
         if (configId && quantity > 0 && unitPrice > 0) {
-            totalQuantity += pieces || quantity;
             subtotal += amount;
             configData.push({
                 config_id: parseInt(configId, 10),
-                quantity: pieces || quantity,
+                quantity: quantity,
                 unit_price: unitPrice,
                 amount: amount
             });
         }
     });
 
-    currentTotalQuantity = totalQuantity;
-    productSubtotal = subtotal;
+    configSubtotal = subtotal;
     currentConfigData = configData;
+    productSubtotal = (parseFloat(document.getElementById('simple_quantity')?.value || 0) * parseFloat(document.getElementById('simple_unit_price')?.value || 0)) + configSubtotal;
 
-    document.getElementById('quantity').value = totalQuantity > 0 ? totalQuantity : '';
-    document.getElementById('unit_price').value = '';
-
-    const qtyDisplay = document.getElementById('total_quantity_display');
-    if (qtyDisplay) {
-        qtyDisplay.value = totalQuantity > 0
-            ? totalQuantity.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-            : '';
-    }
-
-    updateCalculatorDisplay(totalQuantity, subtotal);
-    updateSubtotalDisplay(subtotal);
+    updateCalculatorDisplay(currentTotalQuantity, productSubtotal);
+    updateSubtotalDisplay(productSubtotal);
 
     if (selectedAddons.size > 0) {
         selectedAddons.forEach((inputs, addonId) => {
@@ -544,7 +496,6 @@ function updateConfigTotals() {
         });
     }
     calculateAllAddons();
-    checkQuantity();
 }
 
 function updateCalculatorDisplay(quantity, subtotal) {
@@ -750,7 +701,6 @@ function checkQuantity() {
 
 function validateConfigInputs() {
     const rows = document.querySelectorAll('.config-row');
-    let hasSelection = false;
     for (const row of rows) {
         const select = row.querySelector('.config-select');
         const configId = select?.value || '';
@@ -759,14 +709,11 @@ function validateConfigInputs() {
         const quantity = parseFloat(qtyInput?.value || 0);
         const unitPrice = parseFloat(priceInput?.value || 0);
 
-        if (configId) {
-            hasSelection = true;
-            if (quantity <= 0 || unitPrice <= 0) {
-                return false;
-            }
+        if (configId && (quantity <= 0 || unitPrice <= 0)) {
+            return false;
         }
     }
-    return hasSelection;
+    return true;
 }
 
 function handleSubmit(e) {
@@ -778,24 +725,16 @@ function handleSubmit(e) {
         return;
     }
     
-    const isSimple = document.getElementById('sale_mode_simple')?.checked;
-    if (!isSimple) {
-        if (!validateConfigInputs()) {
-            alert('Please enter both quantity and unit price for each configuration you use.');
-            return;
-        }
+    const simpleQty = parseFloat(document.getElementById('simple_quantity')?.value || 0);
+    const simplePrice = parseFloat(document.getElementById('simple_unit_price')?.value || 0);
+    if (simpleQty <= 0 || simplePrice <= 0) {
+        alert('Please enter quantity and unit price for the sale.');
+        return;
+    }
 
-        if (!currentConfigData || currentConfigData.length === 0) {
-            alert('Please enter at least one configuration.');
-            return;
-        }
-    } else {
-        const simpleQty = parseFloat(document.getElementById('simple_quantity')?.value || 0);
-        const simplePrice = parseFloat(document.getElementById('simple_unit_price')?.value || 0);
-        if (simpleQty <= 0 || simplePrice <= 0) {
-            alert('Please enter quantity and unit price for the simple sale.');
-            return;
-        }
+    if (!validateConfigInputs()) {
+        alert('Please enter both quantity and unit price for each configuration you use.');
+        return;
     }
     
     if (currentTotalQuantity > availableStock && availableStock > 0) {

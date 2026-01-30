@@ -72,9 +72,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="sale_date">Sale Date <span class="text-danger">*</span></label>
+                            <label for="sale_date">Sale Date</label>
                             <input type="date" class="form-control" id="sale_date" name="sale_date" 
-                                   value="<?= date('Y-m-d') ?>" required>
+                                   value="<?= date('Y-m-d') ?>">
                         </div>
                     </div>
                 </div>

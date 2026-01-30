@@ -33,6 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity = floatval($_POST['quantity'] ?? 0);
     $unitPrice = floatval($_POST['unit_price'] ?? 0);
     $notes = sanitize($_POST['notes'] ?? '');
+    $saleDateInput = sanitize($_POST['sale_date'] ?? '');
+    $saleDate = !empty($saleDateInput) ? $saleDateInput : date('Y-m-d');
     
     // NEW: Parse add-on data
     $addonData = isset($_POST['addon_data']) ? json_decode($_POST['addon_data'], true) : [];
@@ -70,9 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
     
-    $productSubtotal = 0;
+    $simpleSubtotal = $quantity * $unitPrice;
+    $configSubtotal = 0;
     $configItems = [];
-    $totalQuantity = 0;
 
     if (!empty($configData)) {
         foreach ($configData as $configItem) {
@@ -90,8 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $amount = $configQty * $configUnitPrice;
-            $totalQuantity += $configQty;
-            $productSubtotal += $amount;
+            $configSubtotal += $amount;
 
             $configItems[] = [
                 'config_id' => $configId,
@@ -101,18 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'amount' => $amount
             ];
         }
-
-        if ($totalQuantity <= 0 || $productSubtotal <= 0) {
-            $errors[] = 'Please enter mainsheet/flatsheet quantities and prices.';
-        } else {
-            $quantity = $totalQuantity;
-            $unitPrice = 0;
-        }
-    } else {
-        if ($quantity <= 0) $errors[] = 'Quantity must be greater than 0.';
-        if ($unitPrice <= 0) $errors[] = 'Unit price must be greater than 0.';
-        $productSubtotal = $quantity * $unitPrice;
     }
+
+    if ($quantity <= 0) $errors[] = 'Quantity must be greater than 0.';
+    if ($unitPrice <= 0) $errors[] = 'Unit price must be greater than 0.';
+
+    $productSubtotal = $simpleSubtotal + $configSubtotal;
 
     if (!empty($errors)) {
         setFlashMessage('error', implode(' ', $errors));
@@ -186,16 +181,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db->beginTransaction();
         
         // 1. Create tile sale
-        $data = [
-            'customer_id' => $customerId,
-            'tile_product_id' => $productId,
-            'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-            'total_amount' => $grandTotal, // Updated to include add-ons
-            'status' => 'completed',
-            'notes' => $notes,
-            'created_by' => $currentUser['id']
-        ];
+    $data = [
+        'customer_id' => $customerId,
+        'tile_product_id' => $productId,
+        'quantity' => $quantity,
+        'unit_price' => $unitPrice,
+        'total_amount' => $grandTotal, // Updated to include add-ons
+        'status' => 'completed',
+        'notes' => $notes,
+        'created_by' => $currentUser['id'],
+        'created_at' => $saleDate . ' 00:00:00'
+    ];
         
         $saleId = $saleModel->create($data);
         
@@ -204,7 +200,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // 2. Build invoice items array
-        $invoiceItems = [];
+        $invoiceItems = [[
+            'product_code' => $product['code'],
+            'description' => "Roofing Tile - {$product['design_name']}",
+            'details' => "Color: {$product['color_name']}\nGauge: " . ucfirst($product['gauge']) . "\nDesign: {$product['design_code']}",
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'subtotal' => $simpleSubtotal
+        ]];
 
         if (!empty($configItems)) {
             foreach ($configItems as $config) {
@@ -217,15 +220,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'subtotal' => $config['amount']
                 ];
             }
-        } else {
-            $invoiceItems[] = [
-                'product_code' => $product['code'],
-                'description' => "Roofing Tile - {$product['design_name']}",
-                'details' => "Color: {$product['color_name']}\nGauge: " . ucfirst($product['gauge']) . "\nDesign: {$product['design_code']}",
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'subtotal' => $productSubtotal
-            ];
         }
         
         // 3. Add add-on items to invoice

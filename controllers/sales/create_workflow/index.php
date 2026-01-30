@@ -58,6 +58,10 @@ try {
     $db = Database::getInstance()->getConnection();
     $db->beginTransaction();
 
+    $saleDateInput = $productionData['sale_date'] ?? '';
+    $saleDate = !empty($saleDateInput) ? $saleDateInput : date('Y-m-d');
+    $saleDateTime = $saleDate . ' 00:00:00';
+
     $productionPaper = $productionData['production_paper'];
     $primaryStockEntryId = null; // ✅ Initialize to track the stock entry
 
@@ -131,6 +135,7 @@ try {
         'total_amount' => $productionPaper['summary']['totalAmount'],
         'status' => SALE_STATUS_COMPLETED,
         'created_by' => $currentUser['id'],
+        'created_at' => $saleDateTime,
     ];
 
     $saleId = $saleModel->create($saleData);
@@ -188,7 +193,7 @@ try {
         ],
         // NEW: Grand total
         'grand_total' => $productionPaper['grandTotal'] ?? $productionPaper['summary']['totalAmount'],
-        'created_at' => date('Y-m-d H:i:s'),
+        'created_at' => $saleDateTime,
     ];
 
     $productionRecordData = [
@@ -197,6 +202,7 @@ try {
         'production_paper' => $productionPaperStructure,
         'status' => PRODUCTION_STATUS_COMPLETED,
         'created_by' => $currentUser['id'],
+        'created_at' => $saleDateTime,
     ];
 
     $productionId = $productionModel->create($productionRecordData);
@@ -237,7 +243,7 @@ try {
         ],
         'customer' => $invoiceData['customer'],
         'meta' => [
-            'date' => date('Y-m-d H:i:s'),
+            'date' => $saleDateTime,
             'ref' => '#SO-' . date('Ymd') . '-' . str_pad($saleId, 6, '0', STR_PAD_LEFT),
             'payment_status' => 'Unpaid',
         ],

@@ -31,7 +31,7 @@ class Sale {
                      price_per_meter, price_per_kg, total_amount, status, created_by, notes, created_at) 
                     VALUES 
                     (:customer_id, :coil_id, :stock_entry_id, :sale_type, :meters, :weight_kg, 
-                     :price_per_meter, :price_per_kg, :total_amount, :status, :created_by, :notes, NOW())";
+                     :price_per_meter, :price_per_kg, :total_amount, :status, :created_by, :notes, :created_at)";
 
             $stmt = $this->db->prepare($sql);
             
@@ -48,6 +48,7 @@ class Sale {
                 ':status' => $data['status'],
                 ':created_by' => $data['created_by'],
                 ':notes' => $data['notes'] ?? null,
+                ':created_at' => $data['created_at'] ?? date('Y-m-d H:i:s'),
             ]);
 
             if ($result) {

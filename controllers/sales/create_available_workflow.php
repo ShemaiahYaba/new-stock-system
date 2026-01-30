@@ -27,7 +27,7 @@ if (!hasPermission(MODULE_SALES, ACTION_CREATE)) {
 }
 
 // Validate required fields
-$required = ['customer_id', 'sale_date'];
+$required = ['customer_id'];
 $missing = [];
 $data = [];
 
@@ -35,7 +35,7 @@ foreach ($required as $field) {
     if (empty($_POST[$field])) {
         $missing[] = $field;
     } else {
-        $data[$field] = trim($_POST[$field]);
+    $data[$field] = trim($_POST[$field]);
     }
 }
 
@@ -45,6 +45,10 @@ if (!empty($missing)) {
     $_SESSION['form_data'] = $_POST;
     redirect('/new-stock-system/index.php?page=sales_create_available');
 }
+
+$saleDateInput = trim($_POST['sale_date'] ?? '');
+$saleDate = !empty($saleDateInput) ? $saleDateInput : date('Y-m-d');
+$saleDateTime = $saleDate . ' 00:00:00';
 
 // Validate stock items
 if (empty($_POST['unit_price']) || !is_array($_POST['unit_price'])) {
@@ -153,6 +157,7 @@ try {
             'status' => SALE_STATUS_COMPLETED,
             'created_by' => $_SESSION['user_id'],
             'notes' => $_POST['notes'] ?? null,
+            'created_at' => $saleDateTime,
         ];
 
         // DEBUG LOGGING
@@ -233,7 +238,7 @@ try {
             'address' => $customer['address'] ?? '',
         ],
         'meta' => [
-            'date' => date('Y-m-d H:i:s'),
+            'date' => $saleDateTime,
             'ref' => '#SO-' . date('Ymd') . '-' . str_pad($firstSaleId, 6, '0', STR_PAD_LEFT),
             'sale_id' => $firstSaleId,
             'payment_status' => 'Unpaid',

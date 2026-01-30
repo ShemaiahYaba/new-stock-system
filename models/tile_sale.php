@@ -20,7 +20,7 @@ class TileSale {
             $sql = "INSERT INTO {$this->table} 
                     (customer_id, tile_product_id, quantity, unit_price, 
                      total_amount, status, notes, created_by, created_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
@@ -31,7 +31,8 @@ class TileSale {
                 $data['total_amount'],
                 $data['status'] ?? 'completed',
                 $data['notes'] ?? null,
-                $data['created_by']
+                $data['created_by'],
+                $data['created_at'] ?? date('Y-m-d H:i:s')
             ]);
             
             $saleId = $this->db->lastInsertId();
