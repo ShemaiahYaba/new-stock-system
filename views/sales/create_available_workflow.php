@@ -23,7 +23,7 @@ $availableStock = $stockEntryModel->getAvailableStock();
 
 // Get customers for dropdown
 $customerModel = new Customer();
-$customers = $customerModel->getAll();
+$customers = $customerModel->getAll(1000, 0);
 
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';
