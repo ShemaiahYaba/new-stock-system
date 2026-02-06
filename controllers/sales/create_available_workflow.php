@@ -271,6 +271,7 @@ try {
         'shipping' => 0,
         'paid_amount' => 0,
         'status' => INVOICE_STATUS_UNPAID,
+        'created_at' => $saleDateTime,
     ];
 
     $invoiceId = $invoiceModel->create($invoiceData);

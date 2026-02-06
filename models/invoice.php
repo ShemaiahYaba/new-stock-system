@@ -18,10 +18,10 @@ class Invoice
 
         $sql = "INSERT INTO {$this->table} 
                 (sale_type, sale_reference_id, sale_id, production_id, invoice_number, 
-                 invoice_shape, total, tax, shipping, paid_amount, status, immutable_hash) 
+                 invoice_shape, total, tax, shipping, paid_amount, status, immutable_hash, created_at) 
                 VALUES (:sale_type, :sale_reference_id, :sale_id, :production_id, 
                         :invoice_number, :invoice_shape, :total, :tax, :shipping, 
-                        :paid_amount, :status, :hash)";
+                        :paid_amount, :status, :hash, :created_at)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -37,6 +37,7 @@ class Invoice
             ':paid_amount' => $data['paid_amount'] ?? 0,
             ':status' => $data['status'] ?? INVOICE_STATUS_UNPAID,
             ':hash' => $hash,
+            ':created_at' => $data['created_at'] ?? date('Y-m-d H:i:s'),
         ]);
 
         return $this->db->lastInsertId();

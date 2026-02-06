@@ -287,7 +287,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'tax' => 0,
             'shipping' => 0,
             'paid_amount' => 0,
-            'status' => INVOICE_STATUS_UNPAID
+            'status' => INVOICE_STATUS_UNPAID,
+            'created_at' => $saleDate . ' 00:00:00'
         ]);
         
         if (!$invoiceId) {
