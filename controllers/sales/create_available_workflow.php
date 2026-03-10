@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Check permissions
-if (!hasPermission(MODULE_SALES, ACTION_CREATE)) {
+if (!hasPermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE)) {
     setFlashMessage('error', 'You do not have permission to create sales');
     redirect('/new-stock-system/index.php?page=sales');
 }
@@ -160,13 +160,7 @@ try {
             'created_at' => $saleDateTime,
         ];
 
-        // DEBUG LOGGING
-        error_log('=== ATTEMPTING TO CREATE SALE ===');
-        error_log('Sale Data: ' . print_r($saleData, true));
-
         $saleId = $saleModel->create($saleData);
-
-        error_log('Sale ID Result: ' . ($saleId ? $saleId : 'FALSE'));
 
         if (!$saleId) {
             // Get PDO error info
