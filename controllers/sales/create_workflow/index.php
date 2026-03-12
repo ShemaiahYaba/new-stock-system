@@ -158,6 +158,9 @@ try {
 
         $kzincSaleUnitType = $kzincHasBundles ? STOCK_UNIT_BUNDLES : STOCK_UNIT_PIECES;
         $kzincSaleQuantity = $kzincHasBundles ? $kzincBundleQty : $totalPiecesToDeduct;
+
+        // Use the first FIFO entry as the primary stock entry reference for the sale record
+        $primaryStockEntryId = $kzincPlannedDeductions[0]['entry_id'] ?? null;
     }
 
     // ========================================

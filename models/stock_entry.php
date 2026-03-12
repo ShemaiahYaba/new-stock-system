@@ -255,15 +255,21 @@ class StockEntry
     public function deductPieces(int $id, int $piecesToDeduct): bool
     {
         try {
+            // Use distinct parameter names — PDO MySQL does not reliably
+            // reuse the same named placeholder twice in one statement.
             $sql = "UPDATE {$this->table}
-                    SET pieces_remaining = pieces_remaining - :deduct,
+                    SET pieces_remaining = pieces_remaining - :deduct_set,
                         updated_at = NOW()
                     WHERE id = :id
-                      AND pieces_remaining >= :deduct
+                      AND pieces_remaining >= :deduct_guard
                       AND deleted_at IS NULL";
 
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([':id' => $id, ':deduct' => $piecesToDeduct]);
+            $stmt->execute([
+                ':id'           => $id,
+                ':deduct_set'   => $piecesToDeduct,
+                ':deduct_guard' => $piecesToDeduct,
+            ]);
 
             return $stmt->rowCount() > 0;
         } catch (PDOException $e) {
@@ -546,7 +552,7 @@ class StockEntry
         try {
             // Sum both meters_remaining (non-KZinc) and pieces_remaining (KZinc)
             // so that either type of depletion triggers the out-of-stock update.
-            $sql = "SELECT SUM(meters_remaining) + SUM(IFNULL(pieces_remaining, 0)) as total_remaining
+            $sql = "SELECT COALESCE(SUM(meters_remaining), 0) + COALESCE(SUM(pieces_remaining), 0) AS total_remaining
                 FROM {$this->table}
                 WHERE coil_id = :coil_id
                 AND deleted_at IS NULL";
@@ -555,22 +561,15 @@ class StockEntry
             $stmt->execute([':coil_id' => $coilId]);
             $result = $stmt->fetch();
 
-            $totalRemaining = $result['total_remaining'] ?? 0;
+            $totalRemaining = (float)($result['total_remaining'] ?? 0);
 
-            // Update coil status if no meters remaining
-            if ($totalRemaining <= 0) {
-                $coilSql = "UPDATE coils 
-                       SET status = :status, updated_at = NOW() 
-                       WHERE id = :id";
+            $newStatus = $totalRemaining <= 0
+                ? STOCK_STATUS_OUT_OF_STOCK
+                : STOCK_STATUS_AVAILABLE;
 
-                $coilStmt = $this->db->prepare($coilSql);
-                return $coilStmt->execute([
-                    ':id' => $coilId,
-                    ':status' => STOCK_STATUS_OUT_OF_STOCK,
-                ]);
-            }
-
-            return true;
+            $coilSql = "UPDATE coils SET status = :status, updated_at = NOW() WHERE id = :id";
+            $coilStmt = $this->db->prepare($coilSql);
+            return $coilStmt->execute([':id' => $coilId, ':status' => $newStatus]);
         } catch (PDOException $e) {
             error_log('Coil status update error: ' . $e->getMessage());
             return false;
