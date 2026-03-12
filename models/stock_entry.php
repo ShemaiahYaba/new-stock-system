@@ -543,10 +543,11 @@ class StockEntry
     public function checkAndUpdateCoilStatus($coilId)
     {
         try {
-            // Check if any stock entries have remaining meters
-            $sql = "SELECT SUM(meters_remaining) as total_remaining 
-                FROM {$this->table} 
-                WHERE coil_id = :coil_id 
+            // Sum both meters_remaining (non-KZinc) and pieces_remaining (KZinc)
+            // so that either type of depletion triggers the out-of-stock update.
+            $sql = "SELECT SUM(meters_remaining) + SUM(IFNULL(pieces_remaining, 0)) as total_remaining
+                FROM {$this->table}
+                WHERE coil_id = :coil_id
                 AND deleted_at IS NULL";
 
             $stmt = $this->db->prepare($sql);

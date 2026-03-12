@@ -160,9 +160,9 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>ID</th>
                             <th>Coil Code</th>
                             <th>Coil Name</th>
-                            <th>Meters</th>
+                            <th>Quantity</th>
                             <th>Weight (KG)</th>
-                            <th>Remaining (M)</th>
+                            <th>Remaining</th>
                             <th>Status</th>
                             <th>Created By</th>
                             <th>Actions</th>
@@ -172,9 +172,16 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <?php foreach ($entries as $entry): ?>
                         <?php
                         $displayStatus = $entry['status'] ?? 'available';
+                        $isKzincEntry = ($entry['unit_type'] ?? 'meters') !== 'meters';
 
-                        if ($entry['meters_remaining'] <= 0) {
-                            $displayStatus = 'sold';
+                        if ($isKzincEntry) {
+                            if ((int)($entry['pieces_remaining'] ?? 0) <= 0) {
+                                $displayStatus = 'sold';
+                            }
+                        } else {
+                            if ($entry['meters_remaining'] <= 0) {
+                                $displayStatus = 'sold';
+                            }
                         }
 
                         $statusBadge = 'bg-info';
@@ -202,10 +209,19 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <td><?php echo !empty($entry['coil_name'])
                                 ? htmlspecialchars($entry['coil_name'])
                                 : 'N/A'; ?></td>
-                            <td><?php echo number_format($entry['meters'], 2); ?>m</td>
-                            
                             <td>
-                                <?php if (!empty($entry['weight_kg']) && $entry['weight_kg'] > 0): ?>
+                                <?php if ($isKzincEntry): ?>
+                                    <?php echo number_format($entry['quantity'] ?? 0, 2); ?> <?php echo htmlspecialchars($entry['unit_type']); ?>
+                                    <small class="text-muted d-block">(<?php echo (int)($entry['pieces_total'] ?? 0); ?> pcs)</small>
+                                <?php else: ?>
+                                    <?php echo number_format($entry['meters'], 2); ?>m
+                                <?php endif; ?>
+                            </td>
+
+                            <td>
+                                <?php if ($isKzincEntry): ?>
+                                    <span class="text-muted">N/A</span>
+                                <?php elseif (!empty($entry['weight_kg']) && $entry['weight_kg'] > 0): ?>
                                     <span class="text-primary fw-bold">
                                         <?php echo number_format($entry['weight_kg'], 2); ?> kg
                                     </span>
@@ -213,13 +229,19 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     <span class="text-muted">N/A</span>
                                 <?php endif; ?>
                             </td>
-                            
+
                             <td>
-                                <span class="badge <?php echo $entry['meters_remaining'] > 0
-                                    ? 'bg-success'
-                                    : 'bg-secondary'; ?>">
-                                    <?php echo number_format($entry['meters_remaining'], 2); ?>m
-                                </span>
+                                <?php if ($isKzincEntry): ?>
+                                    <span class="badge <?php echo (int)($entry['pieces_remaining'] ?? 0) > 0 ? 'bg-success' : 'bg-secondary'; ?>">
+                                        <?php echo (int)($entry['pieces_remaining'] ?? 0); ?> pcs
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge <?php echo $entry['meters_remaining'] > 0
+                                        ? 'bg-success'
+                                        : 'bg-secondary'; ?>">
+                                        <?php echo number_format($entry['meters_remaining'], 2); ?>m
+                                    </span>
+                                <?php endif; ?>
                             </td>
                             
                             <td>
@@ -237,7 +259,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </td>
                             <td><?php echo htmlspecialchars($entry['created_by_name']); ?></td>
                             <td>
-                                <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT) && $entry['meters_remaining'] > 0): ?>
+                                <?php if (!$isKzincEntry && hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT) && $entry['meters_remaining'] > 0): ?>
                                 <form method="POST" action="/new-stock-system/controllers/stock_entries/toggle_status/index.php" style="display: inline;">
                                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
                                     <input type="hidden" name="id" value="<?php echo $entry['id']; ?>">

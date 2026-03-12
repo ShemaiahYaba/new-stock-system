@@ -332,9 +332,6 @@ try {
     // STEP 4: DEDUCT STOCK METERS (STOCK-BASED CATEGORIES ONLY: ALUSTEEL & ALUMINIUM)
     // ========================================
     if (!$isKzinc) {
-        // ✅ Use the pre-calculated deductions
-        $stockEntryModel = new StockEntry();
-
         foreach ($plannedDeductions as $deduction) {
             $entryId = $deduction['entry_id'];
             $deductAmount = $deduction['deduct_amount'];
