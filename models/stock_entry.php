@@ -27,9 +27,11 @@ class StockEntry
     public function create($data)
 {
     try {
-        $sql = "INSERT INTO {$this->table} 
-                (coil_id, meters, meters_remaining, weight_kg, weight_kg_remaining, created_by, created_at) 
-                VALUES (:coil_id, :meters, :meters_remaining, :weight_kg, :weight_kg_remaining, :created_by, NOW())";
+        $sql = "INSERT INTO {$this->table}
+                (coil_id, meters, meters_remaining, weight_kg, weight_kg_remaining,
+                 unit_type, quantity, pieces_total, pieces_remaining, created_by, created_at)
+                VALUES (:coil_id, :meters, :meters_remaining, :weight_kg, :weight_kg_remaining,
+                        :unit_type, :quantity, :pieces_total, :pieces_remaining, :created_by, NOW())";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -38,6 +40,10 @@ class StockEntry
             ':meters_remaining' => $data['meters'],
             ':weight_kg' => $data['weight_kg'] ?? null,
             ':weight_kg_remaining' => $data['weight_kg_remaining'] ?? null,
+            ':unit_type' => $data['unit_type'] ?? STOCK_UNIT_METERS,
+            ':quantity' => $data['quantity'] ?? null,
+            ':pieces_total' => $data['pieces_total'] ?? null,
+            ':pieces_remaining' => $data['pieces_remaining'] ?? null,
             ':created_by' => $data['created_by'],
         ]);
 
@@ -235,6 +241,61 @@ class StockEntry
         } catch (PDOException $e) {
             error_log('Stock entry update error: ' . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Deduct pieces from a KZinc stock entry.
+     * Uses a WHERE guard to prevent over-deduction.
+     *
+     * @param int $id            Stock entry ID
+     * @param int $piecesToDeduct Number of pieces to remove
+     * @return bool True if the row was updated (sufficient stock), false otherwise
+     */
+    public function deductPieces(int $id, int $piecesToDeduct): bool
+    {
+        try {
+            $sql = "UPDATE {$this->table}
+                    SET pieces_remaining = pieces_remaining - :deduct,
+                        updated_at = NOW()
+                    WHERE id = :id
+                      AND pieces_remaining >= :deduct
+                      AND deleted_at IS NULL";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':id' => $id, ':deduct' => $piecesToDeduct]);
+
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log('Stock entry deductPieces error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get available KZinc stock entries for a coil (FIFO order).
+     * Returns entries that have pieces_remaining > 0.
+     *
+     * @param int $coilId
+     * @return array
+     */
+    public function getAvailableKzincEntries(int $coilId): array
+    {
+        try {
+            $sql = "SELECT * FROM {$this->table}
+                    WHERE coil_id = :coil_id
+                      AND unit_type != :meters
+                      AND pieces_remaining > 0
+                      AND deleted_at IS NULL
+                    ORDER BY created_at ASC";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':coil_id' => $coilId, ':meters' => STOCK_UNIT_METERS]);
+
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log('Stock entry getAvailableKzincEntries error: ' . $e->getMessage());
+            return [];
         }
     }
 

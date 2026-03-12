@@ -112,12 +112,52 @@ try {
             );
         }
 
-        // ✅ Set the primary stock entry (the first one we'll use)
+        // Set the primary stock entry (the first one we'll use)
         $primaryStockEntryId = $plannedDeductions[0]['entry_id'];
-        
-        error_log("Stock-based sale ($coilCategory): Will use stock_entry_id = $primaryStockEntryId");
     } else {
-        error_log("KZINC sale: No stock entry required");
+        // KZinc: pre-validate piece availability and determine sale unit
+        $stockEntryModel = new StockEntry();
+
+        $totalPiecesToDeduct = 0;
+        $kzincBundleQty     = 0;
+        $kzincHasBundles    = false;
+
+        foreach ($productionPaper['properties'] as $prop) {
+            $totalPiecesToDeduct += (int)($prop['pieces'] ?? 0);
+            if (($prop['propertyType'] ?? '') === STOCK_UNIT_BUNDLES) {
+                $kzincBundleQty  += (float)($prop['quantity'] ?? 0);
+                $kzincHasBundles  = true;
+            }
+        }
+
+        if ($totalPiecesToDeduct <= 0) {
+            throw new Exception('No pieces specified for KZinc sale');
+        }
+
+        $kzincEntries         = $stockEntryModel->getAvailableKzincEntries($productionData['coil_id']);
+        $totalAvailablePieces = (int)array_sum(array_column($kzincEntries, 'pieces_remaining'));
+
+        if ($totalAvailablePieces < $totalPiecesToDeduct) {
+            throw new Exception(
+                "Insufficient KZinc stock: need $totalPiecesToDeduct pieces, only $totalAvailablePieces available"
+            );
+        }
+
+        // Plan FIFO deductions
+        $kzincPlannedDeductions = [];
+        $remaining = $totalPiecesToDeduct;
+
+        foreach ($kzincEntries as $entry) {
+            if ($remaining <= 0) {
+                break;
+            }
+            $deduct = min($remaining, (int)$entry['pieces_remaining']);
+            $kzincPlannedDeductions[] = ['entry_id' => (int)$entry['id'], 'deduct' => $deduct];
+            $remaining -= $deduct;
+        }
+
+        $kzincSaleUnitType = $kzincHasBundles ? STOCK_UNIT_BUNDLES : STOCK_UNIT_PIECES;
+        $kzincSaleQuantity = $kzincHasBundles ? $kzincBundleQty : $totalPiecesToDeduct;
     }
 
     // ========================================
@@ -126,16 +166,18 @@ try {
     $saleModel = new Sale();
 
     $saleData = [
-        'customer_id' => $productionData['customer_id'],
-        'coil_id' => $productionData['coil_id'],
-        'stock_entry_id' => $primaryStockEntryId, // ✅ NOW CORRECTLY SET!
-        'sale_type' => SALE_TYPE_RETAIL,
-        'meters' => $productionPaper['summary']['totalMeters'],
+        'customer_id'     => $productionData['customer_id'],
+        'coil_id'         => $productionData['coil_id'],
+        'stock_entry_id'  => $primaryStockEntryId,
+        'sale_type'       => SALE_TYPE_RETAIL,
+        'meters'          => $productionPaper['summary']['totalMeters'],
         'price_per_meter' => $isKzinc ? 0 : calculateAveragePrice($productionPaper['properties']),
-        'total_amount' => $productionPaper['summary']['totalAmount'],
-        'status' => SALE_STATUS_COMPLETED,
-        'created_by' => $currentUser['id'],
-        'created_at' => $saleDateTime,
+        'total_amount'    => $productionPaper['summary']['totalAmount'],
+        'unit_type'       => $isKzinc ? $kzincSaleUnitType : STOCK_UNIT_METERS,
+        'quantity'        => $isKzinc ? $kzincSaleQuantity : null,
+        'status'          => SALE_STATUS_COMPLETED,
+        'created_by'      => $currentUser['id'],
+        'created_at'      => $saleDateTime,
     ];
 
     $saleId = $saleModel->create($saleData);
@@ -143,8 +185,6 @@ try {
     if (!$saleId) {
         throw new Exception('Failed to create sale record');
     }
-
-    error_log("Sale #$saleId created with stock_entry_id = " . ($primaryStockEntryId ?? 'NULL'));
 
     // ========================================
     // STEP 2: CREATE PRODUCTION RECORD (IMMUTABLE)
@@ -320,14 +360,18 @@ try {
                 $currentUser['id'],
                 $entryId,
             );
-
-            error_log("Deducted $deductAmount meters from stock_entry #$entryId, new remaining: $newRemaining");
         }
 
         // Update coil status if needed
         $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
     } else {
-        error_log("KZINC sale #$saleId: Skipping meter deduction and ledger entries");
+        // KZinc: deduct pieces FIFO from stock entries
+        foreach ($kzincPlannedDeductions as $deduction) {
+            if (!$stockEntryModel->deductPieces($deduction['entry_id'], $deduction['deduct'])) {
+                throw new Exception("Failed to deduct pieces from stock entry #{$deduction['entry_id']}");
+            }
+        }
+        $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
     }
 
     $db->commit();

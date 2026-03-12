@@ -28,6 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category = sanitize($_POST['category'] ?? '');
     $meters = floatval($_POST['meters'] ?? 0);
     $gauge = sanitize($_POST['gauge'] ?? '');
+    $palletSize = ($category === STOCK_CATEGORY_KZINC && !empty($_POST['pallet_size']))
+        ? (int)$_POST['pallet_size']
+        : null;
     
     $errors = [];
     
@@ -72,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'category' => $category,
         'meters' => $meters,
         'gauge' => $gauge,
+        'pallet_size' => $palletSize,
         'status' => STOCK_STATUS_AVAILABLE,
         'created_by' => $currentUser['id']
     ];

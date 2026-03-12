@@ -26,15 +26,17 @@ class Sale {
      public function create($data)
     {
         try {
-            $sql = "INSERT INTO {$this->table} 
-                    (customer_id, coil_id, stock_entry_id, sale_type, meters, weight_kg, 
-                     price_per_meter, price_per_kg, total_amount, status, created_by, notes, created_at) 
-                    VALUES 
-                    (:customer_id, :coil_id, :stock_entry_id, :sale_type, :meters, :weight_kg, 
+            $sql = "INSERT INTO {$this->table}
+                    (customer_id, coil_id, stock_entry_id, sale_type, meters, weight_kg,
+                     unit_type, quantity,
+                     price_per_meter, price_per_kg, total_amount, status, created_by, notes, created_at)
+                    VALUES
+                    (:customer_id, :coil_id, :stock_entry_id, :sale_type, :meters, :weight_kg,
+                     :unit_type, :quantity,
                      :price_per_meter, :price_per_kg, :total_amount, :status, :created_by, :notes, :created_at)";
 
             $stmt = $this->db->prepare($sql);
-            
+
             $result = $stmt->execute([
                 ':customer_id' => $data['customer_id'],
                 ':coil_id' => $data['coil_id'],
@@ -42,6 +44,8 @@ class Sale {
                 ':sale_type' => $data['sale_type'],
                 ':meters' => $data['meters'] ?? 0,
                 ':weight_kg' => $data['weight_kg'] ?? null,
+                ':unit_type' => $data['unit_type'] ?? STOCK_UNIT_METERS,
+                ':quantity' => $data['quantity'] ?? null,
                 ':price_per_meter' => $data['price_per_meter'] ?? 0,
                 ':price_per_kg' => $data['price_per_kg'] ?? null,
                 ':total_amount' => $data['total_amount'],

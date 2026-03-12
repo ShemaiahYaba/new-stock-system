@@ -44,6 +44,21 @@ const STOCK_STATUSES = [
     STOCK_STATUS_OUT_OF_STOCK => 'Out of stock',
 ];
 
+// KZinc unit types
+define('STOCK_UNIT_METERS',  'meters');
+define('STOCK_UNIT_BUNDLES', 'bundles');
+define('STOCK_UNIT_PIECES',  'pieces');
+define('STOCK_UNIT_PALLETS', 'pallets');
+
+const KZINC_UNITS = [
+    STOCK_UNIT_PALLETS => 'Pallets',
+    STOCK_UNIT_BUNDLES => 'Bundles',
+    STOCK_UNIT_PIECES  => 'Pieces',
+];
+
+// Pieces per bundle for KZinc (fixed across all KZinc coils)
+define('KZINC_PIECES_PER_BUNDLE', 15);
+
 // Stock Categories
 define('STOCK_CATEGORY_ALUSTEEL', 'alusteel');
 define('STOCK_CATEGORY_ALLOY_STEEL', STOCK_CATEGORY_ALUSTEEL); // backward compatibility

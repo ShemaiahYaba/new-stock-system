@@ -30,7 +30,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = sanitize($_POST['status'] ?? '');
     $meters = floatval($_POST['meters'] ?? 0);
     $gauge = sanitize($_POST['gauge'] ?? '');
-    
+    $palletSize = ($category === STOCK_CATEGORY_KZINC && !empty($_POST['pallet_size']))
+        ? (int)$_POST['pallet_size']
+        : null;
+
     $errors = [];
     
     if (empty($code)) $errors[] = 'Coil code is required.';
@@ -73,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'category' => $category,
         'meters' => $meters,
         'gauge' => $gauge,
+        'pallet_size' => $palletSize,
         'status' => $status
     ];
     

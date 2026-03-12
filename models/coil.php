@@ -23,9 +23,9 @@ class Coil
     public function create($data)
     {
         try {
-            $sql = "INSERT INTO {$this->table} 
-                    (code, name, color_id, net_weight, meters, gauge, category, status, created_by, created_at) 
-                    VALUES (:code, :name, :color_id, :net_weight, :meters, :gauge, :category, :status, :created_by, NOW())";
+            $sql = "INSERT INTO {$this->table}
+                    (code, name, color_id, net_weight, meters, gauge, pallet_size, category, status, created_by, created_at)
+                    VALUES (:code, :name, :color_id, :net_weight, :meters, :gauge, :pallet_size, :category, :status, :created_by, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
@@ -35,6 +35,7 @@ class Coil
                 ':net_weight' => $data['net_weight'],
                 ':meters' => $data['meters'] ?? null,
                 ':gauge' => $data['gauge'] ?? null,
+                ':pallet_size' => $data['pallet_size'] ?? null,
                 ':category' => $data['category'],
                 ':status' => $data['status'] ?? STOCK_STATUS_AVAILABLE,
                 ':created_by' => $data['created_by'],
@@ -214,6 +215,11 @@ class Coil
             if (isset($data['gauge'])) {
                 $fields[] = 'gauge = :gauge';
                 $params[':gauge'] = $data['gauge'];
+            }
+
+            if (array_key_exists('pallet_size', $data)) {
+                $fields[] = 'pallet_size = :pallet_size';
+                $params[':pallet_size'] = $data['pallet_size'];
             }
 
             if (isset($data['status'])) {
