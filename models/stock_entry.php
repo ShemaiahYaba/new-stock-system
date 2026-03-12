@@ -360,7 +360,8 @@ class StockEntry
                 FROM {$this->table} se
                 JOIN coils c ON se.coil_id = c.id
                 WHERE se.status = :status
-                AND (se.meters_remaining > 0 OR se.pieces_remaining > 0)
+                AND se.meters_remaining > 0
+                AND (se.unit_type = 'meters' OR se.unit_type IS NULL)
                 AND se.deleted_at IS NULL";
         
         $stmt = $this->db->prepare($sql);
