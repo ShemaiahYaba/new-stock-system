@@ -144,7 +144,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <th>Customer</th>
                             <th>Coil</th>
                             <th>Type</th>
-                            <th>Meters</th>
+                            <th>Qty / Meters</th>
                             <th>Amount</th>
                             <th>Status</th>
                             <th>Workflow</th>

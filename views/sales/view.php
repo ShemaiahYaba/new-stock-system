@@ -174,8 +174,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     </td>
                                     <td>
                                         <?php
-                                        if ($saleUnitType !== 'meters') {
-                                            echo '—';
+                                        if ($saleUnitType !== 'meters' && ($sale['quantity'] ?? 0) > 0) {
+                                            $pricePerUnit = $sale['total_amount'] / $sale['quantity'];
+                                            echo '₦' . number_format($pricePerUnit, 2) . '/' . htmlspecialchars($saleUnitType === 'bundles' ? 'bundle' : rtrim($saleUnitType, 's'));
                                         } elseif ($sale['price_per_kg'] !== null && $sale['price_per_kg'] > 0) {
                                             echo '₦' . number_format($sale['price_per_kg'], 2) . '/kg';
                                         } else {

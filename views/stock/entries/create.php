@@ -113,7 +113,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                        step="0.01" min="0.01" placeholder="e.g., 2">
                                 <small class="form-text text-muted">Amount in the selected unit</small>
                             </div>
-                            <div id="kzinc_breakdown" class="alert alert-secondary" style="display:none;">
+                            <div id="kzinc_breakdown" class="alert alert-secondary alert-permanent" style="display:none;">
                                 <i class="bi bi-calculator"></i>
                                 <span id="kzinc_breakdown_text"></span>
                             </div>
@@ -191,7 +191,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         const qty      = parseFloat(quantityInput.value) || 0;
         const unitType = unitTypeSelect.value;
 
-        if (qty <= 0 || !unitType) {
+        if (!unitType) {
+            breakdownBox.style.display = 'none';
+            return;
+        }
+
+        if (unitType === 'pallets' && currentPalletSize <= 0) {
             breakdownBox.style.display = 'none';
             return;
         }
@@ -199,10 +204,6 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         let pieces = 0, bundles = 0, pallets = 0, text = '';
 
         if (unitType === 'pallets') {
-            if (currentPalletSize <= 0) {
-                breakdownBox.style.display = 'none';
-                return;
-            }
             pallets = qty;
             bundles = qty * currentPalletSize;
             pieces  = bundles * PIECES_PER_BUNDLE;
