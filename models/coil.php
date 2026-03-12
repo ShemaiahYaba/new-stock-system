@@ -402,15 +402,16 @@ class Coil
     public function getWithStockInfo()
     {
         try {
-            $sql = "SELECT c.*, 
-        col.name as color_name, 
+            $sql = "SELECT c.*,
+        col.name as color_name,
         COALESCE(SUM(se.meters_remaining), 0) as total_remaining_meters,
+        COALESCE(SUM(se.pieces_remaining), 0) as total_remaining_pieces,
         COUNT(se.id) as stock_entry_count
         FROM {$this->table} c
         LEFT JOIN colors col ON c.color_id = col.id
-        LEFT JOIN stock_entries se ON c.id = se.coil_id 
-            AND se.deleted_at IS NULL 
-            AND se.meters_remaining > 0
+        LEFT JOIN stock_entries se ON c.id = se.coil_id
+            AND se.deleted_at IS NULL
+            AND (se.meters_remaining > 0 OR se.pieces_remaining > 0)
         WHERE c.deleted_at IS NULL
         GROUP BY c.id
         HAVING stock_entry_count > 0
@@ -424,10 +425,10 @@ class Coil
 
             if (!empty($coilIds)) {
                 $placeholders = rtrim(str_repeat('?,', count($coilIds)), ',');
-                $sql = "SELECT * FROM stock_entries 
-                        WHERE coil_id IN ($placeholders) 
-                        AND deleted_at IS NULL 
-                        AND meters_remaining > 0";
+                $sql = "SELECT * FROM stock_entries
+                        WHERE coil_id IN ($placeholders)
+                        AND deleted_at IS NULL
+                        AND (meters_remaining > 0 OR pieces_remaining > 0)";
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute($coilIds);
                 $entries = $stmt->fetchAll();

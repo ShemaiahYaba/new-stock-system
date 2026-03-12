@@ -38,13 +38,28 @@ $availableStock = $stockEntryModel->getByStatus(STOCK_STATUS_AVAILABLE);
 $factoryUseStock = $stockEntryModel->getByStatus(STOCK_STATUS_FACTORY_USE);
 $soldStock = $stockEntryModel->countByStatus(STOCK_STATUS_SOLD);
 
-// Calculate total meters by status
-$totalAvailableMeters = array_sum(array_column($availableStock, 'meters_remaining'));
+// Calculate total meters by status (non-KZinc)
+$totalAvailableMeters = 0;
+$totalAvailablePieces = 0;
+foreach ($availableStock as $entry) {
+    if (($entry['unit_type'] ?? 'meters') !== 'meters') {
+        $totalAvailablePieces += (int)($entry['pieces_remaining'] ?? 0);
+    } else {
+        $totalAvailableMeters += floatval($entry['meters_remaining']);
+    }
+}
+
 $totalFactoryUseMeters = 0;
 foreach ($factoryUseStock as $entry) {
-    $balance = $stockLedgerModel->getCurrentBalance($entry['id']);
-    $totalFactoryUseMeters += $balance;
+    if (($entry['unit_type'] ?? 'meters') === 'meters') {
+        $balance = $stockLedgerModel->getCurrentBalance($entry['id']);
+        $totalFactoryUseMeters += $balance;
+    }
 }
+
+// KZinc available entries count
+$totalAvailableKzincEntries = array_filter($availableStock, fn($e) => ($e['unit_type'] ?? 'meters') !== 'meters');
+$totalAvailableKzincEntries = count($totalAvailableKzincEntries);
 
 // ===== NEW: Get Tile Module Statistics =====
 $tileProductModel = new TileProduct();
@@ -208,46 +223,31 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <tr>
                                 <th>Status</th>
                                 <th>Entries</th>
-                                <th>Total Meters</th>
+                                <th>Meters (Alusteel/Aluminum)</th>
+                                <th>Pieces (K-Zinc)</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>
-                                    <span class="badge bg-success">
-                                        Available
-                                    </span>
-                                </td>
+                                <td><span class="badge bg-success">Available</span></td>
                                 <td><strong><?php echo count($availableStock); ?></strong></td>
-                                <td><strong><?php echo number_format(
-                                    $totalAvailableMeters,
-                                    2,
-                                ); ?>m</strong></td>
+                                <td><strong><?php echo number_format($totalAvailableMeters, 2); ?>m</strong></td>
+                                <td><strong><?php echo number_format($totalAvailablePieces, 0); ?> pcs</strong></td>
                             </tr>
                             <tr>
-                                <td>
-                                    <span class="badge bg-warning">
-                                        Factory Use
-                                    </span>
-                                </td>
+                                <td><span class="badge bg-warning">Factory Use</span></td>
                                 <td><strong><?php echo count($factoryUseStock); ?></strong></td>
-                                <td><strong><?php echo number_format(
-                                    $totalFactoryUseMeters,
-                                    2,
-                                ); ?>m</strong></td>
+                                <td><strong><?php echo number_format($totalFactoryUseMeters, 2); ?>m</strong></td>
+                                <td><span class="text-muted">N/A</span></td>
                             </tr>
                             <tr>
-                                <td>
-                                    <span class="badge bg-primary">
-                                        Sold
-                                    </span>
-                                </td>
+                                <td><span class="badge bg-primary">Sold</span></td>
                                 <td><strong><?php echo $soldStock; ?></strong></td>
-                                <td><span class="text-muted">Completed</span></td>
+                                <td colspan="2"><span class="text-muted">Completed</span></td>
                             </tr>
                             <tr class="table-active">
                                 <td><strong>Total Stock Entries</strong></td>
-                                <td colspan="2"><strong><?php echo $stockEntryModel->count(); ?></strong></td>
+                                <td colspan="3"><strong><?php echo $stockEntryModel->count(); ?></strong></td>
                             </tr>
                         </tbody>
                     </table>
@@ -269,11 +269,11 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <p class="text-muted mb-0">Total Coils Registered</p>
                         </div>
                         <div class="col-md-3">
-                            <h4 class="text-success"><?php echo number_format(
-                                $totalAvailableMeters,
-                                2,
-                            ); ?>m</h4>
-                            <p class="text-muted mb-0">Available for Sale</p>
+                            <h4 class="text-success"><?php echo number_format($totalAvailableMeters, 2); ?>m</h4>
+                            <p class="text-muted mb-0">Available (Meters)</p>
+                            <?php if ($totalAvailablePieces > 0): ?>
+                            <small class="text-info"><?php echo number_format($totalAvailablePieces, 0); ?> pcs (K-Zinc)</small>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-3">
                             <h4 class="text-warning"><?php echo number_format(

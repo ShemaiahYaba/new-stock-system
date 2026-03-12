@@ -359,8 +359,8 @@ class StockEntry
                                0) as weight_kg_remaining
                 FROM {$this->table} se
                 JOIN coils c ON se.coil_id = c.id
-                WHERE se.status = :status 
-                AND se.meters_remaining > 0
+                WHERE se.status = :status
+                AND (se.meters_remaining > 0 OR se.pieces_remaining > 0)
                 AND se.deleted_at IS NULL";
         
         $stmt = $this->db->prepare($sql);
@@ -493,8 +493,8 @@ class StockEntry
                        c.category as coil_category
                 FROM {$this->table} se
                 INNER JOIN coils c ON se.coil_id = c.id
-                WHERE se.status = :status 
-                AND se.meters_remaining > 0
+                WHERE se.status = :status
+                AND (se.meters_remaining > 0 OR se.pieces_remaining > 0)
                 AND se.deleted_at IS NULL
                 AND c.deleted_at IS NULL
                 ORDER BY se.created_at DESC";
@@ -585,8 +585,8 @@ class StockEntry
     public function getTotalRemainingForCoil($coilId)
     {
         try {
-            $sql = "SELECT SUM(meters_remaining) as total 
-                FROM {$this->table} 
+            $sql = "SELECT SUM(meters_remaining) + SUM(IFNULL(pieces_remaining, 0)) as total
+                FROM {$this->table}
                 WHERE coil_id = :coil_id AND deleted_at IS NULL";
 
             $stmt = $this->db->prepare($sql);
@@ -610,10 +610,10 @@ class StockEntry
     public function getByCoilAndStatus($coilId, $status)
     {
         try {
-            $sql = "SELECT * FROM {$this->table} 
-                WHERE coil_id = :coil_id 
-                AND status = :status 
-                AND meters_remaining > 0
+            $sql = "SELECT * FROM {$this->table}
+                WHERE coil_id = :coil_id
+                AND status = :status
+                AND (meters_remaining > 0 OR pieces_remaining > 0)
                 AND deleted_at IS NULL
                 ORDER BY created_at ASC";
 
