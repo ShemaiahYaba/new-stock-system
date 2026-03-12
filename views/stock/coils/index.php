@@ -127,7 +127,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>Name</th>
                             <th>Color</th>
                             <th>Weight (kg)</th>
-                            <th>Meters</th>
+                            <th>Meters / Pallet Size</th>
                             <th>Gauge</th>
                             <th>Category</th>
                             <th>Status</th>
@@ -149,7 +149,13 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </td>
                             <td><?php echo number_format($coil['net_weight'], 2); ?></td>
                             <td>
-                                <?php if (!empty($coil['meters']) && $coil['meters'] > 0): ?>
+                                <?php if ($coil['category'] === STOCK_CATEGORY_KZINC): ?>
+                                    <?php if (!empty($coil['pallet_size'])): ?>
+                                        <span class="badge bg-secondary"><?php echo (int)$coil['pallet_size']; ?> bdl/pallet</span>
+                                    <?php else: ?>
+                                        <span class="text-muted">No pallet size</span>
+                                    <?php endif; ?>
+                                <?php elseif (!empty($coil['meters']) && $coil['meters'] > 0): ?>
                                     <?php echo number_format($coil['meters'], 2); ?>m
                                 <?php else: ?>
                                     <span class="text-muted">-</span>

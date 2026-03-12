@@ -27,6 +27,8 @@ if (!$entry) {
     exit();
 }
 
+$isKzincEntry = ($entry['unit_type'] ?? 'meters') !== 'meters';
+
 require_once __DIR__ . '/../../../layout/header.php';
 require_once __DIR__ . '/../../../layout/sidebar.php';
 ?>
@@ -72,6 +74,32 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 </span>
                             </td>
                         </tr>
+                        <?php if ($isKzincEntry): ?>
+                        <tr>
+                            <th>Unit Type:</th>
+                            <td><?php echo htmlspecialchars(ucfirst($entry['unit_type'])); ?></td>
+                        </tr>
+                        <tr>
+                            <th>Quantity:</th>
+                            <td><strong><?php echo number_format($entry['quantity'] ?? 0, 2); ?> <?php echo htmlspecialchars($entry['unit_type']); ?></strong></td>
+                        </tr>
+                        <tr>
+                            <th>Total Pieces:</th>
+                            <td><?php echo number_format($entry['pieces_total'] ?? 0, 0); ?> pcs</td>
+                        </tr>
+                        <tr>
+                            <th>Pieces Remaining:</th>
+                            <td>
+                                <span class="badge <?php echo ($entry['pieces_remaining'] ?? 0) > 0 ? 'bg-success' : 'bg-secondary'; ?>" style="font-size: 1rem;">
+                                    <?php echo number_format($entry['pieces_remaining'] ?? 0, 0); ?> pcs
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Pieces Used:</th>
+                            <td><?php echo (int)($entry['pieces_total'] ?? 0) - (int)($entry['pieces_remaining'] ?? 0); ?> pcs</td>
+                        </tr>
+                        <?php else: ?>
                         <tr>
                             <th>Total Meters:</th>
                             <td><strong><?php echo number_format($entry['meters'], 2); ?>m</strong></td>
@@ -88,6 +116,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>Meters Used:</th>
                             <td><?php echo number_format($entry['meters'] - $entry['meters_remaining'], 2); ?>m</td>
                         </tr>
+                        <?php endif; ?>
                         <tr>
                             <th>Created:</th>
                             <td><?php echo formatDate($entry['created_at']); ?></td>
@@ -108,30 +137,42 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 </div>
                 <div class="card-body">
                     <?php
-                    $usedPercentage = $entry['meters'] > 0 ? (($entry['meters'] - $entry['meters_remaining']) / $entry['meters']) * 100 : 0;
-                    $remainingPercentage = 100 - $usedPercentage;
+                    if ($isKzincEntry) {
+                        $total     = (int)($entry['pieces_total'] ?? 0);
+                        $remaining = (int)($entry['pieces_remaining'] ?? 0);
+                        $used      = $total - $remaining;
+                        $usedPercentage      = $total > 0 ? ($used / $total) * 100 : 0;
+                        $remainingPercentage = 100 - $usedPercentage;
+                        $totalLabel     = number_format($entry['quantity'] ?? 0, 2) . ' ' . $entry['unit_type'] . ' (' . $total . ' pcs)';
+                        $remainingLabel = $remaining . ' pcs';
+                    } else {
+                        $usedPercentage      = $entry['meters'] > 0 ? (($entry['meters'] - $entry['meters_remaining']) / $entry['meters']) * 100 : 0;
+                        $remainingPercentage = 100 - $usedPercentage;
+                        $totalLabel     = number_format($entry['meters'], 2) . 'm';
+                        $remainingLabel = number_format($entry['meters_remaining'], 2) . 'm';
+                    }
                     ?>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Usage Progress</label>
                         <div class="progress" style="height: 30px;">
-                            <div class="progress-bar bg-danger" role="progressbar" 
+                            <div class="progress-bar bg-danger" role="progressbar"
                                  style="width: <?php echo $usedPercentage; ?>%">
                                 <?php echo number_format($usedPercentage, 1); ?>% Used
                             </div>
-                            <div class="progress-bar bg-success" role="progressbar" 
+                            <div class="progress-bar bg-success" role="progressbar"
                                  style="width: <?php echo $remainingPercentage; ?>%">
                                 <?php echo number_format($remainingPercentage, 1); ?>% Remaining
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row text-center mt-4">
                         <div class="col-6">
                             <div class="card bg-light">
                                 <div class="card-body">
-                                    <h6 class="text-muted">Total Meters</h6>
-                                    <h3 class="text-primary"><?php echo number_format($entry['meters'], 2); ?>m</h3>
+                                    <h6 class="text-muted"><?php echo $isKzincEntry ? 'Total Stock' : 'Total Meters'; ?></h6>
+                                    <h3 class="text-primary"><?php echo $totalLabel; ?></h3>
                                 </div>
                             </div>
                         </div>
@@ -139,7 +180,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <div class="card bg-light">
                                 <div class="card-body">
                                     <h6 class="text-muted">Remaining</h6>
-                                    <h3 class="text-success"><?php echo number_format($entry['meters_remaining'], 2); ?>m</h3>
+                                    <h3 class="text-success"><?php echo $remainingLabel; ?></h3>
                                 </div>
                             </div>
                         </div>

@@ -192,7 +192,7 @@ class StockEntry
             $fields = [];
             $params = [':id' => $id];
 
-            $allowedFields = ['meters_remaining', 'status', 'weight_kg', 'weight_kg_remaining'];
+            $allowedFields = ['meters', 'meters_remaining', 'status', 'weight_kg', 'weight_kg_remaining', 'quantity', 'pieces_total', 'pieces_remaining', 'unit_type'];
 
             foreach ($allowedFields as $field) {
                 if (isset($data[$field])) {

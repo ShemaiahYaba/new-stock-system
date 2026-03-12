@@ -56,7 +56,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             <div>
                 <h1 class="page-title">Stock Entries</h1>
                 <p class="text-muted">
-                    Manage stock meter entries
+                    Manage stock entries
                     <?php if ($searchQuery !== ''): ?>
                         <span class="badge bg-info">Search: "<?php echo htmlspecialchars($searchQuery); ?>"</span>
                     <?php endif; ?>

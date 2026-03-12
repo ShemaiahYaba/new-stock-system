@@ -163,7 +163,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <?= ucfirst($sale['sale_type'] ?? 'unknown') ?>
                                 </span>
                             </td>
-                            <td><?= number_format($sale['meters'], 2) ?>m</td>
+                            <td>
+                                <?php if (($sale['unit_type'] ?? 'meters') !== 'meters' && ($sale['quantity'] ?? 0) > 0): ?>
+                                    <?= number_format($sale['quantity'], 2) ?> <?= htmlspecialchars($sale['unit_type']) ?>
+                                <?php else: ?>
+                                    <?= number_format($sale['meters'], 2) ?>m
+                                <?php endif; ?>
+                            </td>
                             <td><?= formatCurrency($sale['total_amount']) ?></td>
                             <td>
                                 <span class="badge <?= $sale['status'] === 'completed'

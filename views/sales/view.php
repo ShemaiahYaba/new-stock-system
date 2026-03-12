@@ -161,8 +161,11 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <td><?php echo htmlspecialchars($coil['name'] ?? 'N/A'); ?></td>
                                     <td><?php echo $stockEntry ? '#' . $stockEntry['id'] : 'N/A'; ?></td>
                                     <td>
-                                        <?php 
-                                        if ($sale['weight_kg'] !== null && $sale['weight_kg'] > 0) {
+                                        <?php
+                                        $saleUnitType = $sale['unit_type'] ?? 'meters';
+                                        if ($saleUnitType !== 'meters' && ($sale['quantity'] ?? 0) > 0) {
+                                            echo number_format($sale['quantity'], 2) . ' ' . htmlspecialchars($saleUnitType);
+                                        } elseif ($sale['weight_kg'] !== null && $sale['weight_kg'] > 0) {
                                             echo number_format($sale['weight_kg'], 2) . ' kg';
                                         } else {
                                             echo number_format($sale['meters'], 2) . ' m';
@@ -170,8 +173,10 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                         ?>
                                     </td>
                                     <td>
-                                        <?php 
-                                        if ($sale['price_per_kg'] !== null && $sale['price_per_kg'] > 0) {
+                                        <?php
+                                        if ($saleUnitType !== 'meters') {
+                                            echo '—';
+                                        } elseif ($sale['price_per_kg'] !== null && $sale['price_per_kg'] > 0) {
                                             echo '₦' . number_format($sale['price_per_kg'], 2) . '/kg';
                                         } else {
                                             echo '₦' . number_format($sale['price_per_meter'], 2) . '/m';
