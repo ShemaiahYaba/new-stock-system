@@ -168,7 +168,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 <div class="d-flex align-items-center gap-2">
                                     <!-- Production icon -->
                                     <a href="<?php echo $sale['production_id']
-                                        ? "/new-stock-system/index.php?page=production&action=view&id={$sale['production_id']}"
+                                        ? "/new-stock-system/index.php?page=production_view&id={$sale['production_id']}"
                                         : '#'; ?>"
                                        class="text-decoration-none"
                                        title="Production: <?php echo $sale['production_status'] ?: 'Not started'; ?>">

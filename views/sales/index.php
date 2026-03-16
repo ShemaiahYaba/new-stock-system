@@ -192,7 +192,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 <div class="d-flex align-items-center">
                                     <!-- Production Status -->
                                     <a href="<?= $sale['production_id']
-                                        ? "?page=production&action=view&id={$sale['production_id']}"
+                                        ? "?page=production_view&id={$sale['production_id']}"
                                         : '#' ?>" 
                                        class="text-decoration-none me-2" 
                                        title="Production: <?= $sale['production_status'] ?:
@@ -266,7 +266,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                                     ? 'disabled'
                                                     : '' ?>" 
                                                    href="<?= $sale['production_id']
-                                                       ? "?page=production&action=view&id={$sale['production_id']}"
+                                                       ? "?page=production_view&id={$sale['production_id']}"
                                                        : '#' ?>">
                                                     <i class="bi bi-gear me-2"></i> View Production
                                                 </a>
