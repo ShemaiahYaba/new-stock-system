@@ -80,10 +80,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'created_by' => $currentUser['id']
     ];
     
+    $allowedRedirects = ['coils', 'kzinc_coils'];
+    $redirectTo = in_array($_POST['redirect_to'] ?? '', $allowedRedirects)
+        ? sanitize($_POST['redirect_to'])
+        : 'coils';
+
     if ($coilModel->create($data)) {
         logActivity('Coil created', "Code: $code");
         setFlashMessage('success', 'Coil created successfully!');
-        header('Location: /new-stock-system/index.php?page=coils');
+        header("Location: /new-stock-system/index.php?page=$redirectTo");
     } else {
         setFlashMessage('error', 'Failed to create coil.');
         header('Location: /new-stock-system/index.php?page=coils_create');

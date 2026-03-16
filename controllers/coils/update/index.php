@@ -80,10 +80,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'status' => $status
     ];
     
+    $allowedRedirects = ['coils', 'kzinc_coils'];
+    $redirectTo = in_array($_POST['redirect_to'] ?? '', $allowedRedirects)
+        ? sanitize($_POST['redirect_to'])
+        : 'coils';
+
     if ($coilModel->update($coilId, $data)) {
         logActivity('Coil updated', "Code: $code");
         setFlashMessage('success', 'Coil updated successfully!');
-        header('Location: /new-stock-system/index.php?page=coils');
+        header("Location: /new-stock-system/index.php?page=$redirectTo");
     } else {
         setFlashMessage('error', 'Failed to update coil.');
         header("Location: /new-stock-system/index.php?page=coils_edit&id=$coilId");

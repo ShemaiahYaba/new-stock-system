@@ -165,7 +165,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setFlashMessage('success', 'Stock entry created successfully!');
         }
 
-        header('Location: /new-stock-system/index.php?page=stock_entries');
+        $allowedRedirects = ['stock_entries', 'kzinc_stock'];
+        $redirectTo = in_array($_POST['redirect_to'] ?? '', $allowedRedirects)
+            ? sanitize($_POST['redirect_to'])
+            : 'stock_entries';
+
+        header("Location: /new-stock-system/index.php?page=$redirectTo");
 
     } catch (Exception $e) {
         $db->rollBack();

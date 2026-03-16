@@ -180,15 +180,55 @@ $currentPage = $_GET['page'] ?? 'dashboard';
                     </a>
                 </li>
                 <li>
-                    <a href="/new-stock-system/index.php?page=coils&category=<?php echo STOCK_CATEGORY_KZINC; ?>" class="nav-link">
-                        <i class="bi bi-circle"></i> K-Zinc
-                    </a>
-                </li>
-                <li>
                     <a href="/new-stock-system/index.php?page=stock_entries" class="nav-link <?php echo $currentPage === 'stock_entries' ? 'active' : ''; ?>">
                         <i class="bi bi-circle"></i> Stock Entries
                     </a>
                 </li>
+            </ul>
+        </li>
+        <?php endif; ?>
+
+        <!-- KZinc Module -->
+        <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
+        <?php
+            $kzincPages = ['kzinc_coils','kzinc_coils_create','kzinc_coils_edit','kzinc_coils_view',
+                           'kzinc_stock','kzinc_stock_create',
+                           'kzinc_sales','kzinc_sales_create','kzinc_sales_view'];
+        ?>
+        <li class="nav-item">
+            <a href="#" class="nav-link <?php echo in_array($currentPage, $kzincPages) ? 'active' : ''; ?>"
+               data-bs-toggle="collapse" data-bs-target="#kzincMenu">
+                <i class="bi bi-layers"></i>
+                <span>K-Zinc</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul class="collapse list-unstyled ps-4 <?php echo in_array($currentPage, $kzincPages) ? 'show' : ''; ?>" id="kzincMenu">
+                <li>
+                    <a href="/new-stock-system/index.php?page=kzinc_coils"
+                       class="nav-link <?php echo in_array($currentPage, ['kzinc_coils','kzinc_coils_create','kzinc_coils_edit','kzinc_coils_view']) ? 'active' : ''; ?>">
+                        <i class="bi bi-circle"></i> Coils
+                    </a>
+                </li>
+                <li>
+                    <a href="/new-stock-system/index.php?page=kzinc_stock"
+                       class="nav-link <?php echo in_array($currentPage, ['kzinc_stock','kzinc_stock_create']) ? 'active' : ''; ?>">
+                        <i class="bi bi-circle"></i> Stock Entries
+                    </a>
+                </li>
+                <li>
+                    <a href="/new-stock-system/index.php?page=kzinc_sales"
+                       class="nav-link <?php echo in_array($currentPage, ['kzinc_sales','kzinc_sales_view']) ? 'active' : ''; ?>">
+                        <i class="bi bi-circle"></i> Sales
+                    </a>
+                </li>
+                <?php if (hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_CREATE)): ?>
+                <li>
+                    <a href="/new-stock-system/index.php?page=kzinc_sales_create"
+                       class="nav-link <?php echo $currentPage === 'kzinc_sales_create' ? 'active' : ''; ?>">
+                        <i class="bi bi-plus-circle"></i> New Sale
+                    </a>
+                </li>
+                <?php endif; ?>
             </ul>
         </li>
         <?php endif; ?>

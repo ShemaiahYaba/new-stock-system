@@ -175,8 +175,7 @@ define('MODULE_TILE_MANAGEMENT', 'tile_management'); // NEW
 define('MODULE_TILE_SALES', 'tile_sales'); // NEW
    // Module Permission
 define('MODULE_PRODUCTION_PROPERTIES', 'production_properties');
-
-
+define('MODULE_KZINC_MANAGEMENT', 'kzinc_management');
 
 // Permission Modules Array
 const PERMISSION_MODULES = [
@@ -185,16 +184,17 @@ const PERMISSION_MODULES = [
     MODULE_STOCK_MANAGEMENT => 'Stock Management',
     MODULE_SALES_MANAGEMENT => 'Sales Management',
     MODULE_WAREHOUSE_MANAGEMENT => 'Warehouse Management',
-    MODULE_COLOR_MANAGEMENT => 'Color Management', // NEW
-    MODULE_PRODUCTION_MANAGEMENT => 'Production Management', // NEW
-    MODULE_INVOICE_MANAGEMENT => 'Invoice Management', // NEW
-    MODULE_SUPPLY_MANAGEMENT => 'Supply Management', // NEW
+    MODULE_COLOR_MANAGEMENT => 'Color Management',
+    MODULE_PRODUCTION_MANAGEMENT => 'Production Management',
+    MODULE_INVOICE_MANAGEMENT => 'Invoice Management',
+    MODULE_SUPPLY_MANAGEMENT => 'Supply Management',
     MODULE_REPORTS => 'Reports',
     MODULE_DASHBOARD => 'Dashboard',
     MODULE_DESIGN_MANAGEMENT => 'Design Management',
     MODULE_TILE_MANAGEMENT => 'Tile Management',
     MODULE_TILE_SALES => 'Tile Sales',
     MODULE_PRODUCTION_PROPERTIES => 'Production Properties',
+    MODULE_KZINC_MANAGEMENT => 'KZinc Management',
 ];
 
 // Permission Actions
