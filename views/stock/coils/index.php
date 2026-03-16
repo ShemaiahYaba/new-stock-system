@@ -58,16 +58,25 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         </div>
     </div>
     
-    <!-- Category Filter -->
+    <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
+    <div class="alert alert-info alert-permanent py-2 mb-3">
+        <i class="bi bi-layers"></i>
+        K-Zinc coils are managed in the
+        <a href="/new-stock-system/index.php?page=kzinc_coils" class="alert-link">K-Zinc module</a>.
+    </div>
+    <?php endif; ?>
+
+    <!-- Category Filter (Alusteel & Aluminum only) -->
     <div class="card mb-3">
         <div class="card-body">
             <div class="btn-group" role="group">
-                <a href="/new-stock-system/index.php?page=coils<?php echo $searchQuery !== '' ? '&search=' . urlencode($searchQuery) : ''; ?>" 
+                <a href="/new-stock-system/index.php?page=coils<?php echo $searchQuery !== '' ? '&search=' . urlencode($searchQuery) : ''; ?>"
                    class="btn btn-sm <?php echo !$category ? 'btn-primary' : 'btn-outline-primary'; ?>">
-                    All Categories
+                    All
                 </a>
-                <?php foreach (STOCK_CATEGORIES as $catKey => $catName): ?>
-                <a href="/new-stock-system/index.php?page=coils&category=<?php echo $catKey; ?><?php echo $searchQuery !== '' ? '&search=' . urlencode($searchQuery) : ''; ?>" 
+                <?php foreach (STOCK_CATEGORIES as $catKey => $catName):
+                    if ($catKey === STOCK_CATEGORY_KZINC || $catKey === STOCK_CATEGORY_TILE) continue; ?>
+                <a href="/new-stock-system/index.php?page=coils&category=<?php echo $catKey; ?><?php echo $searchQuery !== '' ? '&search=' . urlencode($searchQuery) : ''; ?>"
                    class="btn btn-sm <?php echo $category === $catKey ? 'btn-primary' : 'btn-outline-primary'; ?>">
                     <?php echo $catName; ?>
                 </a>

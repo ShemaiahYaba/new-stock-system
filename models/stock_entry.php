@@ -288,15 +288,21 @@ class StockEntry
     public function getAvailableKzincEntries(int $coilId): array
     {
         try {
-            $sql = "SELECT * FROM {$this->table}
-                    WHERE coil_id = :coil_id
-                      AND unit_type != :meters
-                      AND pieces_remaining > 0
-                      AND deleted_at IS NULL
-                    ORDER BY created_at ASC";
+            // Include entries with explicit KZinc unit types OR entries on KZinc coils
+            // that have pieces_remaining set (backward compat for old data).
+            $sql = "SELECT se.* FROM {$this->table} se
+                    JOIN coils c ON se.coil_id = c.id
+                    WHERE se.coil_id = :coil_id
+                      AND c.category = :kzinc
+                      AND se.pieces_remaining > 0
+                      AND se.deleted_at IS NULL
+                    ORDER BY se.created_at ASC";
 
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([':coil_id' => $coilId, ':meters' => STOCK_UNIT_METERS]);
+            $stmt->execute([
+                ':coil_id' => $coilId,
+                ':kzinc'   => STOCK_CATEGORY_KZINC,
+            ]);
 
             return $stmt->fetchAll();
         } catch (PDOException $e) {

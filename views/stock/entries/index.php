@@ -17,34 +17,58 @@ $coilId = isset($_GET['coil_id']) ? (int) $_GET['coil_id'] : null;
 $statusFilter = isset($_GET['status']) ? sanitize($_GET['status']) : '';
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-$stockEntryModel = new StockEntry();
-$coilModel = new Coil();
+$db = Database::getInstance()->getConnection();
 
-// Build query based on filters
+// Build a direct query that always excludes KZinc coils
+// (KZinc entries are managed in the dedicated K-Zinc module)
+$baseWhere = "se.deleted_at IS NULL AND c.category != '" . STOCK_CATEGORY_KZINC . "'";
+$baseJoin  = "FROM stock_entries se
+              LEFT JOIN coils c ON se.coil_id = c.id
+              LEFT JOIN users u ON se.created_by = u.id";
+
+$whereParts = [$baseWhere];
+$params     = [];
+
 if ($searchQuery !== '') {
-    // Search mode - search by coil code/name
-    $entries = $stockEntryModel->search($searchQuery, $statusFilter, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalEntries = $stockEntryModel->countSearch($searchQuery, $statusFilter);
-} elseif ($coilId) {
-    // Filter by specific coil
-    $entries = $stockEntryModel->getByCoil($coilId, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE, false);
-    $totalEntries = count($stockEntryModel->getByCoil($coilId, 10000, 0, false));
-} elseif ($statusFilter !== '') {
-    // Filter by status
-    $entries = $stockEntryModel->getAllByStatus($statusFilter, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalEntries = $stockEntryModel->countByStatus($statusFilter);
-} else {
-    // No filters - get all
-    $entries = $stockEntryModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalEntries = $stockEntryModel->count();
+    $q = "%$searchQuery%";
+    $whereParts[] = '(c.code LIKE ? OR c.name LIKE ?)';
+    $params[] = $q;
+    $params[] = $q;
 }
+if ($coilId) {
+    $whereParts[] = 'se.coil_id = ?';
+    $params[] = $coilId;
+}
+if ($statusFilter !== '') {
+    $whereParts[] = 'se.status = ?';
+    $params[] = $statusFilter;
+}
+
+$whereStr = implode(' AND ', $whereParts);
+$offset   = ($currentPage - 1) * RECORDS_PER_PAGE;
+
+$countStmt = $db->prepare("SELECT COUNT(*) $baseJoin WHERE $whereStr");
+$countStmt->execute($params);
+$totalEntries = (int)$countStmt->fetchColumn();
+
+$entriesStmt = $db->prepare(
+    "SELECT se.*, c.code AS coil_code, c.name AS coil_name, c.status AS coil_status, u.name AS created_by_name
+     $baseJoin
+     WHERE $whereStr
+     ORDER BY se.created_at DESC
+     LIMIT ? OFFSET ?"
+);
+$entriesStmt->execute(array_merge($params, [(int)RECORDS_PER_PAGE, $offset]));
+$entries = $entriesStmt->fetchAll();
 
 $paginationData = getPaginationData($totalEntries, $currentPage);
 
-// Get coils for dropdown filter (if needed)
-$coilsForFilter = $coilModel->getAll(null, 1000, 0);
-
-$db = Database::getInstance()->getConnection();
+// Coils for filter dropdown (non-KZinc only)
+$coilModel = new Coil();
+$coilsForFilter = array_filter(
+    $coilModel->getAll(null, 1000, 0),
+    fn($c) => $c['category'] !== STOCK_CATEGORY_KZINC
+);
 
 require_once __DIR__ . '/../../../layout/header.php';
 require_once __DIR__ . '/../../../layout/sidebar.php';
@@ -77,6 +101,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         </div>
     </div>
     
+    <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
+    <div class="alert alert-info alert-permanent py-2 mb-3">
+        <i class="bi bi-layers"></i>
+        K-Zinc stock entries are managed in the
+        <a href="/new-stock-system/index.php?page=kzinc_stock" class="alert-link">K-Zinc module</a>.
+    </div>
+    <?php endif; ?>
+
     <!-- Filters Card -->
     <div class="card mb-3">
         <div class="card-body">

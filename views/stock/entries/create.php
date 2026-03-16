@@ -12,9 +12,12 @@ $pageTitle = 'Create Stock Entry - ' . APP_NAME;
 
 $coilId = isset($_GET['coil_id']) ? (int)$_GET['coil_id'] : null;
 
-// Get available coils
+// Get available coils — exclude KZinc (managed via the K-Zinc module)
 $coilModel = new Coil();
-$coils = $coilModel->getAll(null, 1000, 0);
+$coils = array_filter(
+    $coilModel->getAll(null, 1000, 0),
+    fn($c) => $c['category'] !== STOCK_CATEGORY_KZINC
+);
 
 // If coil_id is provided, get that specific coil
 $selectedCoil = null;
