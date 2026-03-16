@@ -26,13 +26,15 @@ $customers  = $customerModel->getAll(1000, 0);
 $warehouses = $warehouseModel->getActive();
 $kzincCoils = $coilModel->getAll(STOCK_CATEGORY_KZINC, 1000, 0);
 
-// Build coil data for JS — only coils that have stock entries with pieces remaining
-$coilsData = [];
+// Build two coil datasets:
+//   $coilsData    — live sales: only coils with pieces remaining
+//   $allCoilsData — historical entry: all KZinc coils regardless of stock
+$coilsData    = [];
+$allCoilsData = [];
 foreach ($kzincCoils as $c) {
     $entries         = $stockEntryModel->getAvailableKzincEntries($c['id']);
     $availablePieces = (int)array_sum(array_column($entries, 'pieces_remaining'));
-    if ($availablePieces <= 0) continue;  // skip coils with no available stock
-    $coilsData[] = [
+    $coilRow = [
         'id'               => (int)$c['id'],
         'code'             => $c['code'],
         'name'             => $c['name'],
@@ -40,6 +42,10 @@ foreach ($kzincCoils as $c) {
         'available_pieces' => $availablePieces,
         'status'           => $c['status'],
     ];
+    $allCoilsData[] = $coilRow;
+    if ($availablePieces > 0) {
+        $coilsData[] = $coilRow;
+    }
 }
 
 // Colors for the colour-variant picker
@@ -85,8 +91,29 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         </div>
     </div>
 
+    <!-- Historical sale banner (shown when checkbox is checked) -->
+    <div id="historicalBanner" class="alert alert-warning alert-permanent py-2 mb-3" style="display:none;">
+        <i class="bi bi-clock-history"></i>
+        <strong>Historical Entry Mode</strong> — This sale will be recorded for bookkeeping only.
+        Stock levels will <strong>not</strong> be deducted.
+    </div>
+
     <form id="kzincSaleForm">
         <input type="hidden" id="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+        <input type="hidden" id="is_historical" value="0">
+
+        <!-- Historical sale toggle -->
+        <div class="card mb-3 border-warning">
+            <div class="card-body py-2 px-3">
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="historicalToggle" role="switch">
+                    <label class="form-check-label" for="historicalToggle">
+                        <strong>Record historical sale</strong>
+                        <span class="text-muted small ms-2">— Sale already happened. Log for records only, do not deduct from stock.</span>
+                    </label>
+                </div>
+            </div>
+        </div>
 
         <div class="row g-3">
 
@@ -309,15 +336,23 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     const PIECES_PER_BUNDLE  = <?php echo KZINC_PIECES_PER_BUNDLE; ?>;
     const KZINC_CATEGORY     = '<?php echo STOCK_CATEGORY_KZINC; ?>';
 
+    // Coil datasets — live (with stock) vs all (for historical entry)
+    const liveCoilsData = <?php echo json_encode(array_values($coilsData)); ?>;
+    const allCoilsData  = <?php echo json_encode(array_values($allCoilsData)); ?>;
+
     // ── State ──────────────────────────────────────
     let rowCounter      = 0;
     let currentCoilData = null;
     let availableAddons = [];        // fetched from server
     let selectedAddons  = new Map(); // addonId → { addon, amount }
+    let isHistorical    = false;
 
     // ── DOM refs ───────────────────────────────────
-    const coilSelect      = document.getElementById('coil_id');
-    const coilStockInfo   = document.getElementById('coil_stock_info');
+    const coilSelect        = document.getElementById('coil_id');
+    const coilStockInfo     = document.getElementById('coil_stock_info');
+    const historicalToggle  = document.getElementById('historicalToggle');
+    const historicalBanner  = document.getElementById('historicalBanner');
+    const isHistoricalInput = document.getElementById('is_historical');
     const addRowBtn       = document.getElementById('addRowBtn');
     const colourRowsEl    = document.getElementById('colourRows');
     const noRowsMsg       = document.getElementById('noRowsMsg');
@@ -342,6 +377,42 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     function fmt(n) {
         return '₦' + parseFloat(n || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
+
+    // ── Historical toggle ──────────────────────────
+    function rebuildCoilDropdown(dataset) {
+        const currentVal = coilSelect.value;
+        coilSelect.innerHTML = '';
+        const blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = dataset.length === 0 ? '— No coils available —' : '— Select coil —';
+        coilSelect.appendChild(blank);
+        dataset.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.dataset.available = c.available_pieces;
+            opt.dataset.pallet    = c.pallet_size;
+            opt.dataset.code      = c.code;
+            opt.dataset.name      = c.name;
+            opt.textContent = `${c.code} — ${c.name} (${c.available_pieces.toLocaleString()} pcs available)`;
+            if (String(c.id) === currentVal) opt.selected = true;
+            coilSelect.appendChild(opt);
+        });
+        coilSelect.disabled = dataset.length === 0;
+        // Reset coil state if previous selection no longer in dataset
+        const stillValid = dataset.some(c => String(c.id) === currentVal);
+        if (!stillValid) {
+            currentCoilData = null;
+            coilStockInfo.style.display = 'none';
+        }
+    }
+
+    historicalToggle.addEventListener('change', function () {
+        isHistorical = this.checked;
+        isHistoricalInput.value = isHistorical ? '1' : '0';
+        historicalBanner.style.display = isHistorical ? '' : 'none';
+        rebuildCoilDropdown(isHistorical ? allCoilsData : liveCoilsData);
+        recalc();
+    });
 
     // ── Coil selection ─────────────────────────────
     coilSelect.addEventListener('change', function () {
@@ -571,7 +642,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         summTotal.textContent = fmt(grandTotal);
 
         const available = currentCoilData ? currentCoilData.available : null;
-        const over = available !== null && totalPieces > available;
+        // Historical mode: never show over-stock warning — stock is not being deducted
+        const over = !isHistorical && available !== null && totalPieces > available;
         summOverRow.style.display = over ? '' : 'none';
 
         const hasCoil = !!coilSelect.value;
@@ -694,6 +766,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             warehouse_id: parseInt(warehouseId),
             coil_id:      parseInt(coilId),
             sale_date:    saleDate,
+            is_historical: isHistorical,
             production_paper: {
                 customer:  { name: custName, phone: custPhone, email: '' },
                 warehouse: { name: whName },

@@ -53,11 +53,13 @@ try {
         throw new Exception('Missing required production data');
     }
 
-    // ✅ UPDATED: Check if this is a KZINC coil (aluminium and alusteel use stock-based workflow)
     $coilModel = new Coil();
     $coil = $coilModel->findById($productionData['coil_id']);
     $coilCategory = strtolower($coil['category']);
     $isKzinc = $coilCategory === 'kzinc';
+
+    // Historical entry: sale already happened — record for bookkeeping only, skip stock deduction
+    $isHistorical = !empty($productionData['is_historical']);
 
     $db = Database::getInstance()->getConnection();
     $db->beginTransaction();
@@ -119,12 +121,12 @@ try {
         // Set the primary stock entry (the first one we'll use)
         $primaryStockEntryId = $plannedDeductions[0]['entry_id'];
     } else {
-        // KZinc: pre-validate piece availability and determine sale unit
-        $stockEntryModel = new StockEntry();
-
+        // KZinc: determine sale unit type and quantity from the production paper
         $totalPiecesToDeduct = 0;
         $kzincBundleQty     = 0;
         $kzincHasBundles    = false;
+        $kzincPlannedDeductions = [];
+        $stockEntryModel    = new StockEntry();
 
         foreach ($productionPaper['properties'] as $prop) {
             $totalPiecesToDeduct += (int)($prop['pieces'] ?? 0);
@@ -138,33 +140,32 @@ try {
             throw new Exception('No pieces specified for KZinc sale');
         }
 
-        $kzincEntries         = $stockEntryModel->getAvailableKzincEntries($productionData['coil_id']);
-        $totalAvailablePieces = (int)array_sum(array_column($kzincEntries, 'pieces_remaining'));
+        if (!$isHistorical) {
+            // Live sale: validate availability and plan FIFO deductions
+            $kzincEntries         = $stockEntryModel->getAvailableKzincEntries($productionData['coil_id']);
+            $totalAvailablePieces = (int)array_sum(array_column($kzincEntries, 'pieces_remaining'));
 
-        if ($totalAvailablePieces < $totalPiecesToDeduct) {
-            throw new Exception(
-                "Insufficient KZinc stock: need $totalPiecesToDeduct pieces, only $totalAvailablePieces available"
-            );
-        }
-
-        // Plan FIFO deductions
-        $kzincPlannedDeductions = [];
-        $remaining = $totalPiecesToDeduct;
-
-        foreach ($kzincEntries as $entry) {
-            if ($remaining <= 0) {
-                break;
+            if ($totalAvailablePieces < $totalPiecesToDeduct) {
+                throw new Exception(
+                    "Insufficient KZinc stock: need $totalPiecesToDeduct pieces, only $totalAvailablePieces available"
+                );
             }
-            $deduct = min($remaining, (int)$entry['pieces_remaining']);
-            $kzincPlannedDeductions[] = ['entry_id' => (int)$entry['id'], 'deduct' => $deduct];
-            $remaining -= $deduct;
+
+            $remaining = $totalPiecesToDeduct;
+            foreach ($kzincEntries as $entry) {
+                if ($remaining <= 0) break;
+                $deduct = min($remaining, (int)$entry['pieces_remaining']);
+                $kzincPlannedDeductions[] = ['entry_id' => (int)$entry['id'], 'deduct' => $deduct];
+                $remaining -= $deduct;
+            }
+
+            $primaryStockEntryId = $kzincPlannedDeductions[0]['entry_id'] ?? null;
         }
+        // Historical sale: no stock deduction — $kzincPlannedDeductions stays empty,
+        // $primaryStockEntryId stays null.
 
         $kzincSaleUnitType = $kzincHasBundles ? STOCK_UNIT_BUNDLES : STOCK_UNIT_PIECES;
         $kzincSaleQuantity = $kzincHasBundles ? $kzincBundleQty : $totalPiecesToDeduct;
-
-        // Use the first FIFO entry as the primary stock entry reference for the sale record
-        $primaryStockEntryId = $kzincPlannedDeductions[0]['entry_id'] ?? null;
     }
 
     // ========================================
@@ -368,14 +369,15 @@ try {
 
         // Update coil status if needed
         $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
-    } else {
-        // KZinc: deduct pieces FIFO from stock entries
+    } else if (!$isHistorical) {
+        // KZinc live sale: deduct pieces FIFO from stock entries
         foreach ($kzincPlannedDeductions as $deduction) {
             if (!$stockEntryModel->deductPieces($deduction['entry_id'], $deduction['deduct'])) {
                 throw new Exception("Failed to deduct pieces from stock entry #{$deduction['entry_id']}");
             }
         }
         $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
+        // Historical KZinc sale: skip deduction entirely — stock was already consumed in the past
     }
 
     $db->commit();
