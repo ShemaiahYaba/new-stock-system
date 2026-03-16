@@ -22,24 +22,26 @@ $productionModel = new Production();
 $invoiceModel = new Invoice();
 $receiptModel = new Receipt();
 
-if (!empty($searchQuery)) {
-    // ✅ FIXED: Use positional parameters (?) instead of named parameters (:query)
-    $whereClause = 'WHERE s.deleted_at IS NULL 
-                   AND (c.name LIKE ? OR co.code LIKE ? OR co.name LIKE ?)';
-    $searchParam = "%$searchQuery%";
-    $params = [$searchParam, $searchParam, $searchParam]; // Use same param 3 times
+// Always exclude KZinc sales — those are managed in the K-Zinc module
+$baseWhere = "WHERE s.deleted_at IS NULL AND co.category != ?";
+$baseParams = [STOCK_CATEGORY_KZINC];
 
-    $sales = $saleModel->getFilteredSales(
-        $whereClause,
-        $params,
-        RECORDS_PER_PAGE,
-        ($currentPage - 1) * RECORDS_PER_PAGE,
-    );
-    $totalSales = $saleModel->countFilteredSales($whereClause, $params);
+if (!empty($searchQuery)) {
+    $whereClause = $baseWhere . ' AND (c.name LIKE ? OR co.code LIKE ? OR co.name LIKE ?)';
+    $searchParam = "%$searchQuery%";
+    $params = array_merge($baseParams, [$searchParam, $searchParam, $searchParam]);
 } else {
-    $sales = $saleModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalSales = $saleModel->count();
+    $whereClause = $baseWhere;
+    $params = $baseParams;
 }
+
+$sales = $saleModel->getFilteredSales(
+    $whereClause,
+    $params,
+    RECORDS_PER_PAGE,
+    ($currentPage - 1) * RECORDS_PER_PAGE,
+);
+$totalSales = $saleModel->countFilteredSales($whereClause, $params);
 
 // Enhance sales data with workflow status
 foreach ($sales as &$sale) {
@@ -106,7 +108,15 @@ require_once __DIR__ . '/../../layout/sidebar.php';
             </div>
         </div>
     </div>
-    
+
+    <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
+    <div class="alert alert-info alert-permanent py-2 mb-3">
+        <i class="bi bi-layers"></i>
+        K-Zinc sales are managed in the
+        <a href="/new-stock-system/index.php?page=kzinc_sales" class="alert-link">K-Zinc module</a>.
+    </div>
+    <?php endif; ?>
+
     <div class="card">
         <div class="card-header">
             <div class="row align-items-center">

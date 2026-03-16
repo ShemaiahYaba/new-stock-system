@@ -171,12 +171,13 @@ try {
 
                 if ($piecesToRestore > 0) {
                     // Get KZinc entries for the coil in LIFO order (reverse of deduction order)
-                    $kzincEntriesSql = "SELECT id, pieces_total, pieces_remaining
-                                        FROM stock_entries
-                                        WHERE coil_id = ?
-                                          AND unit_type != 'meters'
-                                          AND deleted_at IS NULL
-                                        ORDER BY created_at DESC";
+                    $kzincEntriesSql = "SELECT se.id, se.pieces_total, se.pieces_remaining
+                                        FROM stock_entries se
+                                        JOIN coils c ON se.coil_id = c.id
+                                        WHERE se.coil_id = ?
+                                          AND c.category = 'kzinc'
+                                          AND se.deleted_at IS NULL
+                                        ORDER BY se.created_at DESC";
                     $kzincStmt = $db->prepare($kzincEntriesSql);
                     $kzincStmt->execute([$sale['coil_id']]);
                     $kzincEntries = $kzincStmt->fetchAll();

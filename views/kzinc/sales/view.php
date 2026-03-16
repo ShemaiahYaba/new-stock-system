@@ -32,8 +32,9 @@ if (!$sale) {
     exit();
 }
 
-$production = $productionModel->findBySaleId($saleId);
-$invoice    = $invoiceModel->findBySaleId($saleId);
+$production    = $productionModel->findBySaleId($saleId);
+$invoiceRows   = $invoiceModel->findBySaleId($saleId);
+$invoice       = !empty($invoiceRows) ? $invoiceRows[0] : null;
 
 // Decode production paper
 $paper = null;

@@ -17,14 +17,30 @@ $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 $coilModel = new Coil();
 
+// This view manages Alusteel & Aluminum only — KZinc is handled in the K-Zinc module.
+// When no category filter is active, default to excluding KZinc and Tile.
+$nonKzincCategories = array_keys(array_filter(STOCK_CATEGORIES, function ($k) {
+    return $k !== STOCK_CATEGORY_KZINC && $k !== STOCK_CATEGORY_TILE;
+}, ARRAY_FILTER_USE_KEY));
+
 // Perform search or regular listing
 if ($searchQuery !== '') {
     $coils = $coilModel->search($searchQuery, $category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
     $allSearchResults = $coilModel->search($searchQuery, $category, 10000, 0);
+    // If searching without a category filter, strip KZinc/Tile results
+    if (!$category) {
+        $coils = array_values(array_filter($coils, fn($c) => in_array($c['category'], $nonKzincCategories)));
+        $allSearchResults = array_values(array_filter($allSearchResults, fn($c) => in_array($c['category'], $nonKzincCategories)));
+    }
     $totalCoils = count($allSearchResults);
 } else {
     $coils = $coilModel->getAll($category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
     $totalCoils = $coilModel->count($category);
+    // If no category filter, strip KZinc/Tile from results and recount
+    if (!$category) {
+        $coils = array_values(array_filter($coils, fn($c) => in_array($c['category'], $nonKzincCategories)));
+        $totalCoils = array_sum(array_map(fn($cat) => $coilModel->count($cat), $nonKzincCategories));
+    }
 }
 
 $paginationData = getPaginationData($totalCoils, $currentPage);

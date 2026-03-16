@@ -36,10 +36,13 @@ $totalSales = $saleModel->countFilteredSales($whereClause, $params);
 
 // Enrich with production/invoice
 foreach ($sales as &$sale) {
+    // Surface invoice data that getFilteredSales nests under $sale['invoice']
+    $sale['invoice_id']     = $sale['invoice']['id']     ?? null;
+    $sale['invoice_status'] = $sale['invoice']['status'] ?? null;
+
+    // Surface production data (not returned by getFilteredSales)
     $sale['production_id']     = $sale['production_id']     ?? null;
     $sale['production_status'] = $sale['production_status'] ?? null;
-    $sale['invoice_id']        = $sale['invoice_id']        ?? null;
-    $sale['invoice_status']    = $sale['invoice_status']    ?? null;
 
     if (empty($sale['production_id'])) {
         $prod = $productionModel->findBySaleId($sale['id']);

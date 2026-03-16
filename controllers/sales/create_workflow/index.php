@@ -16,7 +16,11 @@ require_once __DIR__ . '/../../../models/stock_entry.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 require_once __DIR__ . '/../../../utils/auth_middleware.php';
 
-requirePermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE);
+// Allow users with either Sales or KZinc management create permission
+if (!hasPermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE) && !hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_CREATE)) {
+    echo json_encode(['success' => false, 'message' => 'Permission denied']);
+    exit();
+}
 
 header('Content-Type: application/json');
 
