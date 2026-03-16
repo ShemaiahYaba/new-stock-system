@@ -156,10 +156,32 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
-                            <tfoot class="table-light">
+                            <?php if (!empty($paper['addons'])): ?>
+                            <tbody class="table-warning">
+                                <?php foreach ($paper['addons'] as $addon): ?>
                                 <tr>
-                                    <th class="ps-3" colspan="4">Total</th>
-                                    <th class="pe-3 text-end">₦<?php echo number_format($paper['total_amount'] ?? $sale['total_amount'], 2); ?></th>
+                                    <td class="ps-3 text-muted fst-italic" colspan="3">
+                                        <i class="bi bi-plus-square"></i>
+                                        <?php echo htmlspecialchars($addon['name'] ?? $addon['code'] ?? '—'); ?>
+                                    </td>
+                                    <td></td>
+                                    <td class="pe-3 text-end <?php echo ($addon['amount'] ?? 0) < 0 ? 'text-danger' : ''; ?>">
+                                        ₦<?php echo number_format($addon['amount'] ?? 0, 2); ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                            <?php endif; ?>
+                            <tfoot class="table-light">
+                                <?php if (!empty($paper['addons'])): ?>
+                                <tr>
+                                    <th class="ps-3 text-muted" colspan="4">Production Subtotal</th>
+                                    <th class="pe-3 text-end text-muted">₦<?php echo number_format($paper['total_amount'] ?? 0, 2); ?></th>
+                                </tr>
+                                <?php endif; ?>
+                                <tr>
+                                    <th class="ps-3" colspan="4">Grand Total</th>
+                                    <th class="pe-3 text-end">₦<?php echo number_format($paper['grand_total'] ?? $paper['total_amount'] ?? $sale['total_amount'], 2); ?></th>
                                 </tr>
                             </tfoot>
                         </table>

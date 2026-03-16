@@ -131,6 +131,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     </thead>
                     <tbody>
                         <?php foreach ($entries as $entry): ?>
+                        <?php
+                        $rem = (int)($entry['pieces_remaining'] ?? 0);
+                        $piecesTotal = (int)($entry['pieces_total'] ?? 0);
+                        // Derive display status: if pieces are fully depleted, show Sold Out
+                        // regardless of what the status column holds (deductPieces doesn't update status)
+                        $displayStatus = ($rem <= 0 && $piecesTotal > 0) ? 'sold' : ($entry['status'] ?? 'available');
+                        $unitLabel = $entry['unit_type'] ?? null;
+                        ?>
                         <tr>
                             <td><small class="text-muted"><?php echo $entry['id']; ?></small></td>
                             <td>
@@ -140,21 +148,24 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 <small class="d-block text-muted"><?php echo htmlspecialchars($entry['coil_name']); ?></small>
                             </td>
                             <td>
+                                <?php if ($unitLabel): ?>
                                 <span class="badge bg-info text-capitalize">
-                                    <?php echo htmlspecialchars($entry['unit_type'] ?? '—'); ?>
+                                    <?php echo htmlspecialchars($unitLabel); ?>
                                 </span>
+                                <?php else: ?>
+                                <span class="text-muted">—</span>
+                                <?php endif; ?>
                             </td>
                             <td><?php echo number_format($entry['quantity'] ?? 0, 0); ?></td>
-                            <td><?php echo number_format($entry['pieces_total'] ?? 0); ?></td>
+                            <td><?php echo number_format($piecesTotal); ?></td>
                             <td>
-                                <?php $rem = (int)($entry['pieces_remaining'] ?? 0); ?>
-                                <span class="badge <?php echo $rem > 0 ? 'bg-success' : 'bg-secondary'; ?>">
+                                <span class="badge <?php echo $rem > 0 ? 'bg-success' : 'bg-danger'; ?>">
                                     <?php echo number_format($rem); ?> pcs
                                 </span>
                             </td>
                             <td>
-                                <span class="badge <?php echo getStatusBadgeClass($entry['status'] ?? 'available'); ?>">
-                                    <?php echo STOCK_STATUSES[$entry['status']] ?? ucfirst($entry['status'] ?? ''); ?>
+                                <span class="badge <?php echo getStatusBadgeClass($displayStatus); ?>">
+                                    <?php echo STOCK_STATUSES[$displayStatus] ?? ucfirst(str_replace('_', ' ', $displayStatus)); ?>
                                 </span>
                             </td>
                             <td><small><?php echo formatDate($entry['created_at']); ?></small></td>

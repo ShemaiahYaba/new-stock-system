@@ -151,7 +151,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 </div>
 
                 <!-- Section 2: Colour Variations -->
-                <div class="card mb-3">
+                <div class="card mb-3" id="colourVariationsCard">
                     <div class="card-header d-flex justify-content-between align-items-center fw-bold">
                         <span><i class="bi bi-palette"></i> 2. Colour Variations</span>
                         <button type="button" class="btn btn-sm btn-outline-primary" id="addRowBtn">
@@ -181,6 +181,19 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         </div>
                     </div>
                 </div>
+                <!-- Section 3: Add-Ons & Additional Charges -->
+                <div class="card mb-3" id="addonsCard" style="display:none;">
+                    <div class="card-header bg-info text-white fw-bold">
+                        <i class="bi bi-plus-square"></i> 3. Add-Ons &amp; Additional Charges
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Select optional services and charges to include in the invoice.</p>
+                        <div id="addonsContainer">
+                            <div class="text-muted small"><i class="bi bi-hourglass-split"></i> Loading add-ons…</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- ── RIGHT COLUMN ── -->
@@ -207,7 +220,15 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 </td>
                             </tr>
                             <tr class="border-top">
-                                <td class="fw-bold">Total Amount</td>
+                                <td class="text-muted">Production Subtotal</td>
+                                <td class="text-end fw-bold" id="summSubtotal">₦0.00</td>
+                            </tr>
+                            <tr id="summAddonsRow" style="display:none;">
+                                <td class="text-muted">Add-Ons</td>
+                                <td class="text-end" id="summAddons">₦0.00</td>
+                            </tr>
+                            <tr class="border-top table-light">
+                                <td class="fw-bold fs-6">Grand Total</td>
                                 <td class="text-end fw-bold fs-5" id="summTotal">₦0.00</td>
                             </tr>
                         </table>
@@ -280,11 +301,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
 
 <script>
 (function () {
-    const PIECES_PER_BUNDLE = <?php echo KZINC_PIECES_PER_BUNDLE; ?>;
+    const PIECES_PER_BUNDLE  = <?php echo KZINC_PIECES_PER_BUNDLE; ?>;
+    const KZINC_CATEGORY     = '<?php echo STOCK_CATEGORY_KZINC; ?>';
 
     // ── State ──────────────────────────────────────
-    let rowCounter       = 0;
-    let currentCoilData  = null;
+    let rowCounter      = 0;
+    let currentCoilData = null;
+    let availableAddons = [];        // fetched from server
+    let selectedAddons  = new Map(); // addonId → { addon, amount }
 
     // ── DOM refs ───────────────────────────────────
     const coilSelect      = document.getElementById('coil_id');
@@ -292,18 +316,27 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     const addRowBtn       = document.getElementById('addRowBtn');
     const colourRowsEl    = document.getElementById('colourRows');
     const noRowsMsg       = document.getElementById('noRowsMsg');
+    const addonsCard      = document.getElementById('addonsCard');
+    const addonsContainer = document.getElementById('addonsContainer');
 
     const summBundles     = document.getElementById('summTotalBundles');
     const summPieces      = document.getElementById('summTotalPieces');
     const summAvailable   = document.getElementById('summAvailable');
     const summOverRow     = document.getElementById('summOverRow');
+    const summSubtotal    = document.getElementById('summSubtotal');
+    const summAddonsRow   = document.getElementById('summAddonsRow');
+    const summAddons      = document.getElementById('summAddons');
     const summTotal       = document.getElementById('summTotal');
 
     const submitBtn       = document.getElementById('submitBtn');
     const submitError     = document.getElementById('submitError');
     const submitSpinner   = document.getElementById('submitSpinner');
-
     const rowTemplate     = document.getElementById('rowTemplate');
+
+    // ── Format helpers ─────────────────────────────
+    function fmt(n) {
+        return '₦' + parseFloat(n || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 
     // ── Coil selection ─────────────────────────────
     coilSelect.addEventListener('change', function () {
@@ -315,17 +348,156 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             return;
         }
         currentCoilData = {
-            id:          parseInt(opt.value),
-            code:        opt.dataset.code,
-            name:        opt.dataset.name,
-            palletSize:  parseInt(opt.dataset.pallet || '0'),
-            available:   parseInt(opt.dataset.available || '0'),
+            id:        parseInt(opt.value),
+            code:      opt.dataset.code,
+            name:      opt.dataset.name,
+            palletSize: parseInt(opt.dataset.pallet || '0'),
+            available:  parseInt(opt.dataset.available || '0'),
         };
         coilStockInfo.textContent = `${currentCoilData.available} pieces available`;
         coilStockInfo.style.display = '';
         summAvailable.textContent = currentCoilData.available.toLocaleString() + ' pcs';
         recalcSummary();
     });
+
+    // ── Add-ons loading ────────────────────────────
+    async function loadAddons() {
+        try {
+            const resp = await fetch(
+                `/new-stock-system/controllers/production_properties/get_by_category.php?category=${KZINC_CATEGORY}&include_addons=1`
+            );
+            const data = await resp.json();
+            if (data.success) {
+                availableAddons = Array.isArray(data.addons) ? data.addons
+                    : (data.properties || []).filter(p => p.is_addon == 1);
+            }
+        } catch (e) {
+            availableAddons = [];
+        }
+        renderAddons();
+    }
+
+    function renderAddons() {
+        if (availableAddons.length === 0) {
+            addonsCard.style.display = 'none';
+            return;
+        }
+        addonsCard.style.display = '';
+
+        const charges     = availableAddons.filter(a => a.is_refundable != 1);
+        const adjustments = availableAddons.filter(a => a.is_refundable == 1);
+
+        let html = '';
+        if (charges.length > 0) {
+            html += renderAddonGroup('Add-On Charges', 'success', 'bi-plus-circle', charges);
+        }
+        if (adjustments.length > 0) {
+            html += renderAddonGroup('Adjustments & Refunds', 'warning', 'bi-dash-circle', adjustments);
+        }
+        addonsContainer.innerHTML = html;
+
+        // Wire up checkboxes and amount inputs
+        addonsContainer.querySelectorAll('.addon-check').forEach(cb => {
+            cb.addEventListener('change', onAddonToggle);
+        });
+        addonsContainer.querySelectorAll('.addon-amount').forEach(inp => {
+            inp.addEventListener('input', onAddonAmountChange);
+        });
+    }
+
+    function renderAddonGroup(title, color, icon, addons) {
+        let html = `<h6 class="mb-2 mt-3 text-${color}"><i class="bi ${icon}"></i> ${title}</h6><div class="row">`;
+        addons.forEach(addon => {
+            const defaultAmt = parseFloat(addon.default_price) || 0;
+            const isRefund   = addon.is_refundable == 1;
+            const methodLabel = addon.calculation_method === 'percentage'
+                ? `${defaultAmt}%` : fmt(defaultAmt);
+            html += `
+            <div class="col-md-6 col-lg-4 mb-2">
+                <div class="card h-100 p-2 border addon-card-item" data-addon-id="${addon.id}">
+                    <div class="form-check">
+                        <input class="form-check-input addon-check" type="checkbox"
+                               id="addon_${addon.id}" value="${addon.id}"
+                               data-method="${addon.calculation_method || 'fixed'}"
+                               data-default="${defaultAmt}"
+                               data-refund="${isRefund ? '1' : '0'}">
+                        <label class="form-check-label fw-bold small" for="addon_${addon.id}">
+                            ${escHtml(addon.name)}
+                        </label>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 mt-1">
+                        <span class="badge bg-secondary text-capitalize" style="font-size:0.7rem;">
+                            ${addon.calculation_method || 'fixed'}
+                        </span>
+                        <small class="text-muted">${methodLabel}</small>
+                    </div>
+                    <div class="addon-amount-wrapper mt-2" style="display:none;">
+                        <label class="form-label small mb-1">Amount (₦)</label>
+                        <input type="number" class="form-control form-control-sm addon-amount"
+                               data-addon-id="${addon.id}"
+                               min="0" step="0.01" placeholder="${defaultAmt}">
+                    </div>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function onAddonToggle(e) {
+        const addonId = parseInt(e.target.value);
+        const card    = e.target.closest('.addon-card-item');
+        const wrapper = card.querySelector('.addon-amount-wrapper');
+        const amtInp  = card.querySelector('.addon-amount');
+
+        if (e.target.checked) {
+            wrapper.style.display = '';
+            const addon      = availableAddons.find(a => a.id == addonId);
+            const calcMethod = e.target.dataset.method;
+            const defaultAmt = parseFloat(e.target.dataset.default) || 0;
+            let amount = calcMethod === 'percentage'
+                ? (getProductionSubtotal() * defaultAmt / 100)
+                : defaultAmt;
+            if (e.target.dataset.refund === '1' && amount > 0) amount = -amount;
+            amtInp.value = amount.toFixed(2);
+            selectedAddons.set(addonId, { addon, amount });
+        } else {
+            wrapper.style.display = 'none';
+            amtInp.value = '';
+            selectedAddons.delete(addonId);
+        }
+        recalcSummary();
+    }
+
+    function onAddonAmountChange(e) {
+        const addonId = parseInt(e.target.dataset.addonId);
+        const addon   = availableAddons.find(a => a.id == addonId);
+        const isRefund = addon?.is_refundable == 1;
+        let amount    = parseFloat(e.target.value) || 0;
+        if (isRefund && amount > 0) amount = -amount;
+        selectedAddons.set(addonId, { addon, amount });
+        recalcSummary();
+    }
+
+    function getProductionSubtotal() {
+        let total = 0;
+        colourRowsEl.querySelectorAll('.kz-row').forEach(rowEl => {
+            const bundles = parseFloat(rowEl.querySelector('.bundle-input').value) || 0;
+            const price   = parseFloat(rowEl.querySelector('.price-input').value)  || 0;
+            total += bundles * price;
+        });
+        return total;
+    }
+
+    function getAddonsTotal() {
+        let total = 0;
+        selectedAddons.forEach(({ amount }) => { total += amount; });
+        return total;
+    }
 
     // ── Add row ────────────────────────────────────
     addRowBtn.addEventListener('click', addRow);
@@ -336,21 +508,18 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         const rowEl = tpl.querySelector('.kz-row');
         rowEl.dataset.rowId = rowCounter;
 
-        // Remove btn
         rowEl.querySelector('.remove-row').addEventListener('click', () => {
             rowEl.remove();
             refreshNoRowsMsg();
             recalcSummary();
         });
 
-        // Colour select → show/hide custom input
         const colourSel   = rowEl.querySelector('.colour-select');
         const customInput = rowEl.querySelector('.custom-label');
         colourSel.addEventListener('change', () => {
             customInput.style.display = colourSel.value === '__custom__' ? '' : 'none';
         });
 
-        // Bundle / price → recalc
         rowEl.querySelector('.bundle-input').addEventListener('input', () => updateRow(rowEl));
         rowEl.querySelector('.price-input').addEventListener('input',  () => updateRow(rowEl));
 
@@ -365,44 +534,67 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         const pieces   = Math.round(bundles * PIECES_PER_BUNDLE);
         const subtotal = bundles * price;
 
-        rowEl.querySelector('.pieces-display').textContent  = pieces.toLocaleString();
-        rowEl.querySelector('.subtotal-display').textContent = '₦' + subtotal.toLocaleString('en', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        rowEl.querySelector('.pieces-display').textContent   = pieces.toLocaleString();
+        rowEl.querySelector('.subtotal-display').textContent = fmt(subtotal);
         recalcSummary();
     }
 
     function recalcSummary() {
-        let totalBundles = 0, totalPieces = 0, totalAmount = 0;
+        let totalBundles = 0, totalPieces = 0;
+        const productionSubtotal = getProductionSubtotal();
 
         colourRowsEl.querySelectorAll('.kz-row').forEach(rowEl => {
             const bundles = parseFloat(rowEl.querySelector('.bundle-input').value) || 0;
-            const price   = parseFloat(rowEl.querySelector('.price-input').value)  || 0;
             totalBundles += bundles;
             totalPieces  += Math.round(bundles * PIECES_PER_BUNDLE);
-            totalAmount  += bundles * price;
         });
 
-        summBundles.textContent = totalBundles.toLocaleString();
-        summPieces.textContent  = totalPieces.toLocaleString();
-        summTotal.textContent   = '₦' + totalAmount.toLocaleString('en', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        const addonsTotal = getAddonsTotal();
+        const grandTotal  = productionSubtotal + addonsTotal;
+
+        summBundles.textContent  = totalBundles.toLocaleString();
+        summPieces.textContent   = totalPieces.toLocaleString();
+        summSubtotal.textContent = fmt(productionSubtotal);
+
+        if (addonsTotal !== 0) {
+            summAddons.textContent     = fmt(addonsTotal);
+            summAddonsRow.style.display = '';
+        } else {
+            summAddonsRow.style.display = 'none';
+        }
+
+        summTotal.textContent = fmt(grandTotal);
 
         const available = currentCoilData ? currentCoilData.available : null;
         const over = available !== null && totalPieces > available;
         summOverRow.style.display = over ? '' : 'none';
 
-        // Enable submit if: coil selected, at least 1 row, total > 0, not over stock
-        const rows       = colourRowsEl.querySelectorAll('.kz-row');
-        const hasCoil    = !!coilSelect.value;
-        const hasRows    = rows.length > 0 && totalPieces > 0;
+        const hasCoil = !!coilSelect.value;
+        const hasRows = colourRowsEl.querySelectorAll('.kz-row').length > 0 && totalPieces > 0;
         submitBtn.disabled = !(hasCoil && hasRows && !over);
+
+        // Re-calc any percentage add-ons when production total changes
+        addonsContainer.querySelectorAll('.addon-check:checked').forEach(cb => {
+            if (cb.dataset.method === 'percentage') {
+                const addonId  = parseInt(cb.value);
+                const pct      = parseFloat(cb.dataset.default) || 0;
+                const isRefund = cb.dataset.refund === '1';
+                let amount     = productionSubtotal * pct / 100;
+                if (isRefund && amount > 0) amount = -amount;
+                const amtInp = addonsContainer.querySelector(`.addon-amount[data-addon-id="${addonId}"]`);
+                if (amtInp) amtInp.value = amount.toFixed(2);
+                const entry = selectedAddons.get(addonId);
+                if (entry) entry.amount = amount;
+            }
+        });
     }
 
     function refreshNoRowsMsg() {
-        const hasRows = colourRowsEl.querySelectorAll('.kz-row').length > 0;
-        noRowsMsg.style.display = hasRows ? 'none' : '';
+        noRowsMsg.style.display = colourRowsEl.querySelectorAll('.kz-row').length > 0 ? 'none' : '';
     }
 
     // ── Submit ─────────────────────────────────────
-    document.getElementById('submitBtn').addEventListener('click', submitSale);
+    submitBtn.addEventListener('click', submitSale);
 
     async function submitSale() {
         submitError.style.display = 'none';
@@ -418,10 +610,11 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             return;
         }
 
-        // Build properties from rows
+        // Build colour properties
         const rows = colourRowsEl.querySelectorAll('.kz-row');
         const properties = [];
-        let totalPieces = 0, totalAmount = 0;
+        let totalPieces = 0;
+        const productionSubtotal = getProductionSubtotal();
 
         for (const rowEl of rows) {
             const colourSel   = rowEl.querySelector('.colour-select');
@@ -431,26 +624,24 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             const pieces      = Math.round(bundles * PIECES_PER_BUNDLE);
             const subtotal    = bundles * price;
 
+            if (bundles <= 0) continue;
+
             const label = colourSel.value === '__custom__'
                 ? (customInput.value.trim() || 'Custom')
                 : (colourSel.value || 'KZinc');
 
-            if (bundles <= 0) continue;
-
             properties.push({
                 propertyType: 'bundles',
-                label:        label,
-                quantity:     bundles,
-                pieces:       pieces,
-                unitPrice:    price,
-                subtotal:     subtotal,
-                meters:       0,
-                sheetQty:     bundles,
-                sheetMeter:   0,
+                label,
+                quantity:   bundles,
+                pieces,
+                unitPrice:  price,
+                subtotal,
+                meters:     0,
+                sheetQty:   bundles,
+                sheetMeter: 0,
             });
-
             totalPieces += pieces;
-            totalAmount += subtotal;
         }
 
         if (properties.length === 0) {
@@ -458,13 +649,40 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             return;
         }
 
-        // Get display names for production paper
-        const custOpt = document.getElementById('customer_id').options;
-        const custName = custOpt[custOpt.selectedIndex]?.dataset.name || '';
-        const custPhone = custOpt[custOpt.selectedIndex]?.dataset.phone || '';
+        // Build add-ons arrays
+        const addonsArray = [];
+        const addonInvoiceItems = [];
+        let totalCharges = 0, totalAdjustments = 0;
 
-        const whOpt  = document.getElementById('warehouse_id').options;
-        const whName = whOpt[whOpt.selectedIndex]?.dataset.name || '';
+        selectedAddons.forEach(({ addon, amount }, addonId) => {
+            addonsArray.push({
+                addon_id:           addon.id,
+                code:               addon.code || '',
+                name:               addon.name,
+                amount:             amount,
+                calculation_method: addon.calculation_method || 'fixed',
+                display_section:    addon.is_refundable == 1 ? 'adjustment' : 'addon',
+            });
+            addonInvoiceItems.push({
+                description: addon.name,
+                quantity:    1,
+                unit:        'charge',
+                unit_price:  amount,
+                subtotal:    amount,
+            });
+            if (amount >= 0) totalCharges     += amount;
+            else             totalAdjustments += amount;
+        });
+
+        const addonsTotal = getAddonsTotal();
+        const grandTotal  = productionSubtotal + addonsTotal;
+
+        // Display names
+        const custOpt  = document.getElementById('customer_id').options;
+        const custName = custOpt[custOpt.selectedIndex]?.dataset.name  || '';
+        const custPhone= custOpt[custOpt.selectedIndex]?.dataset.phone || '';
+        const whOpt    = document.getElementById('warehouse_id').options;
+        const whName   = whOpt[whOpt.selectedIndex]?.dataset.name || '';
 
         const productionData = {
             customer_id:  parseInt(customerId),
@@ -475,14 +693,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 customer:  { name: custName, phone: custPhone, email: '' },
                 warehouse: { name: whName },
                 coil:      { code: currentCoilData?.code, name: currentCoilData?.name },
-                properties: properties,
-                addons:     [],
+                properties,
+                addons: addonsArray,
                 summary: {
                     totalMeters: 0,
-                    totalAmount: totalAmount,
+                    totalAmount: productionSubtotal,
                 },
-                addonSummary: { totalCharges: 0, totalAdjustments: 0 },
-                grandTotal: totalAmount,
+                addonSummary: { totalCharges, totalAdjustments },
+                grandTotal,
             },
         };
 
@@ -495,13 +713,13 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 unit_price:  p.unitPrice,
                 subtotal:    p.subtotal,
             })),
-            addon_items:   [],
-            addon_summary: { total_charges: 0, total_adjustments: 0 },
+            addon_items:   addonInvoiceItems,
+            addon_summary: { total_charges: totalCharges, total_adjustments: totalAdjustments },
             tax:      { type: 'fixed', value: 0, amount: 0 },
             discount: { type: 'fixed', value: 0, amount: 0 },
             shipping: 0,
-            grandTotal: totalAmount,
-            notes: notes,
+            grandTotal,
+            notes,
         };
 
         const formData = new FormData();
@@ -538,9 +756,10 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         submitError.style.display = '';
     }
 
-    // Init
+    // ── Init ───────────────────────────────────────
     refreshNoRowsMsg();
-    addRow(); // Start with one empty row
+    addRow();        // start with one empty row
+    loadAddons();    // fetch add-ons in background
 })();
 </script>
 
