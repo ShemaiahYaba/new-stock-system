@@ -26,17 +26,19 @@ $customers  = $customerModel->getAll(1000, 0);
 $warehouses = $warehouseModel->getActive();
 $kzincCoils = $coilModel->getAll(STOCK_CATEGORY_KZINC, 1000, 0);
 
-// Build coil data for JS (id, code, name, pallet_size, available_pieces)
+// Build coil data for JS — only coils that have stock entries with pieces remaining
 $coilsData = [];
 foreach ($kzincCoils as $c) {
-    $entries = $stockEntryModel->getAvailableKzincEntries($c['id']);
+    $entries         = $stockEntryModel->getAvailableKzincEntries($c['id']);
+    $availablePieces = (int)array_sum(array_column($entries, 'pieces_remaining'));
+    if ($availablePieces <= 0) continue;  // skip coils with no available stock
     $coilsData[] = [
-        'id'          => (int)$c['id'],
-        'code'        => $c['code'],
-        'name'        => $c['name'],
-        'pallet_size' => (int)($c['pallet_size'] ?? 0),
-        'available_pieces' => (int)array_sum(array_column($entries, 'pieces_remaining')),
-        'status'      => $c['status'],
+        'id'               => (int)$c['id'],
+        'code'             => $c['code'],
+        'name'             => $c['name'],
+        'pallet_size'      => (int)($c['pallet_size'] ?? 0),
+        'available_pieces' => $availablePieces,
+        'status'           => $c['status'],
     ];
 }
 
@@ -126,8 +128,11 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">K-Zinc Coil <span class="text-danger">*</span></label>
-                                <select class="form-select" id="coil_id" required>
-                                    <option value="">— Select coil —</option>
+                                <select class="form-select" id="coil_id" required
+                                        <?php echo empty($coilsData) ? 'disabled' : ''; ?>>
+                                    <option value="">
+                                        <?php echo empty($coilsData) ? '— No coils with available stock —' : '— Select coil —'; ?>
+                                    </option>
                                     <?php foreach ($coilsData as $c): ?>
                                     <option value="<?php echo $c['id']; ?>"
                                             data-available="<?php echo $c['available_pieces']; ?>"
