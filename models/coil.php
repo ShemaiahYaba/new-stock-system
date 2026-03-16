@@ -113,7 +113,7 @@ class Coil
     /**
      * Get all coils with pagination
      */
-    public function getAll($category = null, $limit = RECORDS_PER_PAGE, $offset = 0)
+    public function getAll($category = null, $limit = RECORDS_PER_PAGE, $offset = 0, $status = null, $gauge = null, $colorId = null)
     {
         try {
             $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code, col.hex_code as color_hex
@@ -125,6 +125,15 @@ class Coil
             if ($category) {
                 $sql .= ' AND c.category = :category';
             }
+            if ($status) {
+                $sql .= ' AND c.status = :status';
+            }
+            if ($gauge) {
+                $sql .= ' AND c.gauge = :gauge';
+            }
+            if ($colorId) {
+                $sql .= ' AND c.color_id = :color_id';
+            }
 
             $sql .= ' ORDER BY c.created_at DESC LIMIT :limit OFFSET :offset';
 
@@ -132,6 +141,15 @@ class Coil
 
             if ($category) {
                 $stmt->bindValue(':category', $category, PDO::PARAM_STR);
+            }
+            if ($status) {
+                $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+            }
+            if ($gauge) {
+                $stmt->bindValue(':gauge', $gauge, PDO::PARAM_STR);
+            }
+            if ($colorId) {
+                $stmt->bindValue(':color_id', (int)$colorId, PDO::PARAM_INT);
             }
 
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -148,7 +166,7 @@ class Coil
     /**
      * Count total coils
      */
-    public function count($category = null)
+    public function count($category = null, $status = null, $gauge = null, $colorId = null)
     {
         try {
             $sql = "SELECT COUNT(*) as total FROM {$this->table} WHERE deleted_at IS NULL";
@@ -156,11 +174,29 @@ class Coil
             if ($category) {
                 $sql .= ' AND category = :category';
             }
+            if ($status) {
+                $sql .= ' AND status = :status';
+            }
+            if ($gauge) {
+                $sql .= ' AND gauge = :gauge';
+            }
+            if ($colorId) {
+                $sql .= ' AND color_id = :color_id';
+            }
 
             $stmt = $this->db->prepare($sql);
 
             if ($category) {
                 $stmt->bindValue(':category', $category, PDO::PARAM_STR);
+            }
+            if ($status) {
+                $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+            }
+            if ($gauge) {
+                $stmt->bindValue(':gauge', $gauge, PDO::PARAM_STR);
+            }
+            if ($colorId) {
+                $stmt->bindValue(':color_id', (int)$colorId, PDO::PARAM_INT);
             }
 
             $stmt->execute();
@@ -170,6 +206,32 @@ class Coil
         } catch (PDOException $e) {
             error_log('Coil count error: ' . $e->getMessage());
             return 0;
+        }
+    }
+
+    /**
+     * Get distinct gauge values for filter dropdowns
+     */
+    public function getDistinctGauges($category = null)
+    {
+        try {
+            $sql = "SELECT DISTINCT gauge FROM {$this->table}
+                    WHERE deleted_at IS NULL AND gauge IS NOT NULL AND gauge != ''";
+            if ($category) {
+                $sql .= ' AND category = :category';
+            }
+            $sql .= ' ORDER BY gauge ASC';
+
+            $stmt = $this->db->prepare($sql);
+            if ($category) {
+                $stmt->bindValue(':category', $category, PDO::PARAM_STR);
+            }
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (PDOException $e) {
+            error_log('Coil distinct gauges error: ' . $e->getMessage());
+            return [];
         }
     }
 
@@ -285,38 +347,54 @@ class Coil
      * Since utf8mb4_unicode_ci is case-insensitive, LOWER() is optional
      * but we'll use it for consistency across different collations
      */
-    public function search($query, $category = null, $limit = RECORDS_PER_PAGE, $offset = 0)
+    public function search($query, $category = null, $limit = RECORDS_PER_PAGE, $offset = 0, $status = null, $gauge = null, $colorId = null)
     {
         try {
-            // Add wildcards to the search query
             $searchQuery = "%{$query}%";
-            
+
             $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code, col.hex_code as color_hex
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
                     LEFT JOIN colors col ON c.color_id = col.id
-                    WHERE c.deleted_at IS NULL 
+                    WHERE c.deleted_at IS NULL
                     AND (c.code LIKE :query1 OR c.name LIKE :query2)";
 
             if ($category) {
                 $sql .= ' AND c.category = :category';
             }
+            if ($status) {
+                $sql .= ' AND c.status = :status';
+            }
+            if ($gauge) {
+                $sql .= ' AND c.gauge = :gauge';
+            }
+            if ($colorId) {
+                $sql .= ' AND c.color_id = :color_id';
+            }
 
             $sql .= ' ORDER BY c.created_at DESC LIMIT :limit OFFSET :offset';
 
             $stmt = $this->db->prepare($sql);
-            
-            // Bind each parameter separately with unique names
+
             $stmt->bindValue(':query1', $searchQuery, PDO::PARAM_STR);
             $stmt->bindValue(':query2', $searchQuery, PDO::PARAM_STR);
 
             if ($category) {
                 $stmt->bindValue(':category', $category, PDO::PARAM_STR);
             }
+            if ($status) {
+                $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+            }
+            if ($gauge) {
+                $stmt->bindValue(':gauge', $gauge, PDO::PARAM_STR);
+            }
+            if ($colorId) {
+                $stmt->bindValue(':color_id', (int)$colorId, PDO::PARAM_INT);
+            }
 
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            
+
             $stmt->execute();
 
             return $stmt->fetchAll();

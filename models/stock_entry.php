@@ -362,22 +362,32 @@ class StockEntry
  public function getAvailableStock()
 {
     try {
-        $sql = "SELECT se.*, 
-                       c.code as coil_code, 
-                       c.name as coil_name, 
-                       COALESCE(se.weight_kg, 0) as weight_kg, 
-                       COALESCE(se.weight_kg_remaining, 
-                               (se.weight_kg * (se.meters_remaining / NULLIF(se.meters, 0))), 
+        // Include both 'available' and 'factory_use' entries — factory_use entries are
+        // allocated to production orders but still have meters remaining that can be sold.
+        // Exclude KZinc via category JOIN (KZinc is sold by pieces through its own module).
+        $sql = "SELECT se.*,
+                       c.code as coil_code,
+                       c.name as coil_name,
+                       c.category as coil_category,
+                       COALESCE(se.weight_kg, 0) as weight_kg,
+                       COALESCE(se.weight_kg_remaining,
+                               (se.weight_kg * (se.meters_remaining / NULLIF(se.meters, 0))),
                                0) as weight_kg_remaining
                 FROM {$this->table} se
                 JOIN coils c ON se.coil_id = c.id
-                WHERE se.status = :status
+                WHERE se.status IN (:available, :factory_use)
                 AND se.meters_remaining > 0
                 AND (se.unit_type = 'meters' OR se.unit_type IS NULL)
-                AND se.deleted_at IS NULL";
-        
+                AND c.category != :kzinc
+                AND se.deleted_at IS NULL
+                ORDER BY c.code ASC, se.created_at DESC";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':status' => STOCK_STATUS_AVAILABLE]);
+        $stmt->execute([
+            ':available'   => STOCK_STATUS_AVAILABLE,
+            ':factory_use' => STOCK_STATUS_FACTORY_USE,
+            ':kzinc'       => STOCK_CATEGORY_KZINC,
+        ]);
 
         return $stmt->fetchAll();
     } catch (PDOException $e) {
