@@ -92,19 +92,18 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <th width="5%">Select</th>
         <th>Coil Code</th>
         <th>Description</th>
-        <th>Status</th>
-        <th>Meters Remaining</th>
-        <th>Weight (kg)</th>
-        <th>Unit Price (₦/m)</th>
+        <th>Available (KG)</th>
+        <th>Meters</th>
+        <th>Unit Price (₦/KG)</th>
         <th>Action</th>
     </tr>
 </thead>
 <tbody id="availableStockItems">
     <?php if (empty($availableStock)): ?>
     <tr>
-        <td colspan="9" class="text-center text-muted py-4">
+        <td colspan="8" class="text-center text-muted py-4">
             <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-            No available stock entries found. Add stock entries with meters to coils first.
+            No available stock entries found. Add stock entries to coils first.
         </td>
     </tr>
     <?php else: ?>
@@ -122,24 +121,19 @@ require_once __DIR__ . '/../../layout/sidebar.php';
             </td>
             <td class="coil-code"><?= htmlspecialchars($stock['coil_code']) ?></td>
             <td class="coil-name"><?= htmlspecialchars($stock['coil_name']) ?></td>
-            <td>
-                <span class="badge <?php echo $stock['status'] === STOCK_STATUS_AVAILABLE ? 'bg-success' : 'bg-warning text-dark'; ?>">
-                    <?php echo STOCK_STATUSES[$stock['status']] ?? $stock['status']; ?>
-                </span>
-            </td>
 
-            <!-- PRIMARY: Meters -->
-            <td class="available-meters">
-                <strong><?= number_format($stock['meters_remaining'], 2) ?> m</strong>
-            </td>
-
-            <!-- SECONDARY: KG (may be empty for older entries) -->
-            <td class="available-weight text-muted">
+            <!-- PRIMARY: KG -->
+            <td class="available-weight">
                 <?php if ($stock['weight_kg_remaining'] > 0): ?>
-                    <?= number_format($stock['weight_kg_remaining'], 2) ?> kg
+                    <strong><?= number_format($stock['weight_kg_remaining'], 2) ?> kg</strong>
                 <?php else: ?>
-                    <span class="text-muted">—</span>
+                    <span class="text-danger">No weight data</span>
                 <?php endif; ?>
+            </td>
+
+            <!-- SECONDARY: Meters -->
+            <td class="available-meters text-muted">
+                <?= number_format($stock['meters_remaining'], 2) ?> m
             </td>
 
             <td>
@@ -148,11 +142,12 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                        data-stock-id="<?= $stock['id'] ?>"
                        min="0"
                        step="0.01"
-                       placeholder="₦/m">
+                       placeholder="₦/KG">
             </td>
             <td>
                 <button type="button" class="btn btn-sm btn-primary add-to-sale"
-                        data-stock-id="<?= $stock['id'] ?>">
+                        data-stock-id="<?= $stock['id'] ?>"
+                        <?= (!$stock['weight_kg_remaining'] || $stock['weight_kg_remaining'] <= 0) ? 'disabled title="No weight data available"' : '' ?>>
                     <i class="bi bi-plus"></i> Add
                 </button>
             </td>
@@ -181,9 +176,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
         <th width="5%">#</th>
         <th>Coil Code</th>
         <th>Description</th>
+        <th>Quantity (KG)</th>
         <th>Meters</th>
-        <th>Weight (kg)</th>
-        <th>Unit Price (₦/m)</th>
+        <th>Unit Price (₦/KG)</th>
         <th>Total (₦)</th>
         <th>Action</th>
     </tr>
@@ -195,12 +190,12 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="6" class="text-end fw-bold">Subtotal:</td>
+                                        <td colspan="5" class="text-end fw-bold">Subtotal:</td>
                                         <td class="fw-bold">₦ <span id="subtotal">0.00</span></td>
                                         <td></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="6" class="text-end fw-bold">
+                                        <td colspan="5" class="text-end fw-bold">
                                             Tax (%):
                                             <input type="number"
                                                    name="tax_rate"
@@ -281,6 +276,7 @@ addSelectedBtn.addEventListener('click', function(e) {
     let addedCount = 0;
     let skippedCount = 0;
     let missingPriceCount = 0;
+    let noWeightCount = 0;
 
     checkboxes.forEach(function(checkbox) {
         const stockId = checkbox.getAttribute('data-stock-id');
@@ -294,30 +290,24 @@ addSelectedBtn.addEventListener('click', function(e) {
             return;
         }
 
-        const availableMeters = parseFloat(row.getAttribute('data-meters')) || 0;
-        if (availableMeters <= 0) return;
+        const availableWeight = parseFloat(row.getAttribute('data-weight')) || 0;
+        if (availableWeight <= 0) { noWeightCount++; return; }
 
         const unitPriceInput = row.querySelector('.unit-price');
         const unitPrice = parseFloat(unitPriceInput.value) || 0;
 
-        if (unitPrice <= 0) {
-            missingPriceCount++;
-            return;
-        }
+        if (unitPrice <= 0) { missingPriceCount++; return; }
 
-        const coilCode   = row.querySelector('.coil-code').textContent.trim();
-        const description = row.querySelector('.coil-name').textContent.trim();
-        const weightKg   = parseFloat(row.getAttribute('data-weight')) || 0;
+        const availableMeters = parseFloat(row.getAttribute('data-meters')) || 0;
 
         saleItems.push({
             stockId:     stockId,
-            coilCode:    coilCode,
-            description: description,
-            quantity:    availableMeters, // meters — primary
+            coilCode:    row.querySelector('.coil-code').textContent.trim(),
+            description: row.querySelector('.coil-name').textContent.trim(),
+            quantity:    availableWeight,
             meters:      availableMeters,
-            weightKg:    weightKg,
             unitPrice:   unitPrice,
-            total:       unitPrice * availableMeters
+            total:       unitPrice * availableWeight
         });
 
         addedCount++;
@@ -326,12 +316,9 @@ addSelectedBtn.addEventListener('click', function(e) {
 
     if (addedCount > 0) updateSaleTable();
 
-    if (missingPriceCount > 0) {
-        alert(missingPriceCount + ' item(s) skipped: Please enter unit prices first.');
-    }
-    if (skippedCount > 0) {
-        alert(skippedCount + ' item(s) already in the sale list.');
-    }
+    if (noWeightCount > 0)      alert(noWeightCount + ' item(s) skipped: No weight data available.');
+    if (missingPriceCount > 0)  alert(missingPriceCount + ' item(s) skipped: Please enter unit prices first.');
+    if (skippedCount > 0)       alert(skippedCount + ' item(s) already in the sale list.');
 });
 function addItemToSale(stockId) {
     const row = document.querySelector('tr[data-stock-id="' + stockId + '"]');
@@ -342,18 +329,18 @@ function addItemToSale(stockId) {
         return;
     }
 
+    const availableWeight = parseFloat(row.getAttribute('data-weight')) || 0;
     const availableMeters = parseFloat(row.getAttribute('data-meters')) || 0;
-    const weightKg        = parseFloat(row.getAttribute('data-weight')) || 0;
     const unitPriceInput  = row.querySelector('.unit-price');
     const unitPrice       = parseFloat(unitPriceInput.value) || 0;
 
-    if (availableMeters <= 0) {
-        alert('No meters remaining for this stock entry.');
+    if (availableWeight <= 0) {
+        alert('No weight data available for this item. Cannot add to sale.');
         return;
     }
 
     if (unitPrice <= 0) {
-        alert('Please enter a valid unit price (₦/m) before adding to sale.');
+        alert('Please enter a valid unit price (₦/KG) before adding to sale.');
         unitPriceInput.focus();
         return;
     }
@@ -362,11 +349,10 @@ function addItemToSale(stockId) {
         stockId:     stockId,
         coilCode:    row.querySelector('.coil-code').textContent.trim(),
         description: row.querySelector('.coil-name').textContent.trim(),
-        quantity:    availableMeters,
+        quantity:    availableWeight,
         meters:      availableMeters,
-        weightKg:    weightKg,
         unitPrice:   unitPrice,
-        total:       unitPrice * availableMeters
+        total:       unitPrice * availableWeight
     });
 
     updateSaleTable();
@@ -386,14 +372,13 @@ function addItemToSale(stockId) {
         saleItems.forEach(function(item, index) {
             const row = document.createElement('tr');
             row.setAttribute('data-stock-id', item.stockId);
-            const weightDisplay = item.weightKg > 0 ? item.weightKg.toFixed(2) + ' kg' : '—';
             row.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${item.coilCode}</td>
                 <td>${item.description}</td>
-                <td><strong>${item.meters.toFixed(2)} m</strong></td>
-                <td class="text-muted">${weightDisplay}</td>
-                <td>₦${item.unitPrice.toFixed(2)}/m</td>
+                <td><strong>${item.quantity.toFixed(2)} kg</strong></td>
+                <td class="text-muted">${item.meters.toFixed(2)} m</td>
+                <td>₦${item.unitPrice.toFixed(2)}/kg</td>
                 <td><strong>₦${item.total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
                 <td>
                     <button type="button" class="btn btn-sm btn-outline-danger remove-item" data-stock-id="${item.stockId}">

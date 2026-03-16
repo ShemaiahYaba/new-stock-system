@@ -362,8 +362,7 @@ class StockEntry
  public function getAvailableStock()
 {
     try {
-        // Include both 'available' and 'factory_use' entries — factory_use entries are
-        // allocated to production orders but still have meters remaining that can be sold.
+        // Only 'available' entries — factory_use is allocated to production orders.
         // Exclude KZinc via category JOIN (KZinc is sold by pieces through its own module).
         $sql = "SELECT se.*,
                        c.code as coil_code,
@@ -375,7 +374,7 @@ class StockEntry
                                0) as weight_kg_remaining
                 FROM {$this->table} se
                 JOIN coils c ON se.coil_id = c.id
-                WHERE se.status IN (:available, :factory_use)
+                WHERE se.status = :status
                 AND se.meters_remaining > 0
                 AND (se.unit_type = 'meters' OR se.unit_type IS NULL)
                 AND c.category != :kzinc
@@ -384,9 +383,8 @@ class StockEntry
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
-            ':available'   => STOCK_STATUS_AVAILABLE,
-            ':factory_use' => STOCK_STATUS_FACTORY_USE,
-            ':kzinc'       => STOCK_CATEGORY_KZINC,
+            ':status' => STOCK_STATUS_AVAILABLE,
+            ':kzinc'  => STOCK_CATEGORY_KZINC,
         ]);
 
         return $stmt->fetchAll();

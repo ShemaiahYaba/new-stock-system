@@ -83,26 +83,29 @@ try {
     $stockEntries = [];
     $firstSaleId = null;
 
-    // Process each stock item — meters-based
+    // Process each stock item — KG-based
     foreach ($_POST['unit_price'] as $stockEntryId => $unitPrice) {
         $stockEntry = $stockEntryModel->findById($stockEntryId);
 
-        $allowedStatuses = [STOCK_STATUS_AVAILABLE, STOCK_STATUS_FACTORY_USE];
-        if (!$stockEntry || !in_array($stockEntry['status'], $allowedStatuses)) {
+        if (!$stockEntry || $stockEntry['status'] !== STOCK_STATUS_AVAILABLE) {
             throw new Exception('Invalid or unavailable stock entry: ' . $stockEntryId);
         }
 
-        // Quantity posted is meters
-        $metersToDeduct = isset($_POST['quantity'][$stockEntryId])
-            ? floatval($_POST['quantity'][$stockEntryId])
-            : floatval($stockEntry['meters_remaining']);
+        if (empty($stockEntry['weight_kg_remaining']) || $stockEntry['weight_kg_remaining'] <= 0) {
+            throw new Exception('No weight data available for stock entry: ' . $stockEntryId);
+        }
 
-        if ($metersToDeduct <= 0) {
+        // Quantity posted is KG
+        $quantityKg = isset($_POST['quantity'][$stockEntryId])
+            ? floatval($_POST['quantity'][$stockEntryId])
+            : floatval($stockEntry['weight_kg_remaining']);
+
+        if ($quantityKg <= 0) {
             throw new Exception('Invalid quantity for stock entry: ' . $stockEntryId);
         }
 
-        if ($metersToDeduct > $stockEntry['meters_remaining']) {
-            throw new Exception('Quantity exceeds available meters for stock entry: ' . $stockEntryId);
+        if ($quantityKg > $stockEntry['weight_kg_remaining']) {
+            throw new Exception('Quantity exceeds available weight for stock entry: ' . $stockEntryId);
         }
 
         $unitPrice = floatval($unitPrice);
@@ -110,24 +113,25 @@ try {
             throw new Exception('Invalid unit price for stock entry: ' . $stockEntryId);
         }
 
-        // Derive corresponding KG (proportional to meters deducted); may be 0 if no weight data
-        $weightKgRemaining = floatval($stockEntry['weight_kg_remaining'] ?? 0);
-        $quantityKg = 0;
-        if ($weightKgRemaining > 0 && floatval($stockEntry['meters_remaining']) > 0) {
-            $quantityKg = ($metersToDeduct / floatval($stockEntry['meters_remaining'])) * $weightKgRemaining;
+        // Derive meters to deduct proportionally from KG
+        $metersToDeduct = 0;
+        if ($stockEntry['weight_kg_remaining'] > 0) {
+            $metersToDeduct = ($quantityKg / $stockEntry['weight_kg_remaining']) * $stockEntry['meters_remaining'];
+        } else {
+            $metersToDeduct = $stockEntry['meters_remaining'];
         }
 
-        $lineTotal    = $metersToDeduct * $unitPrice;
+        $lineTotal    = $quantityKg * $unitPrice;
         $totalAmount += $lineTotal;
 
         $saleItems[] = [
-            'coil_id'        => $stockEntry['coil_id'],
-            'stock_entry_id' => $stockEntryId,
-            'quantity_kg'    => $quantityKg,
-            'meters_deducted'=> $metersToDeduct,
-            'unit_price'     => $unitPrice,
-            'total'          => $lineTotal,
-            'stock_entry'    => $stockEntry,
+            'coil_id'         => $stockEntry['coil_id'],
+            'stock_entry_id'  => $stockEntryId,
+            'quantity_kg'     => $quantityKg,
+            'meters_deducted' => $metersToDeduct,
+            'unit_price'      => $unitPrice,
+            'total'           => $lineTotal,
+            'stock_entry'     => $stockEntry,
         ];
     }
 
@@ -193,8 +197,8 @@ try {
         $invoiceItems[] = [
             'description' =>
                 $item['stock_entry']['coil_code'] . ' - ' . $item['stock_entry']['coil_name'],
-            'quantity'   => $item['meters_deducted'],
-            'qty_text'   => number_format($item['meters_deducted'], 2) . ' m',
+            'quantity'   => $item['quantity_kg'],
+            'qty_text'   => number_format($item['quantity_kg'], 2) . ' kg',
             'unit_price' => $item['unit_price'],
             'subtotal'   => $item['total'],
         ];
