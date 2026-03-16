@@ -17,34 +17,58 @@ $coilId = isset($_GET['coil_id']) ? (int) $_GET['coil_id'] : null;
 $statusFilter = isset($_GET['status']) ? sanitize($_GET['status']) : '';
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-$stockEntryModel = new StockEntry();
-$coilModel = new Coil();
+$db = Database::getInstance()->getConnection();
 
-// Build query based on filters
+// Build a direct query that always excludes KZinc coils
+// (KZinc entries are managed in the dedicated K-Zinc module)
+$baseWhere = "se.deleted_at IS NULL AND c.category != '" . STOCK_CATEGORY_KZINC . "'";
+$baseJoin  = "FROM stock_entries se
+              LEFT JOIN coils c ON se.coil_id = c.id
+              LEFT JOIN users u ON se.created_by = u.id";
+
+$whereParts = [$baseWhere];
+$params     = [];
+
 if ($searchQuery !== '') {
-    // Search mode - search by coil code/name
-    $entries = $stockEntryModel->search($searchQuery, $statusFilter, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalEntries = $stockEntryModel->countSearch($searchQuery, $statusFilter);
-} elseif ($coilId) {
-    // Filter by specific coil
-    $entries = $stockEntryModel->getByCoil($coilId, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE, false);
-    $totalEntries = count($stockEntryModel->getByCoil($coilId, 10000, 0, false));
-} elseif ($statusFilter !== '') {
-    // Filter by status
-    $entries = $stockEntryModel->getAllByStatus($statusFilter, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalEntries = $stockEntryModel->countByStatus($statusFilter);
-} else {
-    // No filters - get all
-    $entries = $stockEntryModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalEntries = $stockEntryModel->count();
+    $q = "%$searchQuery%";
+    $whereParts[] = '(c.code LIKE ? OR c.name LIKE ?)';
+    $params[] = $q;
+    $params[] = $q;
 }
+if ($coilId) {
+    $whereParts[] = 'se.coil_id = ?';
+    $params[] = $coilId;
+}
+if ($statusFilter !== '') {
+    $whereParts[] = 'se.status = ?';
+    $params[] = $statusFilter;
+}
+
+$whereStr = implode(' AND ', $whereParts);
+$offset   = ($currentPage - 1) * RECORDS_PER_PAGE;
+
+$countStmt = $db->prepare("SELECT COUNT(*) $baseJoin WHERE $whereStr");
+$countStmt->execute($params);
+$totalEntries = (int)$countStmt->fetchColumn();
+
+$entriesStmt = $db->prepare(
+    "SELECT se.*, c.code AS coil_code, c.name AS coil_name, c.status AS coil_status, u.name AS created_by_name
+     $baseJoin
+     WHERE $whereStr
+     ORDER BY se.created_at DESC
+     LIMIT ? OFFSET ?"
+);
+$entriesStmt->execute(array_merge($params, [(int)RECORDS_PER_PAGE, $offset]));
+$entries = $entriesStmt->fetchAll();
 
 $paginationData = getPaginationData($totalEntries, $currentPage);
 
-// Get coils for dropdown filter (if needed)
-$coilsForFilter = $coilModel->getAll(null, 1000, 0);
-
-$db = Database::getInstance()->getConnection();
+// Coils for filter dropdown (non-KZinc only)
+$coilModel = new Coil();
+$coilsForFilter = array_filter(
+    $coilModel->getAll(null, 1000, 0),
+    fn($c) => $c['category'] !== STOCK_CATEGORY_KZINC
+);
 
 require_once __DIR__ . '/../../../layout/header.php';
 require_once __DIR__ . '/../../../layout/sidebar.php';
@@ -56,7 +80,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             <div>
                 <h1 class="page-title">Stock Entries</h1>
                 <p class="text-muted">
-                    Manage stock meter entries
+                    Manage stock entries
                     <?php if ($searchQuery !== ''): ?>
                         <span class="badge bg-info">Search: "<?php echo htmlspecialchars($searchQuery); ?>"</span>
                     <?php endif; ?>
@@ -77,6 +101,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         </div>
     </div>
     
+    <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
+    <div class="alert alert-info alert-permanent py-2 mb-3">
+        <i class="bi bi-layers"></i>
+        K-Zinc stock entries are managed in the
+        <a href="/new-stock-system/index.php?page=kzinc_stock" class="alert-link">K-Zinc module</a>.
+    </div>
+    <?php endif; ?>
+
     <!-- Filters Card -->
     <div class="card mb-3">
         <div class="card-body">
@@ -160,9 +192,9 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>ID</th>
                             <th>Coil Code</th>
                             <th>Coil Name</th>
-                            <th>Meters</th>
+                            <th>Quantity</th>
                             <th>Weight (KG)</th>
-                            <th>Remaining (M)</th>
+                            <th>Remaining</th>
                             <th>Status</th>
                             <th>Created By</th>
                             <th>Actions</th>
@@ -172,9 +204,16 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <?php foreach ($entries as $entry): ?>
                         <?php
                         $displayStatus = $entry['status'] ?? 'available';
+                        $isKzincEntry = ($entry['unit_type'] ?? 'meters') !== 'meters';
 
-                        if ($entry['meters_remaining'] <= 0) {
-                            $displayStatus = 'sold';
+                        if ($isKzincEntry) {
+                            if ((int)($entry['pieces_remaining'] ?? 0) <= 0) {
+                                $displayStatus = 'sold';
+                            }
+                        } else {
+                            if ($entry['meters_remaining'] <= 0) {
+                                $displayStatus = 'sold';
+                            }
                         }
 
                         $statusBadge = 'bg-info';
@@ -202,10 +241,19 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <td><?php echo !empty($entry['coil_name'])
                                 ? htmlspecialchars($entry['coil_name'])
                                 : 'N/A'; ?></td>
-                            <td><?php echo number_format($entry['meters'], 2); ?>m</td>
-                            
                             <td>
-                                <?php if (!empty($entry['weight_kg']) && $entry['weight_kg'] > 0): ?>
+                                <?php if ($isKzincEntry): ?>
+                                    <?php echo number_format($entry['quantity'] ?? 0, 2); ?> <?php echo htmlspecialchars($entry['unit_type']); ?>
+                                    <small class="text-muted d-block">(<?php echo (int)($entry['pieces_total'] ?? 0); ?> pcs)</small>
+                                <?php else: ?>
+                                    <?php echo number_format($entry['meters'], 2); ?>m
+                                <?php endif; ?>
+                            </td>
+
+                            <td>
+                                <?php if ($isKzincEntry): ?>
+                                    <span class="text-muted">N/A</span>
+                                <?php elseif (!empty($entry['weight_kg']) && $entry['weight_kg'] > 0): ?>
                                     <span class="text-primary fw-bold">
                                         <?php echo number_format($entry['weight_kg'], 2); ?> kg
                                     </span>
@@ -213,13 +261,19 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     <span class="text-muted">N/A</span>
                                 <?php endif; ?>
                             </td>
-                            
+
                             <td>
-                                <span class="badge <?php echo $entry['meters_remaining'] > 0
-                                    ? 'bg-success'
-                                    : 'bg-secondary'; ?>">
-                                    <?php echo number_format($entry['meters_remaining'], 2); ?>m
-                                </span>
+                                <?php if ($isKzincEntry): ?>
+                                    <span class="badge <?php echo (int)($entry['pieces_remaining'] ?? 0) > 0 ? 'bg-success' : 'bg-secondary'; ?>">
+                                        <?php echo (int)($entry['pieces_remaining'] ?? 0); ?> pcs
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge <?php echo $entry['meters_remaining'] > 0
+                                        ? 'bg-success'
+                                        : 'bg-secondary'; ?>">
+                                        <?php echo number_format($entry['meters_remaining'], 2); ?>m
+                                    </span>
+                                <?php endif; ?>
                             </td>
                             
                             <td>
@@ -237,7 +291,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </td>
                             <td><?php echo htmlspecialchars($entry['created_by_name']); ?></td>
                             <td>
-                                <?php if (hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT) && $entry['meters_remaining'] > 0): ?>
+                                <?php if (!$isKzincEntry && hasPermission(MODULE_STOCK_MANAGEMENT, ACTION_EDIT) && $entry['meters_remaining'] > 0): ?>
                                 <form method="POST" action="/new-stock-system/controllers/stock_entries/toggle_status/index.php" style="display: inline;">
                                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
                                     <input type="hidden" name="id" value="<?php echo $entry['id']; ?>">

@@ -25,7 +25,11 @@ $coilModel = new Coil();
 
 $customers = $customerModel->getAll(1000, 0);
 $warehouses = $warehouseModel->getActive();
-$coils = $coilModel->getForDropdown();
+// Exclude KZinc coils — they use the dedicated K-Zinc sales workflow
+$coils = array_filter(
+    $coilModel->getForDropdown(),
+    fn($c) => $c['category'] !== STOCK_CATEGORY_KZINC
+);
 
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';
@@ -337,7 +341,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                         <p class="mb-1"><strong>Weight:</strong> <span id="coil_weight">-</span> kg</p>
                                     </div>
                                     <div class="col-md-2">
-                                        <p class="mb-1"><strong>Available:</strong> <span id="coil_available">0.00</span>m</p>
+                                        <p class="mb-1"><strong>Available:</strong> <span id="coil_available">0.00</span><span id="coil_available_unit">m</span></p>
                                     </div>
                                 </div>
                                 <div class="row mt-2">

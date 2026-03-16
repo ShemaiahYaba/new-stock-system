@@ -27,9 +27,11 @@ class StockEntry
     public function create($data)
 {
     try {
-        $sql = "INSERT INTO {$this->table} 
-                (coil_id, meters, meters_remaining, weight_kg, weight_kg_remaining, created_by, created_at) 
-                VALUES (:coil_id, :meters, :meters_remaining, :weight_kg, :weight_kg_remaining, :created_by, NOW())";
+        $sql = "INSERT INTO {$this->table}
+                (coil_id, meters, meters_remaining, weight_kg, weight_kg_remaining,
+                 unit_type, quantity, pieces_total, pieces_remaining, created_by, created_at)
+                VALUES (:coil_id, :meters, :meters_remaining, :weight_kg, :weight_kg_remaining,
+                        :unit_type, :quantity, :pieces_total, :pieces_remaining, :created_by, NOW())";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -38,6 +40,10 @@ class StockEntry
             ':meters_remaining' => $data['meters'],
             ':weight_kg' => $data['weight_kg'] ?? null,
             ':weight_kg_remaining' => $data['weight_kg_remaining'] ?? null,
+            ':unit_type' => $data['unit_type'] ?? STOCK_UNIT_METERS,
+            ':quantity' => $data['quantity'] ?? null,
+            ':pieces_total' => $data['pieces_total'] ?? null,
+            ':pieces_remaining' => $data['pieces_remaining'] ?? null,
             ':created_by' => $data['created_by'],
         ]);
 
@@ -186,7 +192,7 @@ class StockEntry
             $fields = [];
             $params = [':id' => $id];
 
-            $allowedFields = ['meters_remaining', 'status', 'weight_kg', 'weight_kg_remaining'];
+            $allowedFields = ['meters', 'meters_remaining', 'status', 'weight_kg', 'weight_kg_remaining', 'quantity', 'pieces_total', 'pieces_remaining', 'unit_type'];
 
             foreach ($allowedFields as $field) {
                 if (isset($data[$field])) {
@@ -235,6 +241,73 @@ class StockEntry
         } catch (PDOException $e) {
             error_log('Stock entry update error: ' . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Deduct pieces from a KZinc stock entry.
+     * Uses a WHERE guard to prevent over-deduction.
+     *
+     * @param int $id            Stock entry ID
+     * @param int $piecesToDeduct Number of pieces to remove
+     * @return bool True if the row was updated (sufficient stock), false otherwise
+     */
+    public function deductPieces(int $id, int $piecesToDeduct): bool
+    {
+        try {
+            // Use distinct parameter names — PDO MySQL does not reliably
+            // reuse the same named placeholder twice in one statement.
+            $sql = "UPDATE {$this->table}
+                    SET pieces_remaining = pieces_remaining - :deduct_set,
+                        updated_at = NOW()
+                    WHERE id = :id
+                      AND pieces_remaining >= :deduct_guard
+                      AND deleted_at IS NULL";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                ':id'           => $id,
+                ':deduct_set'   => $piecesToDeduct,
+                ':deduct_guard' => $piecesToDeduct,
+            ]);
+
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log('Stock entry deductPieces error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get available KZinc stock entries for a coil (FIFO order).
+     * Returns entries that have pieces_remaining > 0.
+     *
+     * @param int $coilId
+     * @return array
+     */
+    public function getAvailableKzincEntries(int $coilId): array
+    {
+        try {
+            // Include entries with explicit KZinc unit types OR entries on KZinc coils
+            // that have pieces_remaining set (backward compat for old data).
+            $sql = "SELECT se.* FROM {$this->table} se
+                    JOIN coils c ON se.coil_id = c.id
+                    WHERE se.coil_id = :coil_id
+                      AND c.category = :kzinc
+                      AND se.pieces_remaining > 0
+                      AND se.deleted_at IS NULL
+                    ORDER BY se.created_at ASC";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                ':coil_id' => $coilId,
+                ':kzinc'   => STOCK_CATEGORY_KZINC,
+            ]);
+
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log('Stock entry getAvailableKzincEntries error: ' . $e->getMessage());
+            return [];
         }
     }
 
@@ -289,21 +362,30 @@ class StockEntry
  public function getAvailableStock()
 {
     try {
-        $sql = "SELECT se.*, 
-                       c.code as coil_code, 
-                       c.name as coil_name, 
-                       COALESCE(se.weight_kg, 0) as weight_kg, 
-                       COALESCE(se.weight_kg_remaining, 
-                               (se.weight_kg * (se.meters_remaining / NULLIF(se.meters, 0))), 
+        // Only 'available' entries — factory_use is allocated to production orders.
+        // Exclude KZinc via category JOIN (KZinc is sold by pieces through its own module).
+        $sql = "SELECT se.*,
+                       c.code as coil_code,
+                       c.name as coil_name,
+                       c.category as coil_category,
+                       COALESCE(se.weight_kg, 0) as weight_kg,
+                       COALESCE(se.weight_kg_remaining,
+                               (se.weight_kg * (se.meters_remaining / NULLIF(se.meters, 0))),
                                0) as weight_kg_remaining
                 FROM {$this->table} se
                 JOIN coils c ON se.coil_id = c.id
-                WHERE se.status = :status 
+                WHERE se.status = :status
                 AND se.meters_remaining > 0
-                AND se.deleted_at IS NULL";
-        
+                AND (se.unit_type = 'meters' OR se.unit_type IS NULL)
+                AND c.category != :kzinc
+                AND se.deleted_at IS NULL
+                ORDER BY c.code ASC, se.created_at DESC";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':status' => STOCK_STATUS_AVAILABLE]);
+        $stmt->execute([
+            ':status' => STOCK_STATUS_AVAILABLE,
+            ':kzinc'  => STOCK_CATEGORY_KZINC,
+        ]);
 
         return $stmt->fetchAll();
     } catch (PDOException $e) {
@@ -432,8 +514,8 @@ class StockEntry
                        c.category as coil_category
                 FROM {$this->table} se
                 INNER JOIN coils c ON se.coil_id = c.id
-                WHERE se.status = :status 
-                AND se.meters_remaining > 0
+                WHERE se.status = :status
+                AND (se.meters_remaining > 0 OR se.pieces_remaining > 0)
                 AND se.deleted_at IS NULL
                 AND c.deleted_at IS NULL
                 ORDER BY se.created_at DESC";
@@ -482,32 +564,26 @@ class StockEntry
     public function checkAndUpdateCoilStatus($coilId)
     {
         try {
-            // Check if any stock entries have remaining meters
-            $sql = "SELECT SUM(meters_remaining) as total_remaining 
-                FROM {$this->table} 
-                WHERE coil_id = :coil_id 
+            // Sum both meters_remaining (non-KZinc) and pieces_remaining (KZinc)
+            // so that either type of depletion triggers the out-of-stock update.
+            $sql = "SELECT COALESCE(SUM(meters_remaining), 0) + COALESCE(SUM(pieces_remaining), 0) AS total_remaining
+                FROM {$this->table}
+                WHERE coil_id = :coil_id
                 AND deleted_at IS NULL";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':coil_id' => $coilId]);
             $result = $stmt->fetch();
 
-            $totalRemaining = $result['total_remaining'] ?? 0;
+            $totalRemaining = (float)($result['total_remaining'] ?? 0);
 
-            // Update coil status if no meters remaining
-            if ($totalRemaining <= 0) {
-                $coilSql = "UPDATE coils 
-                       SET status = :status, updated_at = NOW() 
-                       WHERE id = :id";
+            $newStatus = $totalRemaining <= 0
+                ? STOCK_STATUS_OUT_OF_STOCK
+                : STOCK_STATUS_AVAILABLE;
 
-                $coilStmt = $this->db->prepare($coilSql);
-                return $coilStmt->execute([
-                    ':id' => $coilId,
-                    ':status' => STOCK_STATUS_OUT_OF_STOCK,
-                ]);
-            }
-
-            return true;
+            $coilSql = "UPDATE coils SET status = :status, updated_at = NOW() WHERE id = :id";
+            $coilStmt = $this->db->prepare($coilSql);
+            return $coilStmt->execute([':id' => $coilId, ':status' => $newStatus]);
         } catch (PDOException $e) {
             error_log('Coil status update error: ' . $e->getMessage());
             return false;
@@ -523,8 +599,8 @@ class StockEntry
     public function getTotalRemainingForCoil($coilId)
     {
         try {
-            $sql = "SELECT SUM(meters_remaining) as total 
-                FROM {$this->table} 
+            $sql = "SELECT SUM(meters_remaining) + SUM(IFNULL(pieces_remaining, 0)) as total
+                FROM {$this->table}
                 WHERE coil_id = :coil_id AND deleted_at IS NULL";
 
             $stmt = $this->db->prepare($sql);
@@ -548,10 +624,10 @@ class StockEntry
     public function getByCoilAndStatus($coilId, $status)
     {
         try {
-            $sql = "SELECT * FROM {$this->table} 
-                WHERE coil_id = :coil_id 
-                AND status = :status 
-                AND meters_remaining > 0
+            $sql = "SELECT * FROM {$this->table}
+                WHERE coil_id = :coil_id
+                AND status = :status
+                AND (meters_remaining > 0 OR pieces_remaining > 0)
                 AND deleted_at IS NULL
                 ORDER BY created_at ASC";
 

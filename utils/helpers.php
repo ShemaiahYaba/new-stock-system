@@ -231,7 +231,7 @@ function getStatusBadgeClass($status)
         STOCK_STATUS_AVAILABLE => 'bg-success', // Green
         STOCK_STATUS_FACTORY_USE => 'bg-warning', // Yellow
         STOCK_STATUS_SOLD => 'bg-danger', // Red
-        STOCK_STATUS_OUT_OF_STOCK => 'bg-secondary', // Gray - NEW
+        STOCK_STATUS_OUT_OF_STOCK => 'bg-danger', // Red
         SALE_STATUS_PENDING => 'bg-warning',
         SALE_STATUS_COMPLETED => 'bg-success',
         SALE_STATUS_CANCELLED => 'bg-danger',

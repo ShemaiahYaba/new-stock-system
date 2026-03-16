@@ -91,9 +91,25 @@ class WorkflowManager {
           meters_remaining: 0,
         };
 
-        // Update available meters display
-        const availableEl = document.getElementById("coil_available");
-        if (availableEl) availableEl.textContent = "N/A";
+        // Update available pieces display for KZinc
+        const availableEl   = document.getElementById("coil_available");
+        const availableUnit = document.getElementById("coil_available_unit");
+        if (availableUnit) availableUnit.textContent = "pcs";
+
+        try {
+          const piecesResp = await fetch(
+            `/new-stock-system/controllers/sales/get_kzinc_pieces.php?coil_id=${coilData.id}`
+          );
+          const piecesData = await piecesResp.json();
+          if (availableEl) {
+            availableEl.textContent = piecesData.success
+              ? piecesData.total_pieces
+              : "0";
+          }
+        } catch (e) {
+          if (availableEl) availableEl.textContent = "0";
+          console.warn("Could not fetch KZinc pieces:", e);
+        }
 
         // Load properties and add-ons for KZINC
         await this.loadPropertiesForCategory(this.currentCategory);
@@ -108,6 +124,10 @@ class WorkflowManager {
       // ============================================================
       // STOCK-BASED WORKFLOW (ALUSTEEL & ALUMINUM)
       // ============================================================
+
+      // Reset unit label back to meters for non-KZinc
+      const availableUnitEl = document.getElementById("coil_available_unit");
+      if (availableUnitEl) availableUnitEl.textContent = "m";
 
       console.log("📦 Stock-based category detected:", this.currentCategory);
 

@@ -22,24 +22,26 @@ $productionModel = new Production();
 $invoiceModel = new Invoice();
 $receiptModel = new Receipt();
 
-if (!empty($searchQuery)) {
-    // ✅ FIXED: Use positional parameters (?) instead of named parameters (:query)
-    $whereClause = 'WHERE s.deleted_at IS NULL 
-                   AND (c.name LIKE ? OR co.code LIKE ? OR co.name LIKE ?)';
-    $searchParam = "%$searchQuery%";
-    $params = [$searchParam, $searchParam, $searchParam]; // Use same param 3 times
+// Always exclude KZinc sales — those are managed in the K-Zinc module
+$baseWhere = "WHERE s.deleted_at IS NULL AND co.category != ?";
+$baseParams = [STOCK_CATEGORY_KZINC];
 
-    $sales = $saleModel->getFilteredSales(
-        $whereClause,
-        $params,
-        RECORDS_PER_PAGE,
-        ($currentPage - 1) * RECORDS_PER_PAGE,
-    );
-    $totalSales = $saleModel->countFilteredSales($whereClause, $params);
+if (!empty($searchQuery)) {
+    $whereClause = $baseWhere . ' AND (c.name LIKE ? OR co.code LIKE ? OR co.name LIKE ?)';
+    $searchParam = "%$searchQuery%";
+    $params = array_merge($baseParams, [$searchParam, $searchParam, $searchParam]);
 } else {
-    $sales = $saleModel->getAll(RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalSales = $saleModel->count();
+    $whereClause = $baseWhere;
+    $params = $baseParams;
 }
+
+$sales = $saleModel->getFilteredSales(
+    $whereClause,
+    $params,
+    RECORDS_PER_PAGE,
+    ($currentPage - 1) * RECORDS_PER_PAGE,
+);
+$totalSales = $saleModel->countFilteredSales($whereClause, $params);
 
 // Enhance sales data with workflow status
 foreach ($sales as &$sale) {
@@ -106,7 +108,15 @@ require_once __DIR__ . '/../../layout/sidebar.php';
             </div>
         </div>
     </div>
-    
+
+    <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
+    <div class="alert alert-info alert-permanent py-2 mb-3">
+        <i class="bi bi-layers"></i>
+        K-Zinc sales are managed in the
+        <a href="/new-stock-system/index.php?page=kzinc_sales" class="alert-link">K-Zinc module</a>.
+    </div>
+    <?php endif; ?>
+
     <div class="card">
         <div class="card-header">
             <div class="row align-items-center">
@@ -144,7 +154,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <th>Customer</th>
                             <th>Coil</th>
                             <th>Type</th>
-                            <th>Meters</th>
+                            <th>Qty / Meters</th>
                             <th>Amount</th>
                             <th>Status</th>
                             <th>Workflow</th>
@@ -163,7 +173,13 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <?= ucfirst($sale['sale_type'] ?? 'unknown') ?>
                                 </span>
                             </td>
-                            <td><?= number_format($sale['meters'], 2) ?>m</td>
+                            <td>
+                                <?php if (($sale['unit_type'] ?? 'meters') !== 'meters' && ($sale['quantity'] ?? 0) > 0): ?>
+                                    <?= number_format($sale['quantity'], 2) ?> <?= htmlspecialchars($sale['unit_type']) ?>
+                                <?php else: ?>
+                                    <?= number_format($sale['meters'], 2) ?>m
+                                <?php endif; ?>
+                            </td>
                             <td><?= formatCurrency($sale['total_amount']) ?></td>
                             <td>
                                 <span class="badge <?= $sale['status'] === 'completed'
@@ -176,7 +192,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 <div class="d-flex align-items-center">
                                     <!-- Production Status -->
                                     <a href="<?= $sale['production_id']
-                                        ? "?page=production&action=view&id={$sale['production_id']}"
+                                        ? "?page=production_view&id={$sale['production_id']}"
                                         : '#' ?>" 
                                        class="text-decoration-none me-2" 
                                        title="Production: <?= $sale['production_status'] ?:
@@ -250,7 +266,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                                     ? 'disabled'
                                                     : '' ?>" 
                                                    href="<?= $sale['production_id']
-                                                       ? "?page=production&action=view&id={$sale['production_id']}"
+                                                       ? "?page=production_view&id={$sale['production_id']}"
                                                        : '#' ?>">
                                                     <i class="bi bi-gear me-2"></i> View Production
                                                 </a>

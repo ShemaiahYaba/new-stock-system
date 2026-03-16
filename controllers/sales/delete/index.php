@@ -150,42 +150,90 @@ try {
         // (Removed the deletion of ledger entries)
         
         // ========================================
-        // STEP 5: Handle stock restoration via NEW LEDGER INFLOW
+        // STEP 5: Handle stock restoration
         // ========================================
-        if ($sale['stock_entry_id']) {
+        $isKzincSale = ($sale['unit_type'] ?? 'meters') !== 'meters';
+
+        if ($isKzincSale) {
+            // -------------------------------------------------------
+            // KZinc: restore pieces_remaining across entries LIFO
+            // -------------------------------------------------------
             try {
-                // Get the stock entry details
+                // Compute total pieces sold
+                $saleUnitType = $sale['unit_type'];
+                $saleQty      = floatval($sale['quantity'] ?? 0);
+
+                if ($saleUnitType === STOCK_UNIT_BUNDLES) {
+                    $piecesToRestore = (int)($saleQty * KZINC_PIECES_PER_BUNDLE);
+                } else {
+                    $piecesToRestore = (int)$saleQty; // pieces
+                }
+
+                if ($piecesToRestore > 0) {
+                    // Get KZinc entries for the coil in LIFO order (reverse of deduction order)
+                    $kzincEntriesSql = "SELECT se.id, se.pieces_total, se.pieces_remaining
+                                        FROM stock_entries se
+                                        JOIN coils c ON se.coil_id = c.id
+                                        WHERE se.coil_id = ?
+                                          AND c.category = 'kzinc'
+                                          AND se.deleted_at IS NULL
+                                        ORDER BY se.created_at DESC";
+                    $kzincStmt = $db->prepare($kzincEntriesSql);
+                    $kzincStmt->execute([$sale['coil_id']]);
+                    $kzincEntries = $kzincStmt->fetchAll();
+
+                    $remaining = $piecesToRestore;
+                    foreach ($kzincEntries as $kzEntry) {
+                        if ($remaining <= 0) break;
+                        $canRestore = (int)$kzEntry['pieces_total'] - (int)$kzEntry['pieces_remaining'];
+                        $toAdd = min($remaining, $canRestore);
+                        if ($toAdd > 0) {
+                            $restoreSql = "UPDATE stock_entries
+                                           SET pieces_remaining = pieces_remaining + ?,
+                                               updated_at = NOW()
+                                           WHERE id = ?";
+                            $db->prepare($restoreSql)->execute([$toAdd, $kzEntry['id']]);
+                            $remaining -= $toAdd;
+                        }
+                    }
+
+                    $stockEntryModel->checkAndUpdateCoilStatus($sale['coil_id']);
+                    $deletionLog['deleted_items'][] = "KZinc stock restored: {$piecesToRestore} pieces";
+                }
+            } catch (Exception $e) {
+                error_log("KZinc stock restoration failed: " . $e->getMessage());
+                $deletionLog['deleted_items'][] = "KZinc stock restoration failed: " . $e->getMessage();
+            }
+        } elseif ($sale['stock_entry_id']) {
+            // -------------------------------------------------------
+            // Meter-based: restore meters_remaining + ledger inflow
+            // -------------------------------------------------------
+            try {
                 $stockEntry = $stockEntryModel->findById($sale['stock_entry_id']);
-                
+
                 if (!$stockEntry) {
                     throw new Exception('Stock entry not found for restoration');
                 }
-                
-                // Check if this stock entry is in factory_use status
+
                 $isFactoryUse = ($stockEntry['status'] === 'factory_use');
-                
-                // Restore stock in stock_entries table
-                $restoreStockSql = "UPDATE stock_entries 
+
+                $restoreStockSql = "UPDATE stock_entries
                                    SET meters_remaining = meters_remaining + ?,
                                        weight_kg_remaining = COALESCE(weight_kg_remaining, 0) + ?,
-                                       status = CASE 
+                                       status = CASE
                                            WHEN status = 'sold' AND meters_remaining + ? >= meters THEN 'available'
                                            ELSE status
                                        END
                                    WHERE id = ?";
-                $restoreStockStmt = $db->prepare($restoreStockSql);
-                $restoreStockStmt->execute([
+                $db->prepare($restoreStockSql)->execute([
                     $sale['meters'],
                     $sale['weight_kg'] ?? 0,
                     $sale['meters'],
                     $sale['stock_entry_id']
                 ]);
-                
-                // If the stock entry is in factory_use, create a NEW ledger INFLOW to cancel out the original outflow
+
                 if ($isFactoryUse) {
                     $description = "Stock restored from deleted sale #{$saleId} - {$sale['meters']}m returned to factory tracking";
-                    
-                    // Create NEW inflow entry (don't touch the original outflow entry)
                     $ledgerInflowResult = $ledgerModel->recordInflow(
                         $stockEntry['coil_id'],
                         $sale['stock_entry_id'],
@@ -193,24 +241,20 @@ try {
                         $description,
                         $currentUser['id']
                     );
-                    
                     if (!$ledgerInflowResult) {
                         throw new Exception('Failed to create ledger inflow for stock restoration');
                     }
-                    
-                    $deletionLog['deleted_items'][] = "Stock restored: " . number_format($sale['meters'], 2) . "m" . 
-                        ($sale['weight_kg'] ? " (" . number_format($sale['weight_kg'], 2) . "kg)" : "") . 
-                        " + NEW ledger inflow created (cancels out original outflow)";
+                    $deletionLog['deleted_items'][] = "Stock restored: " . number_format($sale['meters'], 2) . "m"
+                        . ($sale['weight_kg'] ? " (" . number_format($sale['weight_kg'], 2) . "kg)" : "")
+                        . " + ledger inflow created";
                 } else {
-                    $deletionLog['deleted_items'][] = "Stock restored: " . number_format($sale['meters'], 2) . "m" . 
-                        ($sale['weight_kg'] ? " (" . number_format($sale['weight_kg'], 2) . "kg)" : "");
+                    $deletionLog['deleted_items'][] = "Stock restored: " . number_format($sale['meters'], 2) . "m"
+                        . ($sale['weight_kg'] ? " (" . number_format($sale['weight_kg'], 2) . "kg)" : "");
                 }
-                
-                // Check and update coil status
+
                 $stockEntryModel->checkAndUpdateCoilStatus($stockEntry['coil_id']);
-                
+
             } catch (Exception $e) {
-                // Stock restoration failed - log but don't stop the deletion
                 error_log("Stock restoration failed: " . $e->getMessage());
                 $deletionLog['deleted_items'][] = "Stock restoration failed: " . $e->getMessage();
             }

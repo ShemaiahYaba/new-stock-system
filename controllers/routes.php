@@ -340,6 +340,61 @@ $routes = [
         'is_api' => true,
     ],
 
+    // ============================================================
+    // KZINC MODULE
+    // ============================================================
+    'kzinc_coils' => [
+        'view'   => 'views/kzinc/coils/index.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'kzinc_coils_create' => [
+        'view'   => 'views/kzinc/coils/create.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_CREATE,
+    ],
+    'kzinc_coils_edit' => [
+        'view'   => 'views/kzinc/coils/edit.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_EDIT,
+    ],
+    'kzinc_coils_view' => [
+        'view'   => 'views/kzinc/coils/view.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'kzinc_stock' => [
+        'view'   => 'views/kzinc/stock/index.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'kzinc_stock_create' => [
+        'view'   => 'views/kzinc/stock/create.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_CREATE,
+    ],
+    'kzinc_stock_ledger' => [
+        'view'   => 'views/kzinc/stock/ledger.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'kzinc_sales' => [
+        'view'   => 'views/kzinc/sales/index.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    'kzinc_sales_create' => [
+        'view'   => 'views/kzinc/sales/create.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_CREATE,
+    ],
+    'kzinc_sales_view' => [
+        'view'   => 'views/kzinc/sales/view.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
+    // ============================================================
+
     // Design Management
     'designs' => [
         'view' => 'views/tiles/designs/index.php',

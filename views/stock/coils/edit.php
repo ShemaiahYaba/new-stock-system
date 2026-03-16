@@ -120,13 +120,21 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             
                             <div class="col-md-4 mb-3">
                                 <label for="gauge" class="form-label">Gauge</label>
-                                <input type="text" class="form-control" id="gauge" name="gauge" 
+                                <input type="text" class="form-control" id="gauge" name="gauge"
                                        placeholder="e.g., 0.45mm"
                                        value="<?php echo isset($coil['gauge']) ? htmlspecialchars($coil['gauge']) : ''; ?>">
                                 <small class="text-muted">Material thickness</small>
                             </div>
                         </div>
-                        
+
+                        <div class="mb-3" id="pallet_size_row" style="display:none;">
+                            <label for="pallet_size" class="form-label">Pallet Size (bundles per pallet) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="pallet_size" name="pallet_size"
+                                   min="1" step="1" placeholder="e.g. 85, 92, 112"
+                                   value="<?php echo htmlspecialchars($coil['pallet_size'] ?? ''); ?>">
+                            <small class="text-muted">How many bundles fit on one pallet for this KZinc coil</small>
+                        </div>
+
                         <div class="mb-3">
                             <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                             <select class="form-select" id="status" name="status" required>
@@ -159,4 +167,20 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     </div>
 </div>
 
+<script>
+(function () {
+    const categorySelect = document.getElementById('category');
+    const palletRow = document.getElementById('pallet_size_row');
+    const palletInput = document.getElementById('pallet_size');
+
+    function togglePallet() {
+        const isKzinc = categorySelect.value === '<?php echo STOCK_CATEGORY_KZINC; ?>';
+        palletRow.style.display = isKzinc ? '' : 'none';
+        palletInput.required = isKzinc;
+    }
+
+    categorySelect.addEventListener('change', togglePallet);
+    togglePallet();
+})();
+</script>
 <?php require_once __DIR__ . '/../../../layout/footer.php'; ?>

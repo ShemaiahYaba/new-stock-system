@@ -3,7 +3,6 @@
  * ============================================
  * ENHANCED: Tile Sale Creation with Add-Ons Support
  * File: controllers/tiles/sales/create/index.php
- * REPLACE existing file with this version
  * ============================================
  */
 session_start();
@@ -39,10 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // NEW: Parse add-on data
     $addonData = isset($_POST['addon_data']) ? json_decode($_POST['addon_data'], true) : [];
     $configData = isset($_POST['config_data']) ? json_decode($_POST['config_data'], true) : [];
-    
-    // Debug logging
-    error_log('📥 Received addon_data: ' . $_POST['addon_data']);
-    error_log('📋 Parsed addon data: ' . print_r($addonData, true));
     
     $errors = [];
     

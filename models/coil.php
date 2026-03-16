@@ -23,9 +23,9 @@ class Coil
     public function create($data)
     {
         try {
-            $sql = "INSERT INTO {$this->table} 
-                    (code, name, color_id, net_weight, meters, gauge, category, status, created_by, created_at) 
-                    VALUES (:code, :name, :color_id, :net_weight, :meters, :gauge, :category, :status, :created_by, NOW())";
+            $sql = "INSERT INTO {$this->table}
+                    (code, name, color_id, net_weight, meters, gauge, pallet_size, category, status, created_by, created_at)
+                    VALUES (:code, :name, :color_id, :net_weight, :meters, :gauge, :pallet_size, :category, :status, :created_by, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
@@ -35,6 +35,7 @@ class Coil
                 ':net_weight' => $data['net_weight'],
                 ':meters' => $data['meters'] ?? null,
                 ':gauge' => $data['gauge'] ?? null,
+                ':pallet_size' => $data['pallet_size'] ?? null,
                 ':category' => $data['category'],
                 ':status' => $data['status'] ?? STOCK_STATUS_AVAILABLE,
                 ':created_by' => $data['created_by'],
@@ -112,7 +113,7 @@ class Coil
     /**
      * Get all coils with pagination
      */
-    public function getAll($category = null, $limit = RECORDS_PER_PAGE, $offset = 0)
+    public function getAll($category = null, $limit = RECORDS_PER_PAGE, $offset = 0, $status = null, $gauge = null, $colorId = null)
     {
         try {
             $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code, col.hex_code as color_hex
@@ -124,6 +125,15 @@ class Coil
             if ($category) {
                 $sql .= ' AND c.category = :category';
             }
+            if ($status) {
+                $sql .= ' AND c.status = :status';
+            }
+            if ($gauge) {
+                $sql .= ' AND c.gauge = :gauge';
+            }
+            if ($colorId) {
+                $sql .= ' AND c.color_id = :color_id';
+            }
 
             $sql .= ' ORDER BY c.created_at DESC LIMIT :limit OFFSET :offset';
 
@@ -131,6 +141,15 @@ class Coil
 
             if ($category) {
                 $stmt->bindValue(':category', $category, PDO::PARAM_STR);
+            }
+            if ($status) {
+                $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+            }
+            if ($gauge) {
+                $stmt->bindValue(':gauge', $gauge, PDO::PARAM_STR);
+            }
+            if ($colorId) {
+                $stmt->bindValue(':color_id', (int)$colorId, PDO::PARAM_INT);
             }
 
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -147,7 +166,7 @@ class Coil
     /**
      * Count total coils
      */
-    public function count($category = null)
+    public function count($category = null, $status = null, $gauge = null, $colorId = null)
     {
         try {
             $sql = "SELECT COUNT(*) as total FROM {$this->table} WHERE deleted_at IS NULL";
@@ -155,11 +174,29 @@ class Coil
             if ($category) {
                 $sql .= ' AND category = :category';
             }
+            if ($status) {
+                $sql .= ' AND status = :status';
+            }
+            if ($gauge) {
+                $sql .= ' AND gauge = :gauge';
+            }
+            if ($colorId) {
+                $sql .= ' AND color_id = :color_id';
+            }
 
             $stmt = $this->db->prepare($sql);
 
             if ($category) {
                 $stmt->bindValue(':category', $category, PDO::PARAM_STR);
+            }
+            if ($status) {
+                $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+            }
+            if ($gauge) {
+                $stmt->bindValue(':gauge', $gauge, PDO::PARAM_STR);
+            }
+            if ($colorId) {
+                $stmt->bindValue(':color_id', (int)$colorId, PDO::PARAM_INT);
             }
 
             $stmt->execute();
@@ -169,6 +206,32 @@ class Coil
         } catch (PDOException $e) {
             error_log('Coil count error: ' . $e->getMessage());
             return 0;
+        }
+    }
+
+    /**
+     * Get distinct gauge values for filter dropdowns
+     */
+    public function getDistinctGauges($category = null)
+    {
+        try {
+            $sql = "SELECT DISTINCT gauge FROM {$this->table}
+                    WHERE deleted_at IS NULL AND gauge IS NOT NULL AND gauge != ''";
+            if ($category) {
+                $sql .= ' AND category = :category';
+            }
+            $sql .= ' ORDER BY gauge ASC';
+
+            $stmt = $this->db->prepare($sql);
+            if ($category) {
+                $stmt->bindValue(':category', $category, PDO::PARAM_STR);
+            }
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (PDOException $e) {
+            error_log('Coil distinct gauges error: ' . $e->getMessage());
+            return [];
         }
     }
 
@@ -214,6 +277,11 @@ class Coil
             if (isset($data['gauge'])) {
                 $fields[] = 'gauge = :gauge';
                 $params[':gauge'] = $data['gauge'];
+            }
+
+            if (array_key_exists('pallet_size', $data)) {
+                $fields[] = 'pallet_size = :pallet_size';
+                $params[':pallet_size'] = $data['pallet_size'];
             }
 
             if (isset($data['status'])) {
@@ -279,38 +347,54 @@ class Coil
      * Since utf8mb4_unicode_ci is case-insensitive, LOWER() is optional
      * but we'll use it for consistency across different collations
      */
-    public function search($query, $category = null, $limit = RECORDS_PER_PAGE, $offset = 0)
+    public function search($query, $category = null, $limit = RECORDS_PER_PAGE, $offset = 0, $status = null, $gauge = null, $colorId = null)
     {
         try {
-            // Add wildcards to the search query
             $searchQuery = "%{$query}%";
-            
+
             $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code, col.hex_code as color_hex
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
                     LEFT JOIN colors col ON c.color_id = col.id
-                    WHERE c.deleted_at IS NULL 
+                    WHERE c.deleted_at IS NULL
                     AND (c.code LIKE :query1 OR c.name LIKE :query2)";
 
             if ($category) {
                 $sql .= ' AND c.category = :category';
             }
+            if ($status) {
+                $sql .= ' AND c.status = :status';
+            }
+            if ($gauge) {
+                $sql .= ' AND c.gauge = :gauge';
+            }
+            if ($colorId) {
+                $sql .= ' AND c.color_id = :color_id';
+            }
 
             $sql .= ' ORDER BY c.created_at DESC LIMIT :limit OFFSET :offset';
 
             $stmt = $this->db->prepare($sql);
-            
-            // Bind each parameter separately with unique names
+
             $stmt->bindValue(':query1', $searchQuery, PDO::PARAM_STR);
             $stmt->bindValue(':query2', $searchQuery, PDO::PARAM_STR);
 
             if ($category) {
                 $stmt->bindValue(':category', $category, PDO::PARAM_STR);
             }
+            if ($status) {
+                $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+            }
+            if ($gauge) {
+                $stmt->bindValue(':gauge', $gauge, PDO::PARAM_STR);
+            }
+            if ($colorId) {
+                $stmt->bindValue(':color_id', (int)$colorId, PDO::PARAM_INT);
+            }
 
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            
+
             $stmt->execute();
 
             return $stmt->fetchAll();
@@ -396,15 +480,16 @@ class Coil
     public function getWithStockInfo()
     {
         try {
-            $sql = "SELECT c.*, 
-        col.name as color_name, 
+            $sql = "SELECT c.*,
+        col.name as color_name,
         COALESCE(SUM(se.meters_remaining), 0) as total_remaining_meters,
+        COALESCE(SUM(se.pieces_remaining), 0) as total_remaining_pieces,
         COUNT(se.id) as stock_entry_count
         FROM {$this->table} c
         LEFT JOIN colors col ON c.color_id = col.id
-        LEFT JOIN stock_entries se ON c.id = se.coil_id 
-            AND se.deleted_at IS NULL 
-            AND se.meters_remaining > 0
+        LEFT JOIN stock_entries se ON c.id = se.coil_id
+            AND se.deleted_at IS NULL
+            AND (se.meters_remaining > 0 OR se.pieces_remaining > 0)
         WHERE c.deleted_at IS NULL
         GROUP BY c.id
         HAVING stock_entry_count > 0
@@ -418,10 +503,10 @@ class Coil
 
             if (!empty($coilIds)) {
                 $placeholders = rtrim(str_repeat('?,', count($coilIds)), ',');
-                $sql = "SELECT * FROM stock_entries 
-                        WHERE coil_id IN ($placeholders) 
-                        AND deleted_at IS NULL 
-                        AND meters_remaining > 0";
+                $sql = "SELECT * FROM stock_entries
+                        WHERE coil_id IN ($placeholders)
+                        AND deleted_at IS NULL
+                        AND (meters_remaining > 0 OR pieces_remaining > 0)";
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute($coilIds);
                 $entries = $stmt->fetchAll();

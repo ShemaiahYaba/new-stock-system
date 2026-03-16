@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Check permissions
-if (!hasPermission(MODULE_SALES, ACTION_CREATE)) {
+if (!hasPermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE)) {
     setFlashMessage('error', 'You do not have permission to create sales');
     redirect('/new-stock-system/index.php?page=sales');
 }
@@ -83,7 +83,7 @@ try {
     $stockEntries = [];
     $firstSaleId = null;
 
-    // Process each stock item - NOW USING KG
+    // Process each stock item — KG-based
     foreach ($_POST['unit_price'] as $stockEntryId => $unitPrice) {
         $stockEntry = $stockEntryModel->findById($stockEntryId);
 
@@ -91,17 +91,15 @@ try {
             throw new Exception('Invalid or unavailable stock entry: ' . $stockEntryId);
         }
 
-        // CRITICAL: Check if weight data exists
         if (empty($stockEntry['weight_kg_remaining']) || $stockEntry['weight_kg_remaining'] <= 0) {
             throw new Exception('No weight data available for stock entry: ' . $stockEntryId);
         }
 
-        // Get quantity in KG from POST
+        // Quantity posted is KG
         $quantityKg = isset($_POST['quantity'][$stockEntryId])
             ? floatval($_POST['quantity'][$stockEntryId])
-            : $stockEntry['weight_kg_remaining'];
+            : floatval($stockEntry['weight_kg_remaining']);
 
-        // Validate quantity
         if ($quantityKg <= 0) {
             throw new Exception('Invalid quantity for stock entry: ' . $stockEntryId);
         }
@@ -110,35 +108,30 @@ try {
             throw new Exception('Quantity exceeds available weight for stock entry: ' . $stockEntryId);
         }
 
-        // Validate unit price (now per KG)
         $unitPrice = floatval($unitPrice);
         if ($unitPrice <= 0) {
             throw new Exception('Invalid unit price for stock entry: ' . $stockEntryId);
         }
 
-        // Calculate corresponding meters to deduct from stock
-        // Formula: (quantityKg / total_weight_kg) * total_meters
+        // Derive meters to deduct proportionally from KG
         $metersToDeduct = 0;
         if ($stockEntry['weight_kg_remaining'] > 0) {
             $metersToDeduct = ($quantityKg / $stockEntry['weight_kg_remaining']) * $stockEntry['meters_remaining'];
         } else {
-            // Fallback: use all remaining meters if no weight data
             $metersToDeduct = $stockEntry['meters_remaining'];
         }
 
-        // Calculate line total (KG-based)
-        $lineTotal = $quantityKg * $unitPrice;
+        $lineTotal    = $quantityKg * $unitPrice;
         $totalAmount += $lineTotal;
 
-        // Add to sale items
         $saleItems[] = [
-            'coil_id' => $stockEntry['coil_id'],
-            'stock_entry_id' => $stockEntryId,
-            'quantity_kg' => $quantityKg,
+            'coil_id'         => $stockEntry['coil_id'],
+            'stock_entry_id'  => $stockEntryId,
+            'quantity_kg'     => $quantityKg,
             'meters_deducted' => $metersToDeduct,
-            'unit_price' => $unitPrice,
-            'total' => $lineTotal,
-            'stock_entry' => $stockEntry,
+            'unit_price'      => $unitPrice,
+            'total'           => $lineTotal,
+            'stock_entry'     => $stockEntry,
         ];
     }
 
@@ -160,13 +153,7 @@ try {
             'created_at' => $saleDateTime,
         ];
 
-        // DEBUG LOGGING
-        error_log('=== ATTEMPTING TO CREATE SALE ===');
-        error_log('Sale Data: ' . print_r($saleData, true));
-
         $saleId = $saleModel->create($saleData);
-
-        error_log('Sale ID Result: ' . ($saleId ? $saleId : 'FALSE'));
 
         if (!$saleId) {
             // Get PDO error info
@@ -210,10 +197,10 @@ try {
         $invoiceItems[] = [
             'description' =>
                 $item['stock_entry']['coil_code'] . ' - ' . $item['stock_entry']['coil_name'],
-            'quantity' => $item['quantity_kg'],
-            'qty_text' => number_format($item['quantity_kg'], 2) . ' kg', // CHANGED to KG
+            'quantity'   => $item['quantity_kg'],
+            'qty_text'   => number_format($item['quantity_kg'], 2) . ' kg',
             'unit_price' => $item['unit_price'],
-            'subtotal' => $item['total'],
+            'subtotal'   => $item['total'],
         ];
     }
 

@@ -16,7 +16,11 @@ require_once __DIR__ . '/../../../models/stock_entry.php';
 require_once __DIR__ . '/../../../utils/helpers.php';
 require_once __DIR__ . '/../../../utils/auth_middleware.php';
 
-requirePermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE);
+// Allow users with either Sales or KZinc management create permission
+if (!hasPermission(MODULE_SALES_MANAGEMENT, ACTION_CREATE) && !hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_CREATE)) {
+    echo json_encode(['success' => false, 'message' => 'Permission denied']);
+    exit();
+}
 
 header('Content-Type: application/json');
 
@@ -49,11 +53,13 @@ try {
         throw new Exception('Missing required production data');
     }
 
-    // ✅ UPDATED: Check if this is a KZINC coil (aluminium and alusteel use stock-based workflow)
     $coilModel = new Coil();
     $coil = $coilModel->findById($productionData['coil_id']);
     $coilCategory = strtolower($coil['category']);
     $isKzinc = $coilCategory === 'kzinc';
+
+    // Historical entry: sale already happened — record for bookkeeping only, skip stock deduction
+    $isHistorical = !empty($productionData['is_historical']);
 
     $db = Database::getInstance()->getConnection();
     $db->beginTransaction();
@@ -112,12 +118,58 @@ try {
             );
         }
 
-        // ✅ Set the primary stock entry (the first one we'll use)
+        // Set the primary stock entry (the first one we'll use)
         $primaryStockEntryId = $plannedDeductions[0]['entry_id'];
-        
-        error_log("Stock-based sale ($coilCategory): Will use stock_entry_id = $primaryStockEntryId");
     } else {
-        error_log("KZINC sale: No stock entry required");
+        // KZinc: determine sale unit type and quantity from the production paper
+        $totalPiecesToDeduct = 0;
+        $kzincBundleQty     = 0;
+        $kzincHasBundles    = false;
+        $kzincPlannedDeductions = [];
+        $stockEntryModel    = new StockEntry();
+
+        foreach ($productionPaper['properties'] as $prop) {
+            $totalPiecesToDeduct += (int)($prop['pieces'] ?? 0);
+            if (($prop['propertyType'] ?? '') === STOCK_UNIT_BUNDLES) {
+                $kzincBundleQty  += (float)($prop['quantity'] ?? 0);
+                $kzincHasBundles  = true;
+            }
+        }
+
+        if ($totalPiecesToDeduct <= 0) {
+            throw new Exception('No pieces specified for KZinc sale');
+        }
+
+        if (!$isHistorical) {
+            // Live sale: validate availability and plan FIFO deductions
+            $kzincEntries         = $stockEntryModel->getAvailableKzincEntries($productionData['coil_id']);
+            $totalAvailablePieces = (int)array_sum(array_column($kzincEntries, 'pieces_remaining'));
+
+            if ($totalAvailablePieces < $totalPiecesToDeduct) {
+                throw new Exception(
+                    "Insufficient KZinc stock: need $totalPiecesToDeduct pieces, only $totalAvailablePieces available"
+                );
+            }
+
+            $remaining = $totalPiecesToDeduct;
+            foreach ($kzincEntries as $entry) {
+                if ($remaining <= 0) break;
+                $deduct  = min($remaining, (int)$entry['pieces_remaining']);
+                $kzincPlannedDeductions[] = [
+                    'entry_id'        => (int)$entry['id'],
+                    'deduct'          => $deduct,
+                    'balance_after'   => (int)$entry['pieces_remaining'] - $deduct,
+                ];
+                $remaining -= $deduct;
+            }
+
+            $primaryStockEntryId = $kzincPlannedDeductions[0]['entry_id'] ?? null;
+        }
+        // Historical sale: no stock deduction — $kzincPlannedDeductions stays empty,
+        // $primaryStockEntryId stays null.
+
+        $kzincSaleUnitType = $kzincHasBundles ? STOCK_UNIT_BUNDLES : STOCK_UNIT_PIECES;
+        $kzincSaleQuantity = $kzincHasBundles ? $kzincBundleQty : $totalPiecesToDeduct;
     }
 
     // ========================================
@@ -126,16 +178,18 @@ try {
     $saleModel = new Sale();
 
     $saleData = [
-        'customer_id' => $productionData['customer_id'],
-        'coil_id' => $productionData['coil_id'],
-        'stock_entry_id' => $primaryStockEntryId, // ✅ NOW CORRECTLY SET!
-        'sale_type' => SALE_TYPE_RETAIL,
-        'meters' => $productionPaper['summary']['totalMeters'],
+        'customer_id'     => $productionData['customer_id'],
+        'coil_id'         => $productionData['coil_id'],
+        'stock_entry_id'  => $primaryStockEntryId,
+        'sale_type'       => SALE_TYPE_RETAIL,
+        'meters'          => $productionPaper['summary']['totalMeters'],
         'price_per_meter' => $isKzinc ? 0 : calculateAveragePrice($productionPaper['properties']),
-        'total_amount' => $productionPaper['summary']['totalAmount'],
-        'status' => SALE_STATUS_COMPLETED,
-        'created_by' => $currentUser['id'],
-        'created_at' => $saleDateTime,
+        'total_amount'    => $productionPaper['summary']['totalAmount'],
+        'unit_type'       => $isKzinc ? $kzincSaleUnitType : STOCK_UNIT_METERS,
+        'quantity'        => $isKzinc ? $kzincSaleQuantity : null,
+        'status'          => SALE_STATUS_COMPLETED,
+        'created_by'      => $currentUser['id'],
+        'created_at'      => $saleDateTime,
     ];
 
     $saleId = $saleModel->create($saleData);
@@ -143,8 +197,6 @@ try {
     if (!$saleId) {
         throw new Exception('Failed to create sale record');
     }
-
-    error_log("Sale #$saleId created with stock_entry_id = " . ($primaryStockEntryId ?? 'NULL'));
 
     // ========================================
     // STEP 2: CREATE PRODUCTION RECORD (IMMUTABLE)
@@ -222,17 +274,23 @@ try {
         $invoiceData['items'], // Production items
         $invoiceData['addon_items'] ?? [] // Add-on items
     );
-    
+
     // Calculate totals
     $productionSubtotal = array_reduce($invoiceData['items'], function($sum, $item) {
         return $sum + ($item['subtotal'] ?? 0);
     }, 0);
-    
+
     $addonTotal = array_reduce($invoiceData['addon_items'] ?? [], function($sum, $item) {
         return $sum + ($item['subtotal'] ?? 0);
     }, 0);
-    
+
     $invoiceSubtotal = $productionSubtotal + $addonTotal;
+
+    // Extract scalar tax/discount amounts — JS sends structured objects
+    $taxRaw      = $invoiceData['tax'] ?? 0;
+    $discountRaw = $invoiceData['discount'] ?? 0;
+    $taxAmount      = is_array($taxRaw)      ? floatval($taxRaw['amount']  ?? 0) : floatval($taxRaw);
+    $discountAmount = is_array($discountRaw) ? floatval($discountRaw['amount'] ?? 0) : floatval($discountRaw);
 
     $invoiceShape = [
         'company' => [
@@ -254,9 +312,9 @@ try {
             'addon_charges' => $invoiceData['addon_summary']['total_charges'] ?? 0,
             'adjustments' => $invoiceData['addon_summary']['total_adjustments'] ?? 0,
         ],
-        'order_tax' => $invoiceData['tax'],
-        'discount' => $invoiceData['discount'],
-        'shipping' => $invoiceData['shipping'],
+        'order_tax' => $taxAmount,
+        'discount' => $discountAmount,
+        'shipping' => floatval($invoiceData['shipping'] ?? 0),
         'grand_total' => $invoiceData['grandTotal'],
         'paid' => 0.0,
         'due' => $invoiceData['grandTotal'],
@@ -275,9 +333,9 @@ try {
         'sale_id' => $saleId,
         'production_id' => $productionId,
         'invoice_shape' => $invoiceShape,
-        'total' => $invoiceData['grandTotal'],
-        'tax' => $invoiceData['tax'],
-        'shipping' => $invoiceData['shipping'],
+        'total' => floatval($invoiceData['grandTotal'] ?? 0),
+        'tax' => $taxAmount,
+        'shipping' => floatval($invoiceData['shipping'] ?? 0),
         'paid_amount' => 0,
         'status' => INVOICE_STATUS_UNPAID,
         'created_at' => $saleDateTime,
@@ -292,9 +350,6 @@ try {
     // STEP 4: DEDUCT STOCK METERS (STOCK-BASED CATEGORIES ONLY: ALUSTEEL & ALUMINIUM)
     // ========================================
     if (!$isKzinc) {
-        // ✅ Use the pre-calculated deductions
-        $stockEntryModel = new StockEntry();
-
         foreach ($plannedDeductions as $deduction) {
             $entryId = $deduction['entry_id'];
             $deductAmount = $deduction['deduct_amount'];
@@ -320,14 +375,27 @@ try {
                 $currentUser['id'],
                 $entryId,
             );
-
-            error_log("Deducted $deductAmount meters from stock_entry #$entryId, new remaining: $newRemaining");
         }
 
         // Update coil status if needed
         $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
-    } else {
-        error_log("KZINC sale #$saleId: Skipping meter deduction and ledger entries");
+    } else if (!$isHistorical) {
+        // KZinc live sale: deduct pieces FIFO from stock entries
+        foreach ($kzincPlannedDeductions as $deduction) {
+            if (!$stockEntryModel->deductPieces($deduction['entry_id'], $deduction['deduct'])) {
+                throw new Exception("Failed to deduct pieces from stock entry #{$deduction['entry_id']}");
+            }
+            logKzincStockEntry(
+                $productionData['coil_id'],
+                $saleId,
+                $deduction['entry_id'],
+                $deduction['deduct'],
+                $deduction['balance_after'],
+                $currentUser['id'],
+            );
+        }
+        $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
+        // Historical KZinc sale: skip deduction entirely — stock was already consumed in the past
     }
 
     $db->commit();
@@ -427,5 +495,50 @@ function logStockCardEntry(
     } catch (PDOException $e) {
         error_log('Stock ledger entry error: ' . $e->getMessage());
         throw new Exception('Failed to log stock ledger entry: ' . $e->getMessage());
+    }
+}
+
+function logKzincStockEntry(
+    $coilId,
+    $saleId,
+    $stockEntryId,
+    $piecesDeducted,
+    $balancePieces,
+    $createdBy,
+) {
+    try {
+        $db = Database::getInstance()->getConnection();
+
+        $sql = "INSERT INTO stock_ledger
+                (coil_id, stock_entry_id, transaction_type, description,
+                 inflow_meters, outflow_meters, balance_meters,
+                 inflow_pieces, outflow_pieces, balance_pieces,
+                 reference_type, reference_id, created_by, created_at)
+                VALUES
+                (:coil_id, :stock_entry_id, 'outflow', :description,
+                 0, 0, 0,
+                 0, :outflow_pieces, :balance_pieces,
+                 'sale', :reference_id, :created_by, NOW())";
+
+        $stmt = $db->prepare($sql);
+        $result = $stmt->execute([
+            ':coil_id'        => $coilId,
+            ':stock_entry_id' => $stockEntryId,
+            ':description'    => "KZinc piece deduction for sale #$saleId",
+            ':outflow_pieces' => $piecesDeducted,
+            ':balance_pieces' => $balancePieces,
+            ':reference_id'   => $saleId,
+            ':created_by'     => $createdBy,
+        ]);
+
+        if (!$result) {
+            error_log('Failed to log KZinc ledger entry: ' . json_encode($stmt->errorInfo()));
+            throw new Exception('Failed to log KZinc ledger entry');
+        }
+
+        return true;
+    } catch (PDOException $e) {
+        error_log('KZinc ledger entry error: ' . $e->getMessage());
+        throw new Exception('Failed to log KZinc ledger entry: ' . $e->getMessage());
     }
 }
