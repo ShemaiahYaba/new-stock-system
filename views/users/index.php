@@ -103,7 +103,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <?php echo USER_ROLES[$user['role']] ?? $user['role']; ?>
                                 </span>
                             </td>
-                            <td><?php echo formatDate($user['created_at']); ?></td>
+                            <td><?php echo formatDate($user['created_at'], 'M j, Y'); ?></td>
                             <td>
                                 <?php
                                 $id = $user['id'];

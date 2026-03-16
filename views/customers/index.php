@@ -92,7 +92,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                             <td><?php echo htmlspecialchars($customer['email'] ?? '-'); ?></td>
                             <td><?php echo htmlspecialchars($customer['phone']); ?></td>
                             <td><?php echo htmlspecialchars($customer['company'] ?? '-'); ?></td>
-                            <td><?php echo formatDate($customer['created_at']); ?></td>
+                            <td><?php echo formatDate($customer['created_at'], 'M j, Y'); ?></td>
                             <td>
                                 <?php
                                 $id = $customer['id'];

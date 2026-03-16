@@ -92,7 +92,7 @@ class User {
             $sql = "SELECT id, email, name, role, created_at, updated_at 
                     FROM {$this->table} 
                     WHERE deleted_at IS NULL 
-                    ORDER BY id ASC 
+                    ORDER BY id DESC
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->db->prepare($sql);
@@ -345,7 +345,7 @@ class User {
                     FROM {$this->table} 
                     WHERE deleted_at IS NULL 
                     AND (email LIKE :query1 OR name LIKE :query2)
-                    ORDER BY id ASC 
+                    ORDER BY id DESC
                     LIMIT :limit OFFSET :offset";
             
             error_log("SQL Query: $sql");

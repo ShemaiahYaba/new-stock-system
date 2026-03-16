@@ -102,7 +102,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     <span class="badge bg-secondary">Inactive</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo formatDate($warehouse['created_at']); ?></td>
+                            <td><?php echo formatDate($warehouse['created_at'], 'M j, Y'); ?></td>
                             <td>
                                 <?php
                                 $id = $warehouse['id'];

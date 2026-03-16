@@ -72,10 +72,10 @@ class Warehouse {
     public function getAll($limit = 1000, $offset = 0) {
         try {
             $sql = "SELECT * FROM {$this->table} 
-                    WHERE deleted_at IS NULL 
-                    ORDER BY id ASC 
+                    WHERE deleted_at IS NULL
+                    ORDER BY id DESC
                     LIMIT :limit OFFSET :offset";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -192,7 +192,7 @@ class Warehouse {
                     FROM {$this->table} 
                     WHERE deleted_at IS NULL 
                     AND (name LIKE :query1 OR location LIKE :query2 OR contact LIKE :query3)
-                    ORDER BY id ASC 
+                    ORDER BY id DESC
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->db->prepare($sql);

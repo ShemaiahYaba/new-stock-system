@@ -100,7 +100,7 @@ class TileSale {
                     LEFT JOIN customers c ON ts.customer_id = c.id
                     LEFT JOIN tile_products tp ON ts.tile_product_id = tp.id
                     WHERE ts.deleted_at IS NULL
-                    ORDER BY ts.created_at DESC
+                    ORDER BY ts.id DESC
                     LIMIT ? OFFSET ?";
             
             $stmt = $this->db->prepare($sql);

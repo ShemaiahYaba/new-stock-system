@@ -115,29 +115,29 @@ class Sale {
                     LEFT JOIN coils co ON s.coil_id = co.id
                     LEFT JOIN users u ON s.created_by = u.id
                     WHERE s.deleted_at IS NULL
-                    ORDER BY s.created_at DESC
+                    ORDER BY s.id DESC
                     LIMIT ? OFFSET ?";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([(int)$limit, (int)$offset]);
-            
+
             $sales = $stmt->fetchAll();
-            
+
             // Get invoice data separately for each sale
             foreach ($sales as &$sale) {
-                $invoiceSql = "SELECT id, status, invoice_number, paid_amount, total 
-                              FROM {$this->invoiceTable} 
-                              WHERE sale_id = ? 
-                              ORDER BY created_at DESC 
+                $invoiceSql = "SELECT id, status, invoice_number, paid_amount, total
+                              FROM {$this->invoiceTable}
+                              WHERE sale_id = ?
+                              ORDER BY created_at DESC
                               LIMIT 1";
                 $invoiceStmt = $this->db->prepare($invoiceSql);
                 $invoiceStmt->execute([$sale['id']]);
                 $invoice = $invoiceStmt->fetch();
-                
+
                 $sale['has_invoice'] = !empty($invoice);
                 $sale['invoice'] = $invoice ?: null;
             }
-            
+
             return $sales;
         } catch (PDOException $e) {
             error_log("Sale fetch error: " . $e->getMessage());
@@ -402,7 +402,7 @@ class Sale {
                     LEFT JOIN coils co ON s.coil_id = co.id
                     LEFT JOIN users u ON s.created_by = u.id
                     $whereClause
-                    ORDER BY s.created_at DESC
+                    ORDER BY s.id DESC
                     LIMIT ? OFFSET ?";
             
             // Add pagination parameters to the end
