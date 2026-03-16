@@ -81,13 +81,13 @@ class Color {
             $sql = "SELECT c.*, u.name as created_by_name 
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
-                    WHERE c.deleted_at IS NULL 
-                    ORDER BY c.id ASC 
+                    WHERE c.deleted_at IS NULL
+                    ORDER BY c.id DESC
                     LIMIT ? OFFSET ?";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([(int)$limit, (int)$offset]);
-            
+
             return $stmt->fetchAll();
         } catch (PDOException $e) {
             error_log("Color fetch error: " . $e->getMessage());
@@ -185,7 +185,7 @@ class Color {
                     LEFT JOIN users u ON c.created_by = u.id
                     WHERE c.deleted_at IS NULL 
                     AND (c.code LIKE ? OR c.name LIKE ?)
-                    ORDER BY c.id ASC 
+                    ORDER BY c.id DESC
                     LIMIT ? OFFSET ?";
             
             $searchParam = "%$query%";

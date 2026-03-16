@@ -95,7 +95,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <?php foreach ($sales as $sale): ?>
                         <tr>
                             <td><strong>#<?= $sale['id'] ?></strong></td>
-                            <td><?= formatDate($sale['created_at'], 'm/d/y') ?></td>
+                            <td><?= formatDate($sale['created_at'], 'M j, Y') ?></td>
                             <td><?= htmlspecialchars($sale['customer_name']) ?></td>
                             <td><code><?= htmlspecialchars($sale['product_code']) ?></code></td>
                             <td class="text-end"><?= number_format($sale['quantity'], 1) ?> pcs</td>

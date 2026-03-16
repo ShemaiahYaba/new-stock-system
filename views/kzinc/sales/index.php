@@ -192,7 +192,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     </a>
                                 </div>
                             </td>
-                            <td><small><?php echo formatDate($sale['created_at']); ?></small></td>
+                            <td><small><?php echo formatDate($sale['created_at'], 'M j, Y'); ?></small></td>
                             <td>
                                 <div class="btn-group btn-group-sm">
                                     <?php if (hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_VIEW)): ?>

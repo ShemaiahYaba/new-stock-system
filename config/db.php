@@ -16,6 +16,12 @@ class Database {
     private $username = 'root';
     private $password = '';
     private $charset = 'utf8mb4';
+
+    // private $host = 'localhost';
+    // private $db_name = 'obumuvcg_stockdb';
+    // private $username = 'obumuvcg_stockuser';
+    // private $password = 'EmekaEzealisi123@456';
+    // private $charset = 'utf8mb4';
     /**
      * Private constructor to prevent direct instantiation
      */

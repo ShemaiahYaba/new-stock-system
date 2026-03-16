@@ -76,8 +76,8 @@ class Customer {
             $sql = "SELECT c.*, u.name as created_by_name 
                     FROM {$this->table} c
                     LEFT JOIN users u ON c.created_by = u.id
-                    WHERE c.deleted_at IS NULL 
-                    ORDER BY c.id ASC 
+                    WHERE c.deleted_at IS NULL
+                    ORDER BY c.id DESC
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->db->prepare($sql);
@@ -206,7 +206,7 @@ class Customer {
                     LEFT JOIN users u ON c.created_by = u.id
                     WHERE c.deleted_at IS NULL 
                     AND (c.name LIKE :query1 OR c.email LIKE :query2 OR c.phone LIKE :query3 OR c.company LIKE :query4)
-                    ORDER BY c.id ASC 
+                    ORDER BY c.id DESC
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->db->prepare($sql);

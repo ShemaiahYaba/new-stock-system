@@ -142,7 +142,7 @@ class Production
             $params[':status'] = $status;
         }
 
-        $sql .= ' ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset';
+        $sql .= ' ORDER BY p.id DESC LIMIT :limit OFFSET :offset';
         $params[':limit'] = (int) $limit;
         $params[':offset'] = (int) $offset;
 
@@ -262,7 +262,7 @@ class Production
             $params[':status'] = $status;
         }
 
-        $sql .= ' ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset';
+        $sql .= ' ORDER BY p.id DESC LIMIT :limit OFFSET :offset';
         $params[':limit'] = (int) $limit;
         $params[':offset'] = (int) $offset;
 

@@ -120,7 +120,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                 <?php endif; ?>
                             </td>
                             <td><?php echo htmlspecialchars($color['created_by_name'] ?? '-'); ?></td>
-                            <td><?php echo formatDate($color['created_at']); ?></td>
+                            <td><?php echo formatDate($color['created_at'], 'M j, Y'); ?></td>
                             <td>
                                 <?php
                                 $id = $color['id'];

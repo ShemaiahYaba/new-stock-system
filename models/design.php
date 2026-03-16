@@ -66,10 +66,10 @@ class Design {
             $sql = "SELECT d.*, u.name as created_by_name 
                     FROM {$this->table} d
                     LEFT JOIN users u ON d.created_by = u.id
-                    WHERE d.deleted_at IS NULL 
-                    ORDER BY d.name ASC 
+                    WHERE d.deleted_at IS NULL
+                    ORDER BY d.id DESC
                     LIMIT ? OFFSET ?";
-            
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([(int)$limit, (int)$offset]);
             return $stmt->fetchAll();
@@ -169,7 +169,7 @@ class Design {
                     LEFT JOIN users u ON d.created_by = u.id
                     WHERE d.deleted_at IS NULL 
                     AND (d.code LIKE ? OR d.name LIKE ?)
-                    ORDER BY d.name ASC 
+                    ORDER BY d.id DESC
                     LIMIT ? OFFSET ?";
             
             $stmt = $this->db->prepare($sql);

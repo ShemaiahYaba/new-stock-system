@@ -228,7 +228,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                     </a>
                                 </div>
                             </td>
-                            <td><?= formatDate($sale['created_at']) ?></td>
+                            <td><?= formatDate($sale['created_at'], 'M j, Y') ?></td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <!-- View Details -->
