@@ -782,10 +782,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             },
         };
 
+        const coilCode = currentCoilData?.code ?? '';
         const invoiceData = {
             customer: { name: custName, phone: custPhone, email: '' },
             items: properties.map(p => ({
-                description: p.label,
+                product_code: `${coilCode} - ${p.quantity} Bundle${p.quantity !== 1 ? 's' : ''} - ${p.label}`,
+                description:  `${p.pieces} pcs`,
                 quantity:    p.quantity,
                 unit:        'bundles',
                 unit_price:  p.unitPrice,

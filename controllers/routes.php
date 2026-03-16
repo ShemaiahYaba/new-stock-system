@@ -373,6 +373,11 @@ $routes = [
         'module' => MODULE_KZINC_MANAGEMENT,
         'action' => ACTION_CREATE,
     ],
+    'kzinc_stock_ledger' => [
+        'view'   => 'views/kzinc/stock/ledger.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_VIEW,
+    ],
     'kzinc_sales' => [
         'view'   => 'views/kzinc/sales/index.php',
         'module' => MODULE_KZINC_MANAGEMENT,

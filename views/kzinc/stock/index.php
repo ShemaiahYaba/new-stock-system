@@ -134,10 +134,9 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <?php
                         $rem = (int)($entry['pieces_remaining'] ?? 0);
                         $piecesTotal = (int)($entry['pieces_total'] ?? 0);
-                        // Derive display status: if pieces are fully depleted, show Sold Out
-                        // regardless of what the status column holds (deductPieces doesn't update status)
                         $displayStatus = ($rem <= 0 && $piecesTotal > 0) ? 'sold' : ($entry['status'] ?? 'available');
                         $unitLabel = $entry['unit_type'] ?? null;
+
                         ?>
                         <tr>
                             <td><small class="text-muted"><?php echo $entry['id']; ?></small></td>
@@ -167,6 +166,11 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 <span class="badge <?php echo getStatusBadgeClass($displayStatus); ?>">
                                     <?php echo STOCK_STATUSES[$displayStatus] ?? ucfirst(str_replace('_', ' ', $displayStatus)); ?>
                                 </span>
+                                <a href="/new-stock-system/index.php?page=kzinc_stock_ledger&entry_id=<?php echo $entry['id']; ?>"
+                                   class="btn btn-sm btn-outline-primary ms-1"
+                                   title="View stock card for entry #<?php echo $entry['id']; ?>">
+                                    <i class="bi bi-journal-text"></i> Stock Card
+                                </a>
                             </td>
                             <td><small><?php echo formatDate($entry['created_at']); ?></small></td>
                             <td><small><?php echo htmlspecialchars($entry['created_by_name'] ?? '—'); ?></small></td>

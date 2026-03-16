@@ -350,6 +350,77 @@ class StockLedger
     }
 
     /**
+     * Record KZinc stock inflow (when a new stock entry is added).
+     * Uses inflow_pieces / balance_pieces columns added in migration 024.
+     *
+     * @param int    $coilId       Coil ID
+     * @param int    $stockEntryId Stock entry ID
+     * @param int    $pieces       Total pieces added
+     * @param string $description  Description
+     * @param int    $createdBy    User ID
+     * @return int|false
+     */
+    public function recordKzincInflow($coilId, $stockEntryId, $pieces, $description, $createdBy)
+    {
+        try {
+            // Balance for a brand-new entry always starts at 0 before this inflow
+            $currentBalance = $this->getCurrentKzincBalance($stockEntryId);
+            $newBalance = $currentBalance + $pieces;
+
+            $sql = "INSERT INTO {$this->table}
+                    (coil_id, stock_entry_id, transaction_type, description,
+                     inflow_meters, outflow_meters, balance_meters,
+                     inflow_pieces, outflow_pieces, balance_pieces,
+                     reference_type, reference_id, created_by, created_at)
+                    VALUES
+                    (:coil_id, :stock_entry_id, 'inflow', :description,
+                     0, 0, 0,
+                     :inflow_pieces, 0, :balance_pieces,
+                     'stock_entry', :ref_id, :created_by, NOW())";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                ':coil_id'       => $coilId,
+                ':stock_entry_id'=> $stockEntryId,
+                ':description'   => $description,
+                ':inflow_pieces' => $pieces,
+                ':balance_pieces'=> $newBalance,
+                ':ref_id'        => $stockEntryId,
+                ':created_by'    => $createdBy,
+            ]);
+
+            return $this->db->lastInsertId();
+        } catch (PDOException $e) {
+            error_log('KZinc inflow ledger error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get the latest piece balance for a KZinc stock entry.
+     *
+     * @param int $stockEntryId
+     * @return int
+     */
+    public function getCurrentKzincBalance($stockEntryId)
+    {
+        try {
+            $stmt = $this->db->prepare(
+                "SELECT balance_pieces FROM {$this->table}
+                 WHERE stock_entry_id = :id
+                 ORDER BY created_at DESC, id DESC
+                 LIMIT 1"
+            );
+            $stmt->execute([':id' => $stockEntryId]);
+            $row = $stmt->fetch();
+            return $row ? (int)$row['balance_pieces'] : 0;
+        } catch (PDOException $e) {
+            error_log('KZinc ledger balance error: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * DEPRECATED: Use getFactoryUseStockEntries() instead
      * Kept for backward compatibility
      *

@@ -145,9 +145,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception('Failed to create stock entry.');
         }
 
-        // Record ledger entry for factory-use, meter-based coils only
-        if (!$isKzinc && $coil['status'] === STOCK_STATUS_FACTORY_USE) {
-            $ledgerModel = new StockLedger();
+        $ledgerModel = new StockLedger();
+
+        if ($isKzinc) {
+            // KZinc: always log inflow in pieces
+            $description = "Stock entry added — {$coil['code']}: {$quantity} {$unitType} ({$piecesTotal} pcs)";
+            $ledgerModel->recordKzincInflow($coilId, $entryId, $piecesTotal, $description, $currentUser['id']);
+        } elseif ($coil['status'] === STOCK_STATUS_FACTORY_USE) {
+            // Non-KZinc factory-use: log inflow in meters
             $description = "Stock entry added - {$meters}m for {$coil['code']}";
             $ledgerModel->recordInflow($coilId, $entryId, $meters, $description, $currentUser['id']);
         }

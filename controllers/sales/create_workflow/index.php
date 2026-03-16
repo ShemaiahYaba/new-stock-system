@@ -154,8 +154,12 @@ try {
             $remaining = $totalPiecesToDeduct;
             foreach ($kzincEntries as $entry) {
                 if ($remaining <= 0) break;
-                $deduct = min($remaining, (int)$entry['pieces_remaining']);
-                $kzincPlannedDeductions[] = ['entry_id' => (int)$entry['id'], 'deduct' => $deduct];
+                $deduct  = min($remaining, (int)$entry['pieces_remaining']);
+                $kzincPlannedDeductions[] = [
+                    'entry_id'        => (int)$entry['id'],
+                    'deduct'          => $deduct,
+                    'balance_after'   => (int)$entry['pieces_remaining'] - $deduct,
+                ];
                 $remaining -= $deduct;
             }
 
@@ -381,6 +385,14 @@ try {
             if (!$stockEntryModel->deductPieces($deduction['entry_id'], $deduction['deduct'])) {
                 throw new Exception("Failed to deduct pieces from stock entry #{$deduction['entry_id']}");
             }
+            logKzincStockEntry(
+                $productionData['coil_id'],
+                $saleId,
+                $deduction['entry_id'],
+                $deduction['deduct'],
+                $deduction['balance_after'],
+                $currentUser['id'],
+            );
         }
         $stockEntryModel->checkAndUpdateCoilStatus($productionData['coil_id']);
         // Historical KZinc sale: skip deduction entirely — stock was already consumed in the past
@@ -483,5 +495,50 @@ function logStockCardEntry(
     } catch (PDOException $e) {
         error_log('Stock ledger entry error: ' . $e->getMessage());
         throw new Exception('Failed to log stock ledger entry: ' . $e->getMessage());
+    }
+}
+
+function logKzincStockEntry(
+    $coilId,
+    $saleId,
+    $stockEntryId,
+    $piecesDeducted,
+    $balancePieces,
+    $createdBy,
+) {
+    try {
+        $db = Database::getInstance()->getConnection();
+
+        $sql = "INSERT INTO stock_ledger
+                (coil_id, stock_entry_id, transaction_type, description,
+                 inflow_meters, outflow_meters, balance_meters,
+                 inflow_pieces, outflow_pieces, balance_pieces,
+                 reference_type, reference_id, created_by, created_at)
+                VALUES
+                (:coil_id, :stock_entry_id, 'outflow', :description,
+                 0, 0, 0,
+                 0, :outflow_pieces, :balance_pieces,
+                 'sale', :reference_id, :created_by, NOW())";
+
+        $stmt = $db->prepare($sql);
+        $result = $stmt->execute([
+            ':coil_id'        => $coilId,
+            ':stock_entry_id' => $stockEntryId,
+            ':description'    => "KZinc piece deduction for sale #$saleId",
+            ':outflow_pieces' => $piecesDeducted,
+            ':balance_pieces' => $balancePieces,
+            ':reference_id'   => $saleId,
+            ':created_by'     => $createdBy,
+        ]);
+
+        if (!$result) {
+            error_log('Failed to log KZinc ledger entry: ' . json_encode($stmt->errorInfo()));
+            throw new Exception('Failed to log KZinc ledger entry');
+        }
+
+        return true;
+    } catch (PDOException $e) {
+        error_log('KZinc ledger entry error: ' . $e->getMessage());
+        throw new Exception('Failed to log KZinc ledger entry: ' . $e->getMessage());
     }
 }
