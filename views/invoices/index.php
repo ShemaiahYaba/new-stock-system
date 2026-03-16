@@ -1,328 +1,317 @@
 <?php
 /**
  * Invoices List View
- * File: views/invoices/index.php
  */
 require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../config/constants.php';
 require_once __DIR__ . '/../../models/invoice.php';
 require_once __DIR__ . '/../../utils/helpers.php';
 
-// Ensure APP_NAME is defined
-if (!defined('APP_NAME')) {
-    define('APP_NAME', 'Stock Taking System');
-}
-
 $pageTitle = 'Invoices - ' . APP_NAME;
 
-// Ensure RECORDS_PER_PAGE is defined at the top
-if (!defined('RECORDS_PER_PAGE')) {
-    define('RECORDS_PER_PAGE', 10);
+$currentPage  = isset($_GET['page_num']) ? max(1, (int)$_GET['page_num']) : 1;
+$statusFilter = trim($_GET['status'] ?? '');
+$searchQuery  = trim($_GET['search'] ?? '');
+
+$invoiceModel = new Invoice();
+$db           = Database::getInstance()->getConnection();
+
+$limit  = RECORDS_PER_PAGE;
+$offset = ($currentPage - 1) * $limit;
+
+// ── Summary stats ────────────────────────────────────────────────────────────
+$stats = $db->query(
+    "SELECT
+        COUNT(*) AS total,
+        COALESCE(SUM(total), 0) AS total_value,
+        COALESCE(SUM(paid_amount), 0) AS total_paid,
+        COALESCE(SUM(total - paid_amount), 0) AS total_due,
+        SUM(CASE WHEN paid_amount = 0 THEN 1 ELSE 0 END) AS unpaid_count,
+        SUM(CASE WHEN paid_amount > 0 AND paid_amount < total THEN 1 ELSE 0 END) AS partial_count,
+        SUM(CASE WHEN paid_amount >= total THEN 1 ELSE 0 END) AS paid_count
+     FROM invoices"
+)->fetch();
+
+// ── Filtered query ───────────────────────────────────────────────────────────
+$where  = ['1=1'];
+$params = [];
+
+if ($statusFilter !== '') {
+    $where[]  = 'i.status = :status';
+    $params[':status'] = $statusFilter;
 }
 
-// Initialize variables
-$currentPage = isset($_GET['page_num']) ? max(1, (int) $_GET['page_num']) : 1;
-$statusFilter = isset($_GET['status']) ? trim($_GET['status']) : '';
-
-// Initialize invoice model
-try {
-    $invoiceModel = new Invoice();
-    $limit = RECORDS_PER_PAGE;
-    $offset = ($currentPage - 1) * $limit;
-
-    // Get invoices with pagination and status filter
-    $invoices = $invoiceModel->getAll($limit, $offset, $statusFilter);
-    $totalInvoices = $invoiceModel->count($statusFilter);
-
-    if (!is_array($invoices)) {
-        $invoices = [];
-        error_log('Error: $invoices is not an array');
-    }
-} catch (Exception $e) {
-    error_log('Error initializing invoice data: ' . $e->getMessage());
-    $invoices = [];
-    $totalInvoices = 0;
+if ($searchQuery !== '') {
+    // Search in stored customer name (inside invoice_shape JSON) and invoice_number
+    $where[]  = "(i.invoice_number LIKE :q OR JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.customer.name')) LIKE :q2)";
+    $params[':q']  = "%$searchQuery%";
+    $params[':q2'] = "%$searchQuery%";
 }
 
-// Calculate pagination data
-$totalPages = ceil($totalInvoices / $limit);
-$paginationData = [
-    'currentPage' => $currentPage,
-    'totalPages' => $totalPages,
-    'hasPrevious' => $currentPage > 1,
-    'hasNext' => $currentPage < $totalPages,
-    'previousPage' => $currentPage > 1 ? $currentPage - 1 : 1,
-    'nextPage' => $currentPage < $totalPages ? $currentPage + 1 : $totalPages,
-];
+$whereStr = implode(' AND ', $where);
 
-// Include layout files
+$countStmt = $db->prepare("SELECT COUNT(*) FROM invoices i WHERE $whereStr");
+$countStmt->execute($params);
+$totalInvoices = (int)$countStmt->fetchColumn();
+
+$listStmt = $db->prepare(
+    "SELECT i.*,
+            JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.customer.name'))  AS customer_name,
+            JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.customer.phone')) AS customer_phone,
+            JSON_UNQUOTE(JSON_EXTRACT(i.invoice_shape, '$.meta.ref'))       AS sale_ref
+     FROM invoices i
+     WHERE $whereStr
+     ORDER BY i.id DESC
+     LIMIT :limit OFFSET :offset"
+);
+foreach ($params as $k => $v) {
+    $listStmt->bindValue($k, $v);
+}
+$listStmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
+$listStmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$listStmt->execute();
+$invoices = $listStmt->fetchAll();
+
+$paginationData = getPaginationData($totalInvoices, $currentPage);
+
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';
-
-// Ensure RECORDS_PER_PAGE is defined
-if (!defined('RECORDS_PER_PAGE')) {
-    define('RECORDS_PER_PAGE', 10);
-}
 ?>
-
-<style>
-    .status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-    .payment-status {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-</style>
 
 <div class="content-wrapper">
     <div class="page-header">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h1 class="page-title">
-                    <i class="bi bi-receipt"></i> Invoices
-                </h1>
-                <p class="text-muted">Manage and track all invoices</p>
+                <h1 class="page-title"><i class="bi bi-receipt"></i> Invoices</h1>
+                <p class="text-muted">
+                    All sales invoices
+                    <?php if ($searchQuery !== ''): ?>
+                        <span class="badge bg-info">Search: "<?php echo htmlspecialchars($searchQuery); ?>"</span>
+                    <?php endif; ?>
+                    (<?php echo $totalInvoices; ?> total)
+                </p>
             </div>
         </div>
     </div>
-    
+
+    <!-- Summary cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <div class="text-muted small mb-1">Total Invoiced</div>
+                    <div class="fw-bold fs-5">₦<?php echo number_format($stats['total_value'], 2); ?></div>
+                    <div class="text-muted small"><?php echo $stats['total']; ?> invoices</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100 border-success">
+                <div class="card-body py-3">
+                    <div class="text-muted small mb-1">Total Collected</div>
+                    <div class="fw-bold fs-5 text-success">₦<?php echo number_format($stats['total_paid'], 2); ?></div>
+                    <div class="text-muted small"><?php echo $stats['paid_count']; ?> fully paid</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100 border-danger">
+                <div class="card-body py-3">
+                    <div class="text-muted small mb-1">Outstanding</div>
+                    <div class="fw-bold fs-5 text-danger">₦<?php echo number_format($stats['total_due'], 2); ?></div>
+                    <div class="text-muted small"><?php echo $stats['unpaid_count']; ?> unpaid</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100 border-warning">
+                <div class="card-body py-3">
+                    <div class="text-muted small mb-1">Part-Paid</div>
+                    <div class="fw-bold fs-5 text-warning"><?php echo $stats['partial_count']; ?></div>
+                    <div class="text-muted small">invoices</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filters -->
     <div class="card mb-3">
         <div class="card-body">
-            <form method="GET" action="/new-stock-system/index.php" class="row g-3">
-                <input type="hidden" name="page" value="invoices">
-                
-                <div class="col-md-4">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select" onchange="this.form.submit()">
-                        <option value="">All Statuses</option>
-                        <option value="paid" <?= $statusFilter === 'paid'
-                            ? 'selected'
-                            : '' ?>>Paid</option>
-                        <option value="partial" <?= $statusFilter === 'partial'
-                            ? 'selected'
-                            : '' ?>>Partial Payment</option>
-                        <option value="unpaid" <?= $statusFilter === 'unpaid'
-                            ? 'selected'
-                            : '' ?>>Unpaid</option>
-                        <option value="overdue" <?= $statusFilter === 'overdue'
-                            ? 'selected'
-                            : '' ?>>Overdue</option>
-                    </select>
+            <div class="row g-3 align-items-end">
+                <!-- Status buttons -->
+                <div class="col-md-7">
+                    <label class="form-label small text-muted">Filter by Status</label>
+                    <div class="btn-group w-100" role="group">
+                        <?php
+                        $baseUrl = '/new-stock-system/index.php?page=invoices' .
+                            ($searchQuery !== '' ? '&search=' . urlencode($searchQuery) : '');
+                        ?>
+                        <a href="<?php echo $baseUrl; ?>"
+                           class="btn btn-sm <?php echo $statusFilter === '' ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                            All <span class="badge bg-white text-dark ms-1"><?php echo $stats['total']; ?></span>
+                        </a>
+                        <a href="<?php echo $baseUrl; ?>&status=unpaid"
+                           class="btn btn-sm <?php echo $statusFilter === 'unpaid' ? 'btn-danger' : 'btn-outline-danger'; ?>">
+                            Unpaid <span class="badge bg-white text-dark ms-1"><?php echo $stats['unpaid_count']; ?></span>
+                        </a>
+                        <a href="<?php echo $baseUrl; ?>&status=partial"
+                           class="btn btn-sm <?php echo $statusFilter === 'partial' ? 'btn-warning' : 'btn-outline-warning'; ?>">
+                            Partial <span class="badge bg-white text-dark ms-1"><?php echo $stats['partial_count']; ?></span>
+                        </a>
+                        <a href="<?php echo $baseUrl; ?>&status=paid"
+                           class="btn btn-sm <?php echo $statusFilter === 'paid' ? 'btn-success' : 'btn-outline-success'; ?>">
+                            Paid <span class="badge bg-white text-dark ms-1"><?php echo $stats['paid_count']; ?></span>
+                        </a>
+                    </div>
                 </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Invoices List -->
-    <div class="card">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="bi bi-list"></i> Invoice Records (<?= $totalInvoices ?> total)
+                <!-- Search -->
+                <div class="col-md-5">
+                    <label class="form-label small text-muted">Search</label>
+                    <form method="GET" action="/new-stock-system/index.php" class="d-flex">
+                        <input type="hidden" name="page" value="invoices">
+                        <?php if ($statusFilter !== ''): ?>
+                        <input type="hidden" name="status" value="<?php echo htmlspecialchars($statusFilter); ?>">
+                        <?php endif; ?>
+                        <input type="text" name="search" class="form-control form-control-sm me-2"
+                               placeholder="Customer name or invoice #…"
+                               value="<?php echo htmlspecialchars($searchQuery); ?>" autocomplete="off">
+                        <button type="submit" class="btn btn-sm btn-primary" title="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <?php if ($searchQuery !== '' || $statusFilter !== ''): ?>
+                        <a href="/new-stock-system/index.php?page=invoices"
+                           class="btn btn-sm btn-secondary ms-2" title="Clear all filters">
+                            <i class="bi bi-x"></i>
+                        </a>
+                        <?php endif; ?>
+                    </form>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Invoices table -->
+    <div class="card">
+        <div class="card-header"><i class="bi bi-list"></i> Invoice Records</div>
         <div class="card-body p-0">
             <?php if (empty($invoices)): ?>
             <div class="alert alert-info m-3">
-                <i class="bi bi-info-circle"></i> No invoices found.
+                <i class="bi bi-info-circle"></i>
+                <?php if ($searchQuery !== ''): ?>
+                    No invoices found matching "<?php echo htmlspecialchars($searchQuery); ?>".
+                <?php elseif ($statusFilter !== ''): ?>
+                    No <?php echo htmlspecialchars($statusFilter); ?> invoices found.
+                <?php else: ?>
+                    No invoices found.
+                <?php endif; ?>
             </div>
-            <?php
-
-                // Handle both array and JSON string for invoice_shape
-
-                // Ensure we have an array
-
-                // Safely get values with null coalescing
-                // Handle both array and JSON string for invoice_shape
-                // Ensure we have an array
-                // Safely get values with null coalescing
-                // Handle both array and JSON string for invoice_shape
-
-                // Ensure we have an array
-
-                // Safely get values with null coalescing
-                // Handle both array and JSON string for invoice_shape
-                // Ensure we have an array
-                // Safely get values with null coalescing
-                else: ?>
+            <?php else: ?>
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Invoice #</th>
                             <th>Customer</th>
+                            <th>Reference</th>
                             <th>Date</th>
-                            <th>Amount</th>
-                            <th>Paid</th>
-                            <th>Balance</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Paid</th>
+                            <th class="text-end">Balance</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($invoices as $invoice):
+                        <?php foreach ($invoices as $inv):
+                            $total   = (float)($inv['total'] ?? 0);
+                            $paid    = (float)($inv['paid_amount'] ?? 0);
+                            $balance = $total - $paid;
+                            $isPaid     = $balance <= 0;
+                            $isPartial  = !$isPaid && $paid > 0;
+                            $statusClass = $isPaid ? 'success' : ($isPartial ? 'warning' : 'danger');
+                            $statusLabel = $isPaid ? 'Paid' : ($isPartial ? 'Partial' : 'Unpaid');
 
-                            $invoiceData = is_array($invoice['invoice_shape'])
-                                ? $invoice['invoice_shape']
-                                : (is_string($invoice['invoice_shape'])
-                                    ? json_decode($invoice['invoice_shape'], true)
-                                    : []);
-
-                            if (!is_array($invoiceData)) {
-                                $invoiceData = [];
-                                error_log(
-                                    'Warning: invoice_shape could not be decoded to array for invoice ' .
-                                        ($invoice['id'] ?? 'unknown'),
-                                );
+                            // Sale type label
+                            $typeLabel = '';
+                            $typeIcon  = '';
+                            if ($inv['production_id']) {
+                                $typeLabel = 'Production';
+                                $typeIcon  = 'bi-gear';
+                            } elseif ($inv['sale_type'] === 'tile_sale') {
+                                $typeLabel = 'Tile Sale';
+                                $typeIcon  = 'bi-grid-3x3';
+                            } elseif ($inv['sale_type'] === 'coil_sale') {
+                                $typeLabel = 'Coil Sale';
+                                $typeIcon  = 'bi-disc';
                             }
-
-                            $totalAmount = $invoice['total'] ?? ($invoice['total_amount'] ?? 0);
-                            $paidAmount = $invoice['paid_amount'] ?? 0;
-                            $balance = $totalAmount - $paidAmount;
-                            $isPaid = $balance <= 0;
-                            $isPartial = !$isPaid && $paidAmount > 0;
-                            $statusClass = $isPaid
-                                ? 'success'
-                                : ($isPartial
-                                    ? 'warning'
-                                    : 'danger');
-                            ?>
+                        ?>
                         <tr>
-                           <td>
-    <strong><?= htmlspecialchars($invoice['invoice_number']) ?></strong>
-    <?php if ($invoice['production_id']): ?>
-    <br><small class="text-muted"><i class="bi bi-gear"></i> Production</small>
-    <?php elseif ($invoice['sale_type'] === 'tile_sale'): ?>
-    <br><small class="text-muted"><i class="bi bi-grid-3x3"></i> Tile Sale</small>
-    <?php elseif ($invoice['sale_type'] === 'coil_sale'): ?>
-    <br><small class="text-muted"><i class="bi bi-disc"></i> Coil Sale</small>
-    <?php endif; ?>
-</td>
-                            <td><?= htmlspecialchars(
-                                $invoiceData['customer']['name'] ?? 'N/A',
-                            ) ?></td>
-                            <td><?= date('M d, Y', strtotime($invoice['created_at'])) ?></td>
-                            <td>₦<?= number_format($totalAmount, 2) ?></td>
-                            <td>₦<?= number_format($invoice['paid_amount'], 2) ?></td>
-                            <td>₦<?= number_format($balance, 2) ?></td>
                             <td>
-                                <span class="badge bg-<?= $statusClass ?> payment-status">
-                                    <?= $isPaid ? 'Paid' : ($isPartial ? 'Partial' : 'Unpaid') ?>
+                                <strong><?php echo htmlspecialchars($inv['invoice_number']); ?></strong>
+                                <?php if ($typeLabel): ?>
+                                <small class="d-block text-muted">
+                                    <i class="bi <?php echo $typeIcon; ?>"></i> <?php echo $typeLabel; ?>
+                                </small>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php echo htmlspecialchars($inv['customer_name'] ?? 'N/A'); ?>
+                                <?php if (!empty($inv['customer_phone'])): ?>
+                                <small class="d-block text-muted"><?php echo htmlspecialchars($inv['customer_phone']); ?></small>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <small class="text-muted"><?php echo htmlspecialchars($inv['sale_ref'] ?? '—'); ?></small>
+                            </td>
+                            <td><small><?php echo date('M d, Y', strtotime($inv['created_at'])); ?></small></td>
+                            <td class="text-end">₦<?php echo number_format($total, 2); ?></td>
+                            <td class="text-end text-success">₦<?php echo number_format($paid, 2); ?></td>
+                            <td class="text-end <?php echo $balance > 0 ? 'text-danger fw-bold' : ''; ?>">
+                                ₦<?php echo number_format(max(0, $balance), 2); ?>
+                            </td>
+                            <td>
+                                <span class="badge bg-<?php echo $statusClass; ?>">
+                                    <?php echo $statusLabel; ?>
                                 </span>
                             </td>
                             <td>
-                                <div class="btn-group">
-                                    <a href="/new-stock-system/index.php?page=invoice_view&id=<?= $invoice[
-                                        'id'
-                                    ] ?>" 
-                                       class="btn btn-sm btn-outline-primary" 
-                                       title="View Invoice">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/new-stock-system/index.php?page=invoice_view&id=<?php echo $inv['id']; ?>"
+                                       class="btn btn-outline-primary" title="View">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     <?php if (!$isPaid): ?>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-success trigger-payment" 
-                                            data-invoice-id="<?= $invoice['id'] ?>"
+                                    <button type="button" class="btn btn-outline-success trigger-payment"
+                                            data-invoice-id="<?php echo $inv['id']; ?>"
+                                            data-customer="<?php echo htmlspecialchars($inv['customer_name'] ?? ''); ?>"
+                                            data-balance="<?php echo number_format($balance, 2); ?>"
                                             title="Record Payment">
                                         <i class="bi bi-cash-coin"></i>
                                     </button>
                                     <?php endif; ?>
-                                    <a href="/new-stock-system/views/invoices/print_view.php?page=invoice_print&id=<?= $invoice[
-                                        'id'
-                                    ] ?>" 
-                                       class="btn btn-sm btn-outline-secondary" 
-                                       target="_blank"
-                                       title="Print Invoice">
+                                    <a href="/new-stock-system/views/invoices/print_view.php?id=<?php echo $inv['id']; ?>"
+                                       class="btn btn-outline-secondary" target="_blank" title="Print">
                                         <i class="bi bi-printer"></i>
                                     </a>
                                 </div>
                             </td>
                         </tr>
-                        <?php
-                        endforeach; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
-            
-            <!-- Pagination -->
-            <?php if ($paginationData['totalPages'] > 1): ?>
-            <div class="p-3 border-top">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center mb-0">
-                        <?php if ($paginationData['currentPage'] > 1): ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData['previousPage'] .
-                                ($statusFilter ? '&status=' . urlencode($statusFilter) : '') ?>" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <?php
-                        $range = 2;
-                        $start = max(1, $paginationData['currentPage'] - $range);
-                        $end = min($paginationData['totalPages'], $paginationData['currentPage'] + $range);
-
-                        if ($start > 1): ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=invoices&page_num=1<?= $statusFilter
-                                ? '&status=' . urlencode($statusFilter)
-                                : '' ?>">1</a>
-                        </li>
-                        <?php if ($start > 2): ?>
-                        <li class="page-item disabled">
-                            <span class="page-link">&hellip;</span>
-                        </li>
-                        <?php endif; ?>
-                        <?php endif; ?>
-                        
-                        <?php for ($i = $start; $i <= $end; $i++): ?>
-                        <li class="page-item <?= $i === $paginationData['currentPage'] ? 'active' : '' ?>">
-                            <a class="page-link" href="?page=invoices&page_num=<?= $i ?><?= $statusFilter
-                                ? '&status=' . urlencode($statusFilter)
-                                : '' ?>" <?= $i === $paginationData['currentPage'] ? 'style="pointer-events: none;"' : '' ?>>
-                                <?= $i ?>
-                            </a>
-                        </li>
-                        <?php endfor; ?>
-                        
-                        <?php if ($end < $paginationData['totalPages']): ?>
-                        <?php if ($end < $paginationData['totalPages'] - 1): ?>
-                        <li class="page-item disabled">
-                            <span class="page-link">&hellip;</span>
-                        </li>
-                        <?php endif; ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData['totalPages'] ?><?= $statusFilter
-                                ? '&status=' . urlencode($statusFilter)
-                                : '' ?>"><?= $paginationData['totalPages'] ?></a>
-                        </li>
-                        <?php endif; ?>
-                        
-                        <?php if (
-                            $paginationData['currentPage'] < $paginationData['totalPages']
-                        ): ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=invoices&page_num=<?= $paginationData['nextPage'] .
-                                ($statusFilter ? '&status=' . urlencode($statusFilter) : '') ?>" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-            </div>
-            <?php endif; ?>
             <?php endif; ?>
         </div>
+        <?php if ($totalInvoices > RECORDS_PER_PAGE): ?>
+        <div class="card-footer">
+            <?php
+            $queryParams = ['page' => 'invoices'];
+            if ($statusFilter !== '') $queryParams['status'] = $statusFilter;
+            if ($searchQuery !== '')  $queryParams['search'] = $searchQuery;
+            include __DIR__ . '/../../layout/pagination.php';
+            ?>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -331,24 +320,26 @@ if (!defined('RECORDS_PER_PAGE')) {
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Record Payment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title"><i class="bi bi-cash-coin"></i> Record Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="paymentForm" method="POST" action="/new-stock-system/controllers/invoices/record_payment.php">
+            <form id="paymentForm" method="POST"
+                  action="/new-stock-system/controllers/invoices/record_payment.php">
                 <div class="modal-body">
-                    <input type="hidden" name="invoice_id" id="invoice_id">
-                    
+                    <input type="hidden" name="invoice_id" id="modal_invoice_id">
+
+                    <div class="alert alert-info py-2 mb-3" id="modal_invoice_info"></div>
+
                     <div class="mb-3">
-                        <label for="amount" class="form-label">Amount (₦)</label>
-                        <input type="text" class="form-control" id="amount" name="amount" required 
-                               oninput="formatNumber(this)" data-prev-value="">
+                        <label class="form-label">Amount (₦)</label>
+                        <input type="text" class="form-control" id="amount" name="amount" required
+                               oninput="formatPaymentNumber(this)" autocomplete="off">
                         <input type="hidden" id="amount_raw" name="amount_raw">
-                        <div class="form-text">Enter payment amount (e.g. 1,000,000.00)</div>
+                        <div class="form-text">Balance due shown above</div>
                     </div>
-                    
                     <div class="mb-3">
-                        <label for="payment_method" class="form-label">Payment Method</label>
-                        <select class="form-select" id="payment_method" name="payment_method" required>
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" name="payment_method" required>
                             <option value="cash">Cash</option>
                             <option value="bank_transfer">Bank Transfer</option>
                             <option value="pos">POS</option>
@@ -356,112 +347,96 @@ if (!defined('RECORDS_PER_PAGE')) {
                             <option value="other">Other</option>
                         </select>
                     </div>
-                    
                     <div class="mb-3">
-                        <label for="reference" class="form-label">Reference/Note</label>
-                        <input type="text" class="form-control" id="reference" name="reference" placeholder="e.g. Bank ref, cheque #, etc.">
+                        <label class="form-label">Reference / Note</label>
+                        <input type="text" class="form-control" name="reference"
+                               placeholder="Bank ref, cheque #, etc.">
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Record Payment</button>
+                    <button type="submit" class="btn btn-primary" id="paymentSubmitBtn">
+                        <i class="bi bi-check-circle"></i> Record Payment
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100">
+    <div id="appToast" class="toast align-items-center border-0" role="alert" aria-live="assertive">
+        <div class="d-flex">
+            <div class="toast-body" id="appToastMsg"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
 <script>
-// Format number with commas
-function formatNumber(input) {
-    // Remove all non-digits and decimal points
+function formatPaymentNumber(input) {
     let value = input.value.replace(/[^\d.]/g, '');
-    
-    // Allow only one decimal point
-    const decimalSplit = value.split('.');
-    if (decimalSplit.length > 2) {
-        value = decimalSplit[0] + '.' + decimalSplit.slice(1).join('');
-    }
-    
-    // Format the number with commas
-    if (value) {
-        // Get the part before the decimal
-        const parts = value.split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        
-        // Join back with decimal if it exists
-        input.value = parts.length > 1 ? parts[0] + '.' + parts[1] : parts[0];
-        
-        // Store the raw value (without commas) in a hidden field
-        document.getElementById('amount_raw').value = value.replace(/,/g, '');
-    } else {
-        document.getElementById('amount_raw').value = '';
-    }
+    const parts = value.split('.');
+    if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
+    const p = value.split('.');
+    p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    input.value = p.length > 1 ? p[0] + '.' + p[1] : p[0];
+    document.getElementById('amount_raw').value = value.replace(/,/g, '');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle payment modal
+function showToast(message, type) {
+    const toast    = document.getElementById('appToast');
+    const toastMsg = document.getElementById('appToastMsg');
+    toast.className = 'toast align-items-center border-0 text-white bg-' +
+                      (type === 'success' ? 'success' : 'danger');
+    toastMsg.textContent = message;
+    bootstrap.Toast.getOrCreateInstance(toast, { delay: 3000 }).show();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
     const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
-    
-    // Format amount when modal is shown
-    document.getElementById('paymentModal').addEventListener('shown.bs.modal', function() {
-        const amountInput = document.getElementById('amount');
-        if (amountInput.value) {
-            formatNumber(amountInput);
-        }
-    });
-    
-    document.querySelectorAll('.trigger-payment').forEach(button => {
-        button.addEventListener('click', function() {
-            const invoiceId = this.getAttribute('data-invoice-id');
-            document.getElementById('invoice_id').value = invoiceId;
+
+    document.querySelectorAll('.trigger-payment').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const id       = this.dataset.invoiceId;
+            const customer = this.dataset.customer;
+            const balance  = this.dataset.balance;
+            document.getElementById('modal_invoice_id').value = id;
+            document.getElementById('modal_invoice_info').textContent =
+                customer + ' — Balance due: ₦' + balance;
+            document.getElementById('amount').value = '';
+            document.getElementById('amount_raw').value = '';
             paymentModal.show();
         });
     });
-    
-    // Handle form submission
-    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+
+    document.getElementById('paymentForm').addEventListener('submit', function (e) {
         e.preventDefault();
-        
-        // Add loading state
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-        
-        // Submit form via AJAX
-        fetch(this.action, {
-            method: 'POST',
-            body: new FormData(this)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message
-                showToast('Payment recorded successfully', 'success');
-                // Reload page to update the list
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                // Show error message
-                showToast(data.message || 'Error processing payment', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('An error occurred. Please try again.', 'error');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        });
+        const btn = document.getElementById('paymentSubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing…';
+
+        fetch(this.action, { method: 'POST', body: new FormData(this) })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    paymentModal.hide();
+                    showToast('Payment recorded successfully', 'success');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    showToast(data.message || 'Error processing payment', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-circle"></i> Record Payment';
+                }
+            })
+            .catch(() => {
+                showToast('Network error. Please try again.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> Record Payment';
+            });
     });
-    
-    // Helper function to show toast messages
-    function showToast(message, type = 'info') {
-        // You can implement a toast notification system here
-        // For now, using a simple alert
-        alert(`${type.toUpperCase()}: ${message}`);
-    }
 });
 </script>
 
