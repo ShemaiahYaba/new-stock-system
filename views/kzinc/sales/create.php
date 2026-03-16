@@ -411,7 +411,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         isHistoricalInput.value = isHistorical ? '1' : '0';
         historicalBanner.style.display = isHistorical ? '' : 'none';
         rebuildCoilDropdown(isHistorical ? allCoilsData : liveCoilsData);
-        recalc();
+        recalcSummary();
     });
 
     // ── Coil selection ─────────────────────────────
@@ -816,7 +816,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             const data = await resp.json();
 
             if (data.success) {
-                window.location.href = `/new-stock-system/index.php?page=kzinc_sales_view&id=${data.sale_id}`;
+                window.location.href = `/new-stock-system/index.php?page=invoice_view&id=${data.invoice_id}`;
             } else {
                 showError(data.message || 'Failed to create sale. Please try again.');
                 submitBtn.disabled = false;

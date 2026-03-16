@@ -270,17 +270,23 @@ try {
         $invoiceData['items'], // Production items
         $invoiceData['addon_items'] ?? [] // Add-on items
     );
-    
+
     // Calculate totals
     $productionSubtotal = array_reduce($invoiceData['items'], function($sum, $item) {
         return $sum + ($item['subtotal'] ?? 0);
     }, 0);
-    
+
     $addonTotal = array_reduce($invoiceData['addon_items'] ?? [], function($sum, $item) {
         return $sum + ($item['subtotal'] ?? 0);
     }, 0);
-    
+
     $invoiceSubtotal = $productionSubtotal + $addonTotal;
+
+    // Extract scalar tax/discount amounts — JS sends structured objects
+    $taxRaw      = $invoiceData['tax'] ?? 0;
+    $discountRaw = $invoiceData['discount'] ?? 0;
+    $taxAmount      = is_array($taxRaw)      ? floatval($taxRaw['amount']  ?? 0) : floatval($taxRaw);
+    $discountAmount = is_array($discountRaw) ? floatval($discountRaw['amount'] ?? 0) : floatval($discountRaw);
 
     $invoiceShape = [
         'company' => [
@@ -302,9 +308,9 @@ try {
             'addon_charges' => $invoiceData['addon_summary']['total_charges'] ?? 0,
             'adjustments' => $invoiceData['addon_summary']['total_adjustments'] ?? 0,
         ],
-        'order_tax' => $invoiceData['tax'],
-        'discount' => $invoiceData['discount'],
-        'shipping' => $invoiceData['shipping'],
+        'order_tax' => $taxAmount,
+        'discount' => $discountAmount,
+        'shipping' => floatval($invoiceData['shipping'] ?? 0),
         'grand_total' => $invoiceData['grandTotal'],
         'paid' => 0.0,
         'due' => $invoiceData['grandTotal'],
@@ -323,9 +329,9 @@ try {
         'sale_id' => $saleId,
         'production_id' => $productionId,
         'invoice_shape' => $invoiceShape,
-        'total' => $invoiceData['grandTotal'],
-        'tax' => $invoiceData['tax'],
-        'shipping' => $invoiceData['shipping'],
+        'total' => floatval($invoiceData['grandTotal'] ?? 0),
+        'tax' => $taxAmount,
+        'shipping' => floatval($invoiceData['shipping'] ?? 0),
         'paid_amount' => 0,
         'status' => INVOICE_STATUS_UNPAID,
         'created_at' => $saleDateTime,
