@@ -509,26 +509,33 @@ function logKzincStockEntry(
     try {
         $db = Database::getInstance()->getConnection();
 
+        $bundlesDeducted = (int)($piecesDeducted / KZINC_PIECES_PER_BUNDLE);
+        $balanceBundles  = (int)($balancePieces  / KZINC_PIECES_PER_BUNDLE);
+
         $sql = "INSERT INTO stock_ledger
                 (coil_id, stock_entry_id, transaction_type, description,
                  inflow_meters, outflow_meters, balance_meters,
                  inflow_pieces, outflow_pieces, balance_pieces,
+                 inflow_bundles, outflow_bundles, balance_bundles,
                  reference_type, reference_id, created_by, created_at)
                 VALUES
                 (:coil_id, :stock_entry_id, 'outflow', :description,
                  0, 0, 0,
                  0, :outflow_pieces, :balance_pieces,
+                 0, :outflow_bundles, :balance_bundles,
                  'sale', :reference_id, :created_by, NOW())";
 
         $stmt = $db->prepare($sql);
         $result = $stmt->execute([
-            ':coil_id'        => $coilId,
-            ':stock_entry_id' => $stockEntryId,
-            ':description'    => "KZinc piece deduction for sale #$saleId",
-            ':outflow_pieces' => $piecesDeducted,
-            ':balance_pieces' => $balancePieces,
-            ':reference_id'   => $saleId,
-            ':created_by'     => $createdBy,
+            ':coil_id'         => $coilId,
+            ':stock_entry_id'  => $stockEntryId,
+            ':description'     => "KZinc deduction for sale #$saleId",
+            ':outflow_pieces'  => $piecesDeducted,
+            ':balance_pieces'  => $balancePieces,
+            ':outflow_bundles' => $bundlesDeducted,
+            ':balance_bundles' => $balanceBundles,
+            ':reference_id'    => $saleId,
+            ':created_by'      => $createdBy,
         ]);
 
         if (!$result) {

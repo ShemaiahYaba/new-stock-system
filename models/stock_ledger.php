@@ -351,42 +351,48 @@ class StockLedger
 
     /**
      * Record KZinc stock inflow (when a new stock entry is added).
-     * Uses inflow_pieces / balance_pieces columns added in migration 024.
+     * Populates both piece columns (024) and bundle columns (025) for cross-validation.
      *
      * @param int    $coilId       Coil ID
      * @param int    $stockEntryId Stock entry ID
      * @param int    $pieces       Total pieces added
+     * @param int    $bundles      Total bundles added (pieces / KZINC_PIECES_PER_BUNDLE)
      * @param string $description  Description
      * @param int    $createdBy    User ID
      * @return int|false
      */
-    public function recordKzincInflow($coilId, $stockEntryId, $pieces, $description, $createdBy)
+    public function recordKzincInflow($coilId, $stockEntryId, $pieces, $bundles, $description, $createdBy)
     {
         try {
-            // Balance for a brand-new entry always starts at 0 before this inflow
-            $currentBalance = $this->getCurrentKzincBalance($stockEntryId);
-            $newBalance = $currentBalance + $pieces;
+            $currentPieceBalance  = $this->getCurrentKzincBalance($stockEntryId);
+            $currentBundleBalance = $this->getCurrentKzincBundleBalance($stockEntryId);
+            $newPieceBalance      = $currentPieceBalance  + $pieces;
+            $newBundleBalance     = $currentBundleBalance + $bundles;
 
             $sql = "INSERT INTO {$this->table}
                     (coil_id, stock_entry_id, transaction_type, description,
                      inflow_meters, outflow_meters, balance_meters,
                      inflow_pieces, outflow_pieces, balance_pieces,
+                     inflow_bundles, outflow_bundles, balance_bundles,
                      reference_type, reference_id, created_by, created_at)
                     VALUES
                     (:coil_id, :stock_entry_id, 'inflow', :description,
                      0, 0, 0,
                      :inflow_pieces, 0, :balance_pieces,
+                     :inflow_bundles, 0, :balance_bundles,
                      'stock_entry', :ref_id, :created_by, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                ':coil_id'       => $coilId,
-                ':stock_entry_id'=> $stockEntryId,
-                ':description'   => $description,
-                ':inflow_pieces' => $pieces,
-                ':balance_pieces'=> $newBalance,
-                ':ref_id'        => $stockEntryId,
-                ':created_by'    => $createdBy,
+                ':coil_id'        => $coilId,
+                ':stock_entry_id' => $stockEntryId,
+                ':description'    => $description,
+                ':inflow_pieces'  => $pieces,
+                ':balance_pieces' => $newPieceBalance,
+                ':inflow_bundles' => $bundles,
+                ':balance_bundles'=> $newBundleBalance,
+                ':ref_id'         => $stockEntryId,
+                ':created_by'     => $createdBy,
             ]);
 
             return $this->db->lastInsertId();
@@ -398,9 +404,6 @@ class StockLedger
 
     /**
      * Get the latest piece balance for a KZinc stock entry.
-     *
-     * @param int $stockEntryId
-     * @return int
      */
     public function getCurrentKzincBalance($stockEntryId)
     {
@@ -416,6 +419,27 @@ class StockLedger
             return $row ? (int)$row['balance_pieces'] : 0;
         } catch (PDOException $e) {
             error_log('KZinc ledger balance error: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Get the latest bundle balance for a KZinc stock entry.
+     */
+    public function getCurrentKzincBundleBalance($stockEntryId)
+    {
+        try {
+            $stmt = $this->db->prepare(
+                "SELECT balance_bundles FROM {$this->table}
+                 WHERE stock_entry_id = :id
+                 ORDER BY created_at DESC, id DESC
+                 LIMIT 1"
+            );
+            $stmt->execute([':id' => $stockEntryId]);
+            $row = $stmt->fetch();
+            return $row ? (int)$row['balance_bundles'] : 0;
+        } catch (PDOException $e) {
+            error_log('KZinc ledger bundle balance error: ' . $e->getMessage());
             return 0;
         }
     }

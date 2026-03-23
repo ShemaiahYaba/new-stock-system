@@ -148,9 +148,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ledgerModel = new StockLedger();
 
         if ($isKzinc) {
-            // KZinc: always log inflow in pieces
-            $description = "Stock entry added — {$coil['code']}: {$quantity} {$unitType} ({$piecesTotal} pcs)";
-            $ledgerModel->recordKzincInflow($coilId, $entryId, $piecesTotal, $description, $currentUser['id']);
+            // KZinc: log inflow in both pieces and bundles
+            $bundlesTotal = (int)($piecesTotal / KZINC_PIECES_PER_BUNDLE);
+            $description  = "Stock entry added — {$coil['code']}: {$quantity} {$unitType} ({$piecesTotal} pcs / {$bundlesTotal} bundles)";
+            $ledgerModel->recordKzincInflow($coilId, $entryId, $piecesTotal, $bundlesTotal, $description, $currentUser['id']);
         } elseif ($coil['status'] === STOCK_STATUS_FACTORY_USE) {
             // Non-KZinc factory-use: log inflow in meters
             $description = "Stock entry added - {$meters}m for {$coil['code']}";
