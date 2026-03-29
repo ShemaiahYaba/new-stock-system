@@ -58,6 +58,18 @@ try {
     $coilCategory = strtolower($coil['category']);
     $isKzinc = $coilCategory === 'kzinc';
 
+    // If the sale was created from the legacy Sales module with meter-based properties,
+    // treat the KZinc coil as a regular meter-based coil (not the pallet module path).
+    if ($isKzinc) {
+        $hasMeterProperties = false;
+        foreach ($productionData['production_paper']['properties'] ?? [] as $prop) {
+            if (($prop['meters'] ?? 0) > 0) { $hasMeterProperties = true; break; }
+        }
+        if ($hasMeterProperties) {
+            $isKzinc = false; // Redirect to legacy FIFO meter-deduction path
+        }
+    }
+
     // Historical entry: sale already happened — record for bookkeeping only, skip stock deduction
     $isHistorical = !empty($productionData['is_historical']);
 
@@ -128,11 +140,17 @@ try {
         $kzincPlannedDeductions = [];
         $stockEntryModel    = new StockEntry();
 
+        $kzincHasPallets = false;
         foreach ($productionPaper['properties'] as $prop) {
             $totalPiecesToDeduct += (int)($prop['pieces'] ?? 0);
-            if (($prop['propertyType'] ?? '') === STOCK_UNIT_BUNDLES) {
+            $pType = $prop['propertyType'] ?? '';
+            if ($pType === STOCK_UNIT_BUNDLES) {
                 $kzincBundleQty  += (float)($prop['quantity'] ?? 0);
                 $kzincHasBundles  = true;
+            } elseif ($pType === STOCK_UNIT_PALLETS) {
+                $kzincBundleQty  += (float)($prop['pallets'] ?? 0) * (int)($coil['pallet_size'] ?? 0);
+                $kzincHasBundles  = true;
+                $kzincHasPallets  = true;
             }
         }
 
@@ -168,7 +186,7 @@ try {
         // Historical sale: no stock deduction — $kzincPlannedDeductions stays empty,
         // $primaryStockEntryId stays null.
 
-        $kzincSaleUnitType = $kzincHasBundles ? STOCK_UNIT_BUNDLES : STOCK_UNIT_PIECES;
+        $kzincSaleUnitType = $kzincHasPallets ? STOCK_UNIT_PALLETS : ($kzincHasBundles ? STOCK_UNIT_BUNDLES : STOCK_UNIT_PIECES);
         $kzincSaleQuantity = $kzincHasBundles ? $kzincBundleQty : $totalPiecesToDeduct;
     }
 

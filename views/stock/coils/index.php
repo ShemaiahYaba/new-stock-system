@@ -22,9 +22,9 @@ $colorFilter  = isset($_GET['color_id']) && $_GET['color_id'] !== '' ? (int)$_GE
 $coilModel  = new Coil();
 $colorModel = new Color();
 
-// Categories shown on this page — excludes KZinc and Tile
+// Categories shown on this page — excludes Tile only; KZinc coils are managed here (meter-based)
 $nonKzincCategories = array_keys(array_filter(STOCK_CATEGORIES, function ($k) {
-    return $k !== STOCK_CATEGORY_KZINC && $k !== STOCK_CATEGORY_TILE;
+    return $k !== STOCK_CATEGORY_TILE;
 }, ARRAY_FILTER_USE_KEY));
 
 // Gauge & color options for filter dropdowns

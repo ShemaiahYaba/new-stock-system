@@ -377,14 +377,12 @@ class StockEntry
                 WHERE se.status = :status
                 AND se.meters_remaining > 0
                 AND (se.unit_type = 'meters' OR se.unit_type IS NULL)
-                AND c.category != :kzinc
                 AND se.deleted_at IS NULL
                 ORDER BY c.code ASC, se.created_at DESC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             ':status' => STOCK_STATUS_AVAILABLE,
-            ':kzinc'  => STOCK_CATEGORY_KZINC,
         ]);
 
         return $stmt->fetchAll();

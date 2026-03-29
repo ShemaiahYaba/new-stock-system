@@ -7,6 +7,7 @@ session_start();
 
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../config/constants.php';
+require_once __DIR__ . '/../../models/coil.php';
 require_once __DIR__ . '/../../models/stock_entry.php';
 require_once __DIR__ . '/../../utils/auth_middleware.php';
 
@@ -23,13 +24,16 @@ if ($coilId <= 0) {
 
 try {
     $stockEntryModel = new StockEntry();
-    $entries = $stockEntryModel->getAvailableKzincEntries($coilId);
+    $coilModel       = new Coil();
 
+    $entries     = $stockEntryModel->getAvailableKzincEntries($coilId);
+    $coil        = $coilModel->findById($coilId);
     $totalPieces = array_sum(array_column($entries, 'pieces_remaining'));
 
     echo json_encode([
         'success'      => true,
         'total_pieces' => (int) $totalPieces,
+        'pallet_size'  => (int) ($coil['pallet_size'] ?? 0),
         'entries'      => $entries,
     ]);
 } catch (Exception $e) {

@@ -19,9 +19,9 @@ $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 $db = Database::getInstance()->getConnection();
 
-// Build a direct query that always excludes KZinc coils
-// (KZinc entries are managed in the dedicated K-Zinc module)
-$baseWhere = "se.deleted_at IS NULL AND c.category != '" . STOCK_CATEGORY_KZINC . "'";
+// Show all non-tile stock entries. For KZinc, only show meter-based entries
+// (bundle/pallet/piece entries are managed in the dedicated K-Zinc module).
+$baseWhere = "se.deleted_at IS NULL AND (c.category != '" . STOCK_CATEGORY_KZINC . "' OR (se.unit_type = '" . STOCK_UNIT_METERS . "' OR se.unit_type IS NULL))";
 $baseJoin  = "FROM stock_entries se
               LEFT JOIN coils c ON se.coil_id = c.id
               LEFT JOIN users u ON se.created_by = u.id";

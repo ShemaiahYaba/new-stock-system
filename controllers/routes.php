@@ -378,6 +378,11 @@ $routes = [
         'module' => MODULE_KZINC_MANAGEMENT,
         'action' => ACTION_VIEW,
     ],
+    'kzinc_stock_from_coil' => [
+        'view'   => 'views/kzinc/stock/from_coil.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_CREATE,
+    ],
     'kzinc_sales' => [
         'view'   => 'views/kzinc/sales/index.php',
         'module' => MODULE_KZINC_MANAGEMENT,
