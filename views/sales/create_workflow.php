@@ -25,11 +25,8 @@ $coilModel = new Coil();
 
 $customers = $customerModel->getAll(1000, 0);
 $warehouses = $warehouseModel->getActive();
-// All non-tile coils (including KZinc meter coils)
-$coils = array_filter(
-    $coilModel->getForDropdown(),
-    fn($c) => $c['category'] !== STOCK_CATEGORY_TILE
-);
+// Only coils with at least one factory_use stock entry (meters_remaining > 0)
+$coils = $coilModel->getForSaleDropdown();
 
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';

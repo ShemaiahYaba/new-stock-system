@@ -464,12 +464,45 @@ class Coil
                            col.name as color_name, col.hex_code as color_hex
                     FROM {$this->table} c
                     LEFT JOIN colors col ON c.color_id = col.id
-                    WHERE c.deleted_at IS NULL 
+                    WHERE c.deleted_at IS NULL
                     ORDER BY c.code ASC";
             $stmt = $this->db->query($sql);
             return $stmt->fetchAll();
         } catch (PDOException $e) {
             error_log('Coil dropdown fetch error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get coils that have at least one factory_use stock entry with meters remaining.
+     * Used by the New Sale workflow so the coil dropdown only shows coils
+     * the user can actually select a stock entry for.
+     */
+    public function getForSaleDropdown()
+    {
+        try {
+            $sql = "SELECT c.id, c.code, c.name, c.category, c.status, c.color_id,
+                           c.net_weight, c.meters, c.gauge,
+                           col.name as color_name, col.hex_code as color_hex
+                    FROM {$this->table} c
+                    LEFT JOIN colors col ON c.color_id = col.id
+                    WHERE c.deleted_at IS NULL
+                      AND c.category != :tile
+                      AND EXISTS (
+                          SELECT 1 FROM stock_entries se
+                          WHERE se.coil_id = c.id
+                            AND se.deleted_at IS NULL
+                            AND se.status = 'factory_use'
+                            AND se.meters_remaining > 0
+                            AND (se.unit_type = 'meters' OR se.unit_type IS NULL)
+                      )
+                    ORDER BY c.code ASC";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':tile' => STOCK_CATEGORY_TILE]);
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log('Coil sale dropdown fetch error: ' . $e->getMessage());
             return [];
         }
     }

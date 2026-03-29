@@ -1,6 +1,6 @@
 <?php
 /**
- * Coils List View — Alusteel & Aluminum only (KZinc is in the K-Zinc module)
+ * Coils List View — Alusteel, Aluminum & KZinc meter coils
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -99,7 +99,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
     <div class="alert alert-info alert-permanent py-2 mb-3">
         <i class="bi bi-layers"></i>
-        K-Zinc coils are managed in the
+        K-Zinc coil meter stock is managed here. For pallet / bundle / piece operations, use the
         <a href="/new-stock-system/index.php?page=kzinc_coils" class="alert-link">K-Zinc module</a>.
     </div>
     <?php endif; ?>
@@ -121,7 +121,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     All
                 </a>
                 <?php foreach (STOCK_CATEGORIES as $catKey => $catName):
-                    if ($catKey === STOCK_CATEGORY_KZINC || $catKey === STOCK_CATEGORY_TILE) continue; ?>
+                    if ($catKey === STOCK_CATEGORY_TILE) continue; ?>
                 <a href="<?php echo $catBase . '&category=' . $catKey . $catExtra; ?>"
                    class="btn btn-sm <?php echo $category === $catKey ? 'btn-primary' : 'btn-outline-primary'; ?>">
                     <?php echo $catName; ?>
