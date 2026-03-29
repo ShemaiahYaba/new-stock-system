@@ -158,6 +158,18 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                        class="btn btn-success" title="Add Stock">
                                         <i class="bi bi-plus-circle"></i>
                                     </a>
+                                    <?php if (hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_DELETE)): ?>
+                                    <form method="POST"
+                                          action="/new-stock-system/controllers/kzinc/coils/delete/index.php"
+                                          style="display:inline-block;"
+                                          onsubmit="return confirm('Are you sure you want to delete this K-Zinc coil?');">
+                                        <input type="hidden" name="id" value="<?php echo $coil['id']; ?>">
+                                        <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+                                        <button type="submit" class="btn btn-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

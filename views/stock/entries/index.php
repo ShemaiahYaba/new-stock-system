@@ -12,16 +12,25 @@ require_once __DIR__ . '/../../../utils/helpers.php';
 $pageTitle = 'Stock Entries - ' . APP_NAME;
 
 // Get filter parameters
-$currentPage = isset($_GET['page_num']) ? (int) $_GET['page_num'] : 1;
-$coilId = isset($_GET['coil_id']) ? (int) $_GET['coil_id'] : null;
-$statusFilter = isset($_GET['status']) ? sanitize($_GET['status']) : '';
-$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+$currentPage    = isset($_GET['page_num']) ? (int) $_GET['page_num'] : 1;
+$coilId         = isset($_GET['coil_id']) ? (int) $_GET['coil_id'] : null;
+$statusFilter   = isset($_GET['status'])   ? sanitize($_GET['status'])   : '';
+$searchQuery    = isset($_GET['search'])   ? trim($_GET['search'])        : '';
+$categoryFilter = isset($_GET['category']) ? sanitize($_GET['category'])  : '';
+
+// Validate category filter — only allow known non-tile categories
+$allowedCategories = array_keys(array_filter(STOCK_CATEGORIES, function ($k) {
+    return $k !== STOCK_CATEGORY_TILE;
+}, ARRAY_FILTER_USE_KEY));
+if (!in_array($categoryFilter, $allowedCategories, true)) {
+    $categoryFilter = '';
+}
 
 $db = Database::getInstance()->getConnection();
 
 // Show all non-tile stock entries. For KZinc, only show meter-based entries
 // (bundle/pallet/piece entries are managed in the dedicated K-Zinc module).
-$baseWhere = "se.deleted_at IS NULL AND (c.category != '" . STOCK_CATEGORY_KZINC . "' OR (se.unit_type = '" . STOCK_UNIT_METERS . "' OR se.unit_type IS NULL))";
+$baseWhere = "se.deleted_at IS NULL AND c.category != '" . STOCK_CATEGORY_TILE . "' AND (c.category != '" . STOCK_CATEGORY_KZINC . "' OR (se.unit_type = '" . STOCK_UNIT_METERS . "' OR se.unit_type IS NULL))";
 $baseJoin  = "FROM stock_entries se
               LEFT JOIN coils c ON se.coil_id = c.id
               LEFT JOIN users u ON se.created_by = u.id";
@@ -43,6 +52,10 @@ if ($statusFilter !== '') {
     $whereParts[] = 'se.status = ?';
     $params[] = $statusFilter;
 }
+if ($categoryFilter !== '') {
+    $whereParts[] = 'c.category = ?';
+    $params[] = $categoryFilter;
+}
 
 $whereStr = implode(' AND ', $whereParts);
 $offset   = ($currentPage - 1) * RECORDS_PER_PAGE;
@@ -63,11 +76,11 @@ $entries = $entriesStmt->fetchAll();
 
 $paginationData = getPaginationData($totalEntries, $currentPage);
 
-// Coils for filter dropdown (non-KZinc only)
+// Coils for filter dropdown (all non-tile coils, including KZinc meter coils)
 $coilModel = new Coil();
 $coilsForFilter = array_filter(
     $coilModel->getAll(null, 1000, 0),
-    fn($c) => $c['category'] !== STOCK_CATEGORY_KZINC
+    fn($c) => $c['category'] !== STOCK_CATEGORY_TILE
 );
 
 require_once __DIR__ . '/../../../layout/header.php';
@@ -87,6 +100,9 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     <?php if ($statusFilter !== ''): ?>
                         <span class="badge bg-secondary">Status: <?php echo ucfirst(str_replace('_', ' ', $statusFilter)); ?></span>
                     <?php endif; ?>
+                    <?php if ($categoryFilter !== ''): ?>
+                        <span class="badge bg-info"><?php echo STOCK_CATEGORIES[$categoryFilter] ?? $categoryFilter; ?></span>
+                    <?php endif; ?>
                     <?php if ($coilId): ?>
                         <span class="badge bg-primary">Coil Filter Active</span>
                     <?php endif; ?>
@@ -104,38 +120,63 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
     <div class="alert alert-info alert-permanent py-2 mb-3">
         <i class="bi bi-layers"></i>
-        K-Zinc stock entries are managed in the
+        K-Zinc coil meter entries are shown here. Pallet/bundle/piece entries are managed in the
         <a href="/new-stock-system/index.php?page=kzinc_stock" class="alert-link">K-Zinc module</a>.
     </div>
     <?php endif; ?>
 
     <!-- Filters Card -->
+    <?php
+    // Build a shared extra-params string used by filter buttons to preserve the other active filter
+    $catExtra    = $categoryFilter !== '' ? '&category=' . urlencode($categoryFilter) : '';
+    $statusExtra = $statusFilter   !== '' ? '&status='   . urlencode($statusFilter)   : '';
+    $coilExtra   = $coilId                ? '&coil_id='  . $coilId                     : '';
+    $searchExtra = $searchQuery    !== '' ? '&search='   . urlencode($searchQuery)    : '';
+    ?>
     <div class="card mb-3">
         <div class="card-body">
             <div class="row g-3">
+                <!-- Category Filter Buttons -->
+                <div class="col-12">
+                    <label class="form-label small text-muted">Filter by Category:</label>
+                    <div class="btn-group" role="group">
+                        <a href="/new-stock-system/index.php?page=stock_entries<?php echo $statusExtra . $coilExtra . $searchExtra; ?>"
+                           class="btn btn-sm <?php echo $categoryFilter === '' ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                            All Categories
+                        </a>
+                        <?php foreach (STOCK_CATEGORIES as $catKey => $catName):
+                            if ($catKey === STOCK_CATEGORY_TILE) continue; ?>
+                        <a href="/new-stock-system/index.php?page=stock_entries&category=<?php echo urlencode($catKey); ?><?php echo $statusExtra . $coilExtra . $searchExtra; ?>"
+                           class="btn btn-sm <?php echo $categoryFilter === $catKey ? 'btn-info' : 'btn-outline-info'; ?>">
+                            <?php echo $catName; ?>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
                 <!-- Status Filter Buttons -->
                 <div class="col-md-6">
                     <label class="form-label small text-muted">Filter by Status:</label>
                     <div class="btn-group w-100" role="group">
-                        <a href="/new-stock-system/index.php?page=stock_entries<?php echo $coilId ? '&coil_id='.$coilId : ''; ?><?php echo $searchQuery !== '' ? '&search='.urlencode($searchQuery) : ''; ?>" 
+                        <a href="/new-stock-system/index.php?page=stock_entries<?php echo $catExtra . $coilExtra . $searchExtra; ?>"
                            class="btn btn-sm <?php echo $statusFilter === '' ? 'btn-primary' : 'btn-outline-primary'; ?>">
                             All
                         </a>
-                        <a href="/new-stock-system/index.php?page=stock_entries&status=available<?php echo $coilId ? '&coil_id='.$coilId : ''; ?><?php echo $searchQuery !== '' ? '&search='.urlencode($searchQuery) : ''; ?>" 
+                        <a href="/new-stock-system/index.php?page=stock_entries&status=available<?php echo $catExtra . $coilExtra . $searchExtra; ?>"
                            class="btn btn-sm <?php echo $statusFilter === 'available' ? 'btn-success' : 'btn-outline-success'; ?>">
                             Available
                         </a>
-                        <a href="/new-stock-system/index.php?page=stock_entries&status=factory_use<?php echo $coilId ? '&coil_id='.$coilId : ''; ?><?php echo $searchQuery !== '' ? '&search='.urlencode($searchQuery) : ''; ?>" 
+                        <a href="/new-stock-system/index.php?page=stock_entries&status=factory_use<?php echo $catExtra . $coilExtra . $searchExtra; ?>"
                            class="btn btn-sm <?php echo $statusFilter === 'factory_use' ? 'btn-warning' : 'btn-outline-warning'; ?>">
                             Factory Use
                         </a>
-                        <a href="/new-stock-system/index.php?page=stock_entries&status=sold<?php echo $coilId ? '&coil_id='.$coilId : ''; ?><?php echo $searchQuery !== '' ? '&search='.urlencode($searchQuery) : ''; ?>" 
+                        <a href="/new-stock-system/index.php?page=stock_entries&status=sold<?php echo $catExtra . $coilExtra . $searchExtra; ?>"
                            class="btn btn-sm <?php echo $statusFilter === 'sold' ? 'btn-danger' : 'btn-outline-danger'; ?>">
                             Sold Out
                         </a>
                     </div>
                 </div>
-                
+
                 <!-- Search Bar -->
                 <div class="col-md-6">
                     <label class="form-label small text-muted">Search:</label>
@@ -147,17 +188,20 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <?php if ($statusFilter !== ''): ?>
                         <input type="hidden" name="status" value="<?php echo htmlspecialchars($statusFilter); ?>">
                         <?php endif; ?>
-                        <input type="text" 
-                               name="search" 
-                               class="form-control form-control-sm me-2" 
-                               placeholder="Search by coil code or name..." 
+                        <?php if ($categoryFilter !== ''): ?>
+                        <input type="hidden" name="category" value="<?php echo htmlspecialchars($categoryFilter); ?>">
+                        <?php endif; ?>
+                        <input type="text"
+                               name="search"
+                               class="form-control form-control-sm me-2"
+                               placeholder="Search by coil code or name..."
                                value="<?php echo htmlspecialchars($searchQuery); ?>"
                                autocomplete="off">
                         <button type="submit" class="btn btn-sm btn-primary" title="Search">
                             <i class="bi bi-search"></i>
                         </button>
-                        <?php if ($searchQuery !== '' || $statusFilter !== '' || $coilId): ?>
-                        <a href="/new-stock-system/index.php?page=stock_entries" 
+                        <?php if ($searchQuery !== '' || $statusFilter !== '' || $coilId || $categoryFilter !== ''): ?>
+                        <a href="/new-stock-system/index.php?page=stock_entries"
                            class="btn btn-sm btn-secondary ms-2" title="Clear all filters">
                             <i class="bi bi-x"></i>
                         </a>

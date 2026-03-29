@@ -207,6 +207,18 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                         <i class="bi bi-receipt"></i>
                                     </a>
                                     <?php endif; ?>
+                                    <?php if (hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_DELETE)): ?>
+                                    <form method="POST"
+                                          action="/new-stock-system/controllers/kzinc/sales/delete/index.php"
+                                          style="display:inline-block;"
+                                          onsubmit="return confirm('Delete this K-Zinc sale? This cannot be undone.');">
+                                        <input type="hidden" name="id" value="<?php echo $sale['id']; ?>">
+                                        <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>
