@@ -21,8 +21,8 @@ $productionModel = new Production();
 $invoiceModel    = new Invoice();
 $receiptModel    = new Receipt();
 
-// Filter sales to KZinc coils only — positional params required by getFilteredSales
-$whereClause = "WHERE s.deleted_at IS NULL AND co.category = ?";
+// Filter to KZinc pallet coil sales only — meter coil sales live in the legacy sales module
+$whereClause = "WHERE s.deleted_at IS NULL AND co.category = ? AND co.kzinc_track_mode = 'pallets'";
 $params      = [STOCK_CATEGORY_KZINC];
 
 if ($searchQuery !== '') {
