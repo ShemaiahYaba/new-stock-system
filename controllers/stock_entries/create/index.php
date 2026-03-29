@@ -62,7 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
-    $isKzinc = $coil['category'] === STOCK_CATEGORY_KZINC;
+    // Only treat as KZinc pallet path if the coil is explicitly a pallet/sheet coil.
+    // KZinc meter coils go through the regular meters path.
+    $isKzinc = $coil['category'] === STOCK_CATEGORY_KZINC
+               && ($coil['kzinc_track_mode'] ?? null) === 'pallets';
 
     if ($isKzinc) {
         // -------------------------------------------------------

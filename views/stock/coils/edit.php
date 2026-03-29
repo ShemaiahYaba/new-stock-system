@@ -105,19 +105,19 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="net_weight" class="form-label">Net Weight (kg) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="net_weight" name="net_weight" 
+                                <input type="number" class="form-control" id="net_weight" name="net_weight"
                                        step="0.01" min="0" value="<?php echo $coil['net_weight']; ?>" required>
                                 <div class="invalid-feedback">Please provide net weight.</div>
                             </div>
-                            
-                            <div class="col-md-4 mb-3">
+
+                            <div class="col-md-4 mb-3" id="meters_col">
                                 <label for="meters" class="form-label">Meters</label>
-                                <input type="number" class="form-control" id="meters" name="meters" 
+                                <input type="number" class="form-control" id="meters" name="meters"
                                        step="0.01" min="0" placeholder="e.g., 500.00"
                                        value="<?php echo isset($coil['meters']) ? $coil['meters'] : ''; ?>">
                                 <small class="text-muted">Approximate meters per coil</small>
                             </div>
-                            
+
                             <div class="col-md-4 mb-3">
                                 <label for="gauge" class="form-label">Gauge</label>
                                 <input type="text" class="form-control" id="gauge" name="gauge"
@@ -127,12 +127,45 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </div>
                         </div>
 
+                        <!-- KZinc: tracking mode -->
+                        <?php $currentTrackMode = $coil['kzinc_track_mode'] ?? null; ?>
+                        <div id="kzinc_track_mode_row" style="display:none;">
+                            <div class="alert alert-warning py-2 mb-3">
+                                <strong><i class="bi bi-layers"></i> K-Zinc Tracking Mode</strong>
+                                <small class="d-block text-muted mt-1">Changing this after stock entries exist may cause inconsistencies.</small>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-check-card border rounded p-3">
+                                        <input class="form-check-input" type="radio" name="kzinc_track_mode"
+                                               id="track_meters" value="meters"
+                                               <?php echo $currentTrackMode === 'meters' ? 'checked' : ''; ?>>
+                                        <label class="form-check-label w-100" for="track_meters">
+                                            <strong>Meter coil</strong> — raw roll<br>
+                                            <small class="text-muted">Tracked in meters/kg via Stock Management.</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-check-card border rounded p-3">
+                                        <input class="form-check-input" type="radio" name="kzinc_track_mode"
+                                               id="track_pallets" value="pallets"
+                                               <?php echo $currentTrackMode === 'pallets' ? 'checked' : ''; ?>>
+                                        <label class="form-check-label w-100" for="track_pallets">
+                                            <strong>Pallet/sheet coil</strong> — pre-cut<br>
+                                            <small class="text-muted">Tracked in pallets, bundles &amp; pieces via K-Zinc module.</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-3" id="pallet_size_row" style="display:none;">
                             <label for="pallet_size" class="form-label">Pallet Size (bundles per pallet) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="pallet_size" name="pallet_size"
                                    min="1" step="1" placeholder="e.g. 85, 92, 112"
                                    value="<?php echo htmlspecialchars($coil['pallet_size'] ?? ''); ?>">
-                            <small class="text-muted">How many bundles fit on one pallet for this KZinc coil</small>
+                            <small class="text-muted">How many bundles fit on one pallet. Changing this only affects new stock entries.</small>
                         </div>
 
                         <div class="mb-3">
@@ -169,18 +202,46 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
 
 <script>
 (function () {
+    const KZINC = '<?php echo STOCK_CATEGORY_KZINC; ?>';
     const categorySelect = document.getElementById('category');
-    const palletRow = document.getElementById('pallet_size_row');
-    const palletInput = document.getElementById('pallet_size');
+    const trackModeRow   = document.getElementById('kzinc_track_mode_row');
+    const palletRow      = document.getElementById('pallet_size_row');
+    const palletInput    = document.getElementById('pallet_size');
+    const metersCol      = document.getElementById('meters_col');
+    const metersInput    = document.getElementById('meters');
+    const trackRadios    = document.querySelectorAll('input[name="kzinc_track_mode"]');
 
-    function togglePallet() {
-        const isKzinc = categorySelect.value === '<?php echo STOCK_CATEGORY_KZINC; ?>';
-        palletRow.style.display = isKzinc ? '' : 'none';
-        palletInput.required = isKzinc;
+    function onTrackModeChange() {
+        const selected = document.querySelector('input[name="kzinc_track_mode"]:checked');
+        if (!selected) {
+            palletRow.style.display = 'none';
+            palletInput.required    = false;
+            metersCol.style.display = '';
+            return;
+        }
+        const isPallets = selected.value === 'pallets';
+        palletRow.style.display  = isPallets ? '' : 'none';
+        palletInput.required     = isPallets;
+        metersCol.style.display  = isPallets ? 'none' : '';
+        if (isPallets) metersInput.value = '';
     }
 
-    categorySelect.addEventListener('change', togglePallet);
-    togglePallet();
+    function onCategoryChange() {
+        const isKzinc = categorySelect.value === KZINC;
+        trackModeRow.style.display = isKzinc ? '' : 'none';
+        if (!isKzinc) {
+            trackRadios.forEach(r => r.checked = false);
+            palletRow.style.display = 'none';
+            palletInput.required    = false;
+            metersCol.style.display = '';
+        } else {
+            onTrackModeChange();
+        }
+    }
+
+    categorySelect.addEventListener('change', onCategoryChange);
+    trackRadios.forEach(r => r.addEventListener('change', onTrackModeChange));
+    onCategoryChange();
 })();
 </script>
 <?php require_once __DIR__ . '/../../../layout/footer.php'; ?>

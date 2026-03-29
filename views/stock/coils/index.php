@@ -22,13 +22,20 @@ $colorFilter  = isset($_GET['color_id']) && $_GET['color_id'] !== '' ? (int)$_GE
 $coilModel  = new Coil();
 $colorModel = new Color();
 
-// Categories shown on this page — excludes Tile only; KZinc coils are managed here (meter-based)
-$nonKzincCategories = array_keys(array_filter(STOCK_CATEGORIES, function ($k) {
+// Categories shown on this page — excludes Tile; KZinc meter coils shown, KZinc pallet coils managed in K-Zinc module
+$allowedCategories = array_keys(array_filter(STOCK_CATEGORIES, function ($k) {
     return $k !== STOCK_CATEGORY_TILE;
 }, ARRAY_FILTER_USE_KEY));
 
+// KZinc pallet coils belong in the K-Zinc module — exclude them here
+$stockMgmtFilter = function ($c) {
+    if ($c['category'] === STOCK_CATEGORY_KZINC && ($c['kzinc_track_mode'] ?? null) === 'pallets') {
+        return false;
+    }
+    return true;
+};
+
 // Gauge & color options for filter dropdowns
-// Scope to current category if one is selected, otherwise show all non-KZinc gauges
 $gaugeOptions = $coilModel->getDistinctGauges($category);
 $colorOptions = $colorModel->getAll(1000, 0);
 
@@ -41,8 +48,11 @@ if ($searchQuery !== '') {
     $allSearchResults = $coilModel->search($searchQuery, $category, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter);
 
     if (!$category) {
-        $coils            = array_values(array_filter($coils, fn($c) => in_array($c['category'], $nonKzincCategories)));
-        $allSearchResults = array_values(array_filter($allSearchResults, fn($c) => in_array($c['category'], $nonKzincCategories)));
+        $coils            = array_values(array_filter($coils, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
+        $allSearchResults = array_values(array_filter($allSearchResults, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
+    } else {
+        $coils            = array_values(array_filter($coils, $stockMgmtFilter));
+        $allSearchResults = array_values(array_filter($allSearchResults, $stockMgmtFilter));
     }
     $totalCoils = count($allSearchResults);
 } else {
@@ -50,14 +60,14 @@ if ($searchQuery !== '') {
         $category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE,
         $statusFilter, $gaugeFilter, $colorFilter
     );
+    $coils = array_values(array_filter($coils, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
+
     if (!$category) {
-        $coils = array_values(array_filter($coils, fn($c) => in_array($c['category'], $nonKzincCategories)));
-        $totalCoils = array_sum(array_map(
-            fn($cat) => $coilModel->count($cat, $statusFilter, $gaugeFilter, $colorFilter),
-            $nonKzincCategories
-        ));
+        $allCoils   = $coilModel->getAll(null, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter);
+        $totalCoils = count(array_filter($allCoils, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
     } else {
-        $totalCoils = $coilModel->count($category, $statusFilter, $gaugeFilter, $colorFilter);
+        $allCat     = $coilModel->getAll($category, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter);
+        $totalCoils = count(array_filter($allCat, $stockMgmtFilter));
     }
 }
 

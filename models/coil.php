@@ -24,21 +24,22 @@ class Coil
     {
         try {
             $sql = "INSERT INTO {$this->table}
-                    (code, name, color_id, net_weight, meters, gauge, pallet_size, category, status, created_by, created_at)
-                    VALUES (:code, :name, :color_id, :net_weight, :meters, :gauge, :pallet_size, :category, :status, :created_by, NOW())";
+                    (code, name, color_id, net_weight, meters, gauge, pallet_size, kzinc_track_mode, category, status, created_by, created_at)
+                    VALUES (:code, :name, :color_id, :net_weight, :meters, :gauge, :pallet_size, :kzinc_track_mode, :category, :status, :created_by, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                ':code' => $data['code'],
-                ':name' => $data['name'],
-                ':color_id' => $data['color_id'],
-                ':net_weight' => $data['net_weight'],
-                ':meters' => $data['meters'] ?? null,
-                ':gauge' => $data['gauge'] ?? null,
-                ':pallet_size' => $data['pallet_size'] ?? null,
-                ':category' => $data['category'],
-                ':status' => $data['status'] ?? STOCK_STATUS_AVAILABLE,
-                ':created_by' => $data['created_by'],
+                ':code'             => $data['code'],
+                ':name'             => $data['name'],
+                ':color_id'         => $data['color_id'],
+                ':net_weight'       => $data['net_weight'],
+                ':meters'           => $data['meters'] ?? null,
+                ':gauge'            => $data['gauge'] ?? null,
+                ':pallet_size'      => $data['pallet_size'] ?? null,
+                ':kzinc_track_mode' => $data['kzinc_track_mode'] ?? null,
+                ':category'         => $data['category'],
+                ':status'           => $data['status'] ?? STOCK_STATUS_AVAILABLE,
+                ':created_by'       => $data['created_by'],
             ]);
 
             return $this->db->lastInsertId();
@@ -284,6 +285,11 @@ class Coil
                 $params[':pallet_size'] = $data['pallet_size'];
             }
 
+            if (array_key_exists('kzinc_track_mode', $data)) {
+                $fields[] = 'kzinc_track_mode = :kzinc_track_mode';
+                $params[':kzinc_track_mode'] = $data['kzinc_track_mode'];
+            }
+
             if (isset($data['status'])) {
                 $fields[] = 'status = :status';
                 $params[':status'] = $data['status'];
@@ -483,7 +489,7 @@ class Coil
     {
         try {
             $sql = "SELECT c.id, c.code, c.name, c.category, c.status, c.color_id,
-                           c.net_weight, c.meters, c.gauge,
+                           c.net_weight, c.meters, c.gauge, c.kzinc_track_mode,
                            col.name as color_name, col.hex_code as color_hex
                     FROM {$this->table} c
                     LEFT JOIN colors col ON c.color_id = col.id

@@ -17,8 +17,11 @@ $filterCoilId = isset($_GET['coil_id']) ? (int)$_GET['coil_id'] : null;
 $coilModel       = new Coil();
 $stockEntryModel = new StockEntry();
 
-// Get all KZinc coils for the filter dropdown
-$kzincCoils = $coilModel->getAll(STOCK_CATEGORY_KZINC, 1000, 0);
+// Only pallet coils in this module
+$kzincCoils = array_values(array_filter(
+    $coilModel->getAll(STOCK_CATEGORY_KZINC, 1000, 0),
+    fn($c) => ($c['kzinc_track_mode'] ?? null) === 'pallets'
+));
 
 // Load entries
 // We query all entries belonging to KZinc coils (unit_type != meters)

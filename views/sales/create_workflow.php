@@ -309,6 +309,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                                 data-code="<?php echo htmlspecialchars($coil['code']); ?>"
                                                 data-name="<?php echo htmlspecialchars($coil['name']); ?>"
                                                 data-category="<?php echo $coil['category']; ?>"
+                                                data-track-mode="<?php echo htmlspecialchars($coil['kzinc_track_mode'] ?? ''); ?>"
                                                 data-status="<?php echo $coil['status']; ?>"
                                                 data-color_name="<?php echo htmlspecialchars($coil['color_name'] ?? ''); ?>"
                                                 data-weight="<?php echo htmlspecialchars($coil['net_weight'] ?? 0); ?>"
@@ -773,6 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 code: option.dataset.code,
                 name: option.dataset.name,
                 category: option.dataset.category,
+                trackMode: option.dataset.trackMode || '',
                 color_name: option.dataset.color_name,
                 weight: option.dataset.weight,
                 status: option.dataset.status

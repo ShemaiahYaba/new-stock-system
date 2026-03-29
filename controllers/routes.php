@@ -349,7 +349,7 @@ $routes = [
         'action' => ACTION_VIEW,
     ],
     'kzinc_coils_create' => [
-        'view'   => 'views/kzinc/coils/create.php',
+        'view'   => 'views/stock/coils/create.php',
         'module' => MODULE_KZINC_MANAGEMENT,
         'action' => ACTION_CREATE,
     ],

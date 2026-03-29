@@ -16,13 +16,19 @@ $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 $coilModel = new Coil();
 
+// Only pallet/sheet KZinc coils belong in this module
+$palletOnly = fn($c) => ($c['kzinc_track_mode'] ?? null) === 'pallets';
+
 if ($searchQuery !== '') {
-    $coils = $coilModel->search($searchQuery, STOCK_CATEGORY_KZINC, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
     $allResults = $coilModel->search($searchQuery, STOCK_CATEGORY_KZINC, 10000, 0);
+    $allResults = array_values(array_filter($allResults, $palletOnly));
     $totalCoils = count($allResults);
+    $coils      = array_slice($allResults, ($currentPage - 1) * RECORDS_PER_PAGE, RECORDS_PER_PAGE);
 } else {
-    $coils = $coilModel->getAll(STOCK_CATEGORY_KZINC, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE);
-    $totalCoils = $coilModel->count(STOCK_CATEGORY_KZINC);
+    $allKzinc   = $coilModel->getAll(STOCK_CATEGORY_KZINC, 10000, 0);
+    $allKzinc   = array_values(array_filter($allKzinc, $palletOnly));
+    $totalCoils = count($allKzinc);
+    $coils      = array_slice($allKzinc, ($currentPage - 1) * RECORDS_PER_PAGE, RECORDS_PER_PAGE);
 }
 
 // Load piece totals for each coil
