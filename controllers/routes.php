@@ -349,7 +349,7 @@ $routes = [
         'action' => ACTION_VIEW,
     ],
     'kzinc_coils_create' => [
-        'view'   => 'views/kzinc/coils/create.php',
+        'view'   => 'views/stock/coils/create.php',
         'module' => MODULE_KZINC_MANAGEMENT,
         'action' => ACTION_CREATE,
     ],
@@ -377,6 +377,11 @@ $routes = [
         'view'   => 'views/kzinc/stock/ledger.php',
         'module' => MODULE_KZINC_MANAGEMENT,
         'action' => ACTION_VIEW,
+    ],
+    'kzinc_stock_from_coil' => [
+        'view'   => 'views/kzinc/stock/from_coil.php',
+        'module' => MODULE_KZINC_MANAGEMENT,
+        'action' => ACTION_CREATE,
     ],
     'kzinc_sales' => [
         'view'   => 'views/kzinc/sales/index.php',

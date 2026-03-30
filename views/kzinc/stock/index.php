@@ -17,8 +17,11 @@ $filterCoilId = isset($_GET['coil_id']) ? (int)$_GET['coil_id'] : null;
 $coilModel       = new Coil();
 $stockEntryModel = new StockEntry();
 
-// Get all KZinc coils for the filter dropdown
-$kzincCoils = $coilModel->getAll(STOCK_CATEGORY_KZINC, 1000, 0);
+// Only pallet coils in this module
+$kzincCoils = array_values(array_filter(
+    $coilModel->getAll(STOCK_CATEGORY_KZINC, 1000, 0),
+    fn($c) => ($c['kzinc_track_mode'] ?? null) === 'pallets'
+));
 
 // Load entries
 // We query all entries belonging to KZinc coils (unit_type != meters)
@@ -72,9 +75,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 <p class="text-muted">(<?php echo $totalEntries; ?> total)</p>
             </div>
             <?php if (hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_CREATE)): ?>
-            <a href="/new-stock-system/index.php?page=kzinc_stock_create" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Add Stock Entry
-            </a>
+            <div class="d-flex gap-2">
+                <a href="/new-stock-system/index.php?page=kzinc_stock_from_coil" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left-right"></i> Stock from Coil
+                </a>
+                <a href="/new-stock-system/index.php?page=kzinc_stock_create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add Stock Entry
+                </a>
+            </div>
             <?php endif; ?>
         </div>
     </div>
@@ -127,6 +135,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>Status</th>
                             <th>Date</th>
                             <th>By</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -174,6 +183,20 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </td>
                             <td><small><?php echo formatDate($entry['created_at']); ?></small></td>
                             <td><small><?php echo htmlspecialchars($entry['created_by_name'] ?? '—'); ?></small></td>
+                            <td>
+                                <?php if (hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_DELETE)): ?>
+                                <form method="POST"
+                                      action="/new-stock-system/controllers/kzinc/stock/delete/index.php"
+                                      style="display:inline-block;"
+                                      onsubmit="return confirm('Delete this stock entry? This cannot be undone.');">
+                                    <input type="hidden" name="id" value="<?php echo $entry['id']; ?>">
+                                    <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

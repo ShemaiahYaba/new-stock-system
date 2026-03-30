@@ -195,11 +195,13 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <table class="table table-sm table-borderless mb-0">
                                 <thead class="text-muted small">
                                     <tr>
-                                        <th style="width:30%">Colour / Label</th>
-                                        <th style="width:18%">Bundles</th>
-                                        <th style="width:15%">Pieces</th>
-                                        <th style="width:20%">Price / Bundle (₦)</th>
-                                        <th style="width:17%">Subtotal (₦)</th>
+                                        <th style="width:24%">Colour / Label</th>
+                                        <th style="width:10%">Pallets</th>
+                                        <th style="width:10%">Bundles</th>
+                                        <th style="width:10%">Pcs</th>
+                                        <th style="width:10%">Total Pcs</th>
+                                        <th style="width:18%">Price / Bundle (₦)</th>
+                                        <th style="width:15%">Subtotal (₦)</th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -309,16 +311,26 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 <input type="text" class="form-control form-control-sm mt-1 custom-label"
                        placeholder="Custom colour/label" style="display:none;">
             </div>
-            <div class="col-md-2 col-6">
+            <div class="col-md-1 col-4">
+                <label class="form-label small mb-1">Pallets</label>
+                <input type="number" class="form-control form-control-sm pallet-input"
+                       min="0" step="1" placeholder="0">
+            </div>
+            <div class="col-md-1 col-4">
                 <label class="form-label small mb-1">Bundles</label>
                 <input type="number" class="form-control form-control-sm bundle-input"
-                       min="1" step="1" placeholder="0">
+                       min="0" step="1" placeholder="0">
+            </div>
+            <div class="col-md-1 col-4">
+                <label class="form-label small mb-1">Pcs</label>
+                <input type="number" class="form-control form-control-sm loose-pieces-input"
+                       min="0" step="1" placeholder="0">
             </div>
             <div class="col-md-2 col-6">
-                <label class="form-label small mb-1">Pieces</label>
+                <label class="form-label small mb-1">Total Pcs</label>
                 <div class="form-control form-control-sm bg-light pieces-display text-center fw-bold">0</div>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-2 col-6">
                 <label class="form-label small mb-1">Price / Bundle (₦)</label>
                 <input type="number" class="form-control form-control-sm price-input"
                        min="0" step="0.01" placeholder="0.00">
@@ -561,10 +573,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
 
     function getProductionSubtotal() {
         let total = 0;
+        const palletSize = currentCoilData?.palletSize || 0;
         colourRowsEl.querySelectorAll('.kz-row').forEach(rowEl => {
-            const bundles = parseFloat(rowEl.querySelector('.bundle-input').value) || 0;
-            const price   = parseFloat(rowEl.querySelector('.price-input').value)  || 0;
-            total += bundles * price;
+            const pallets     = parseFloat(rowEl.querySelector('.pallet-input').value)       || 0;
+            const bundles     = parseFloat(rowEl.querySelector('.bundle-input').value)       || 0;
+            const loosePieces = parseFloat(rowEl.querySelector('.loose-pieces-input').value) || 0;
+            const price       = parseFloat(rowEl.querySelector('.price-input').value)        || 0;
+            const effectiveBundles = (pallets * palletSize) + bundles + (loosePieces / PIECES_PER_BUNDLE);
+            total += effectiveBundles * price;
         });
         return total;
     }
@@ -596,8 +612,10 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             customInput.style.display = colourSel.value === '__custom__' ? '' : 'none';
         });
 
-        rowEl.querySelector('.bundle-input').addEventListener('input', () => updateRow(rowEl));
-        rowEl.querySelector('.price-input').addEventListener('input',  () => updateRow(rowEl));
+        rowEl.querySelector('.pallet-input').addEventListener('input',       () => updateRow(rowEl));
+        rowEl.querySelector('.bundle-input').addEventListener('input',       () => updateRow(rowEl));
+        rowEl.querySelector('.loose-pieces-input').addEventListener('input', () => updateRow(rowEl));
+        rowEl.querySelector('.price-input').addEventListener('input',        () => updateRow(rowEl));
 
         colourRowsEl.appendChild(tpl);
         refreshNoRowsMsg();
@@ -605,24 +623,32 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     }
 
     function updateRow(rowEl) {
-        const bundles  = parseFloat(rowEl.querySelector('.bundle-input').value) || 0;
-        const price    = parseFloat(rowEl.querySelector('.price-input').value)  || 0;
-        const pieces   = Math.round(bundles * PIECES_PER_BUNDLE);
-        const subtotal = bundles * price;
+        const palletSize  = currentCoilData?.palletSize || 0;
+        const pallets     = parseFloat(rowEl.querySelector('.pallet-input').value)       || 0;
+        const bundles     = parseFloat(rowEl.querySelector('.bundle-input').value)       || 0;
+        const loosePieces = parseFloat(rowEl.querySelector('.loose-pieces-input').value) || 0;
+        const price       = parseFloat(rowEl.querySelector('.price-input').value)        || 0;
 
-        rowEl.querySelector('.pieces-display').textContent   = pieces.toLocaleString();
+        const totalPieces      = (pallets * palletSize * PIECES_PER_BUNDLE) + (bundles * PIECES_PER_BUNDLE) + loosePieces;
+        const effectiveBundles = (pallets * palletSize) + bundles + (loosePieces / PIECES_PER_BUNDLE);
+        const subtotal         = effectiveBundles * price;
+
+        rowEl.querySelector('.pieces-display').textContent   = Math.round(totalPieces).toLocaleString();
         rowEl.querySelector('.subtotal-display').textContent = fmt(subtotal);
         recalcSummary();
     }
 
     function recalcSummary() {
         let totalBundles = 0, totalPieces = 0;
+        const palletSize = currentCoilData?.palletSize || 0;
         const productionSubtotal = getProductionSubtotal();
 
         colourRowsEl.querySelectorAll('.kz-row').forEach(rowEl => {
-            const bundles = parseFloat(rowEl.querySelector('.bundle-input').value) || 0;
-            totalBundles += bundles;
-            totalPieces  += Math.round(bundles * PIECES_PER_BUNDLE);
+            const pallets     = parseFloat(rowEl.querySelector('.pallet-input').value)       || 0;
+            const bundles     = parseFloat(rowEl.querySelector('.bundle-input').value)       || 0;
+            const loosePieces = parseFloat(rowEl.querySelector('.loose-pieces-input').value) || 0;
+            totalBundles += (pallets * palletSize) + bundles;
+            totalPieces  += (pallets * palletSize * PIECES_PER_BUNDLE) + (bundles * PIECES_PER_BUNDLE) + loosePieces;
         });
 
         const addonsTotal = getAddonsTotal();
@@ -693,24 +719,34 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         let totalPieces = 0;
         const productionSubtotal = getProductionSubtotal();
 
+        const palletSize = currentCoilData?.palletSize || 0;
+
         for (const rowEl of rows) {
             const colourSel   = rowEl.querySelector('.colour-select');
             const customInput = rowEl.querySelector('.custom-label');
-            const bundles     = parseFloat(rowEl.querySelector('.bundle-input').value) || 0;
-            const price       = parseFloat(rowEl.querySelector('.price-input').value)  || 0;
-            const pieces      = Math.round(bundles * PIECES_PER_BUNDLE);
-            const subtotal    = bundles * price;
+            const pallets     = parseFloat(rowEl.querySelector('.pallet-input').value)       || 0;
+            const bundles     = parseFloat(rowEl.querySelector('.bundle-input').value)       || 0;
+            const loosePieces = parseFloat(rowEl.querySelector('.loose-pieces-input').value) || 0;
+            const price       = parseFloat(rowEl.querySelector('.price-input').value)        || 0;
+            const pieces      = Math.round((pallets * palletSize * PIECES_PER_BUNDLE) + (bundles * PIECES_PER_BUNDLE) + loosePieces);
+            const effectiveBundles = (pallets * palletSize) + bundles + (loosePieces / PIECES_PER_BUNDLE);
+            const subtotal    = effectiveBundles * price;
 
-            if (bundles <= 0) continue;
+            if (pieces <= 0) continue;
 
             const label = colourSel.value === '__custom__'
                 ? (customInput.value.trim() || 'Custom')
                 : (colourSel.value || 'KZinc');
 
+            const propertyType = pallets > 0 ? 'pallets' : (bundles > 0 ? 'bundles' : 'pieces');
+
             properties.push({
-                propertyType: 'bundles',
+                propertyType,
                 label,
-                quantity:   bundles,
+                pallets,
+                bundles,
+                loose_pieces: loosePieces,
+                quantity:   pallets > 0 ? pallets : (bundles > 0 ? bundles : loosePieces),
                 pieces,
                 unitPrice:  price,
                 subtotal,
@@ -722,7 +758,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         }
 
         if (properties.length === 0) {
-            showError('Add at least one colour row with a bundle quantity.');
+            showError('Add at least one colour row with a quantity (pallets, bundles, or pieces).');
             return;
         }
 
@@ -785,14 +821,21 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         const coilCode = currentCoilData?.code ?? '';
         const invoiceData = {
             customer: { name: custName, phone: custPhone, email: '' },
-            items: properties.map(p => ({
-                product_code: `${coilCode} - ${p.quantity} Bundle${p.quantity !== 1 ? 's' : ''} - ${p.label}`,
-                description:  `${p.pieces} pcs`,
-                quantity:    p.quantity,
-                unit:        'bundles',
-                unit_price:  p.unitPrice,
-                subtotal:    p.subtotal,
-            })),
+            items: properties.map(p => {
+                const parts = [];
+                if (p.pallets > 0)      parts.push(`${p.pallets} Pallet${p.pallets !== 1 ? 's' : ''}`);
+                if (p.bundles > 0)      parts.push(`${p.bundles} Bundle${p.bundles !== 1 ? 's' : ''}`);
+                if (p.loose_pieces > 0) parts.push(`${p.loose_pieces} pcs`);
+                const qtyDesc = parts.join(' + ') || `${p.pieces} pcs`;
+                return {
+                    product_code: `${coilCode} - ${qtyDesc} - ${p.label}`,
+                    description:  `${p.pieces} pcs total`,
+                    quantity:    p.quantity,
+                    unit:        p.propertyType,
+                    unit_price:  p.unitPrice,
+                    subtotal:    p.subtotal,
+                };
+            }),
             addon_items:   addonInvoiceItems,
             addon_summary: { total_charges: totalCharges, total_adjustments: totalAdjustments },
             tax:      { type: 'fixed', value: 0, amount: 0 },

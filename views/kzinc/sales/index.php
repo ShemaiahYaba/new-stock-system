@@ -21,8 +21,8 @@ $productionModel = new Production();
 $invoiceModel    = new Invoice();
 $receiptModel    = new Receipt();
 
-// Filter sales to KZinc coils only — positional params required by getFilteredSales
-$whereClause = "WHERE s.deleted_at IS NULL AND co.category = ?";
+// Filter to KZinc pallet coil sales only — meter coil sales live in the legacy sales module
+$whereClause = "WHERE s.deleted_at IS NULL AND co.category = ? AND co.kzinc_track_mode = 'pallets'";
 $params      = [STOCK_CATEGORY_KZINC];
 
 if ($searchQuery !== '') {
@@ -206,6 +206,18 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                        class="btn btn-secondary" title="Invoice">
                                         <i class="bi bi-receipt"></i>
                                     </a>
+                                    <?php endif; ?>
+                                    <?php if (hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_DELETE)): ?>
+                                    <form method="POST"
+                                          action="/new-stock-system/controllers/kzinc/sales/delete/index.php"
+                                          style="display:inline-block;"
+                                          onsubmit="return confirm('Delete this K-Zinc sale? This cannot be undone.');">
+                                        <input type="hidden" name="id" value="<?php echo $sale['id']; ?>">
+                                        <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
                                     <?php endif; ?>
                                 </div>
                             </td>

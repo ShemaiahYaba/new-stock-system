@@ -12,11 +12,11 @@ $pageTitle = 'Create Stock Entry - ' . APP_NAME;
 
 $coilId = isset($_GET['coil_id']) ? (int)$_GET['coil_id'] : null;
 
-// Get available coils — exclude KZinc (managed via the K-Zinc module)
+// Get available coils — exclude Tile only; KZinc coils can have meter-based stock entries here
 $coilModel = new Coil();
 $coils = array_filter(
     $coilModel->getAll(null, 1000, 0),
-    fn($c) => $c['category'] !== STOCK_CATEGORY_KZINC
+    fn($c) => $c['category'] !== STOCK_CATEGORY_TILE
 );
 
 // If coil_id is provided, get that specific coil
@@ -59,6 +59,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 <?php foreach ($coils as $coil): ?>
                                 <option value="<?php echo $coil['id']; ?>"
                                         data-category="<?php echo htmlspecialchars($coil['category']); ?>"
+                                        data-track-mode="<?php echo htmlspecialchars($coil['kzinc_track_mode'] ?? ''); ?>"
                                         data-pallet-size="<?php echo (int)($coil['pallet_size'] ?? 0); ?>"
                                         <?php echo ($selectedCoil && $selectedCoil['id'] == $coil['id']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($coil['code']); ?> -
@@ -226,16 +227,20 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
 
     function onCoilChange() {
         const selected = coilSelect.options[coilSelect.selectedIndex];
-        const category   = selected ? selected.getAttribute('data-category') : '';
+        const category  = selected ? selected.getAttribute('data-category') : '';
+        const trackMode = selected ? selected.getAttribute('data-track-mode') : '';
         currentPalletSize = selected ? parseInt(selected.getAttribute('data-pallet-size') || '0', 10) : 0;
-        const isKzinc = category === KZINC_CATEGORY;
 
-        metersSection.style.display = isKzinc ? 'none' : '';
-        kzincSection.style.display  = isKzinc ? '' : 'none';
+        // KZinc pallet coils → bundle/pallet/piece section
+        // Everything else (including KZinc meter coils) → meters section
+        const isKzincPallet = category === KZINC_CATEGORY && trackMode === 'pallets';
 
-        metersInput.required    = !isKzinc;
-        unitTypeSelect.required = isKzinc;
-        quantityInput.required  = isKzinc;
+        metersSection.style.display = isKzincPallet ? 'none' : '';
+        kzincSection.style.display  = isKzincPallet ? '' : 'none';
+
+        metersInput.required    = !isKzincPallet;
+        unitTypeSelect.required = isKzincPallet;
+        quantityInput.required  = isKzincPallet;
 
         breakdownBox.style.display = 'none';
         updateBreakdown();

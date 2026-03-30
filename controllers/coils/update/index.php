@@ -30,18 +30,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = sanitize($_POST['status'] ?? '');
     $meters = floatval($_POST['meters'] ?? 0);
     $gauge = sanitize($_POST['gauge'] ?? '');
-    $palletSize = ($category === STOCK_CATEGORY_KZINC && !empty($_POST['pallet_size']))
-        ? (int)$_POST['pallet_size']
-        : null;
+    $palletSize    = null;
+    $kzincTrackMode = null;
+    if ($category === STOCK_CATEGORY_KZINC) {
+        $kzincTrackMode = in_array($_POST['kzinc_track_mode'] ?? '', ['meters', 'pallets'])
+            ? $_POST['kzinc_track_mode']
+            : null;
+        if ($kzincTrackMode === 'pallets' && !empty($_POST['pallet_size'])) {
+            $palletSize = (int)$_POST['pallet_size'];
+        }
+    }
 
     $errors = [];
     
     if (empty($code)) $errors[] = 'Coil code is required.';
     if (empty($name)) $errors[] = 'Coil name is required.';
-    if ($colorId <= 0) $errors[] = 'Please select a valid color.'; // CHANGED
+    if ($colorId <= 0) $errors[] = 'Please select a valid color.';
     if ($netWeight <= 0) $errors[] = 'Net weight must be greater than 0.';
     if (!array_key_exists($category, STOCK_CATEGORIES)) $errors[] = 'Invalid category.';
     if (!array_key_exists($status, STOCK_STATUSES)) $errors[] = 'Invalid status.';
+    if ($category === STOCK_CATEGORY_KZINC && $kzincTrackMode === null) $errors[] = 'Please select a K-Zinc tracking mode.';
+    if ($category === STOCK_CATEGORY_KZINC && $kzincTrackMode === 'pallets' && empty($palletSize)) $errors[] = 'Pallet size is required for K-Zinc pallet coils.';
     
     if (!empty($errors)) {
         setFlashMessage('error', implode(' ', $errors));
@@ -76,7 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'category' => $category,
         'meters' => $meters,
         'gauge' => $gauge,
-        'pallet_size' => $palletSize,
+        'pallet_size'      => $palletSize,
+        'kzinc_track_mode' => $kzincTrackMode,
         'status' => $status
     ];
     

@@ -25,11 +25,8 @@ $coilModel = new Coil();
 
 $customers = $customerModel->getAll(1000, 0);
 $warehouses = $warehouseModel->getActive();
-// Exclude KZinc coils — they use the dedicated K-Zinc sales workflow
-$coils = array_filter(
-    $coilModel->getForDropdown(),
-    fn($c) => $c['category'] !== STOCK_CATEGORY_KZINC
-);
+// Only coils with at least one factory_use stock entry (meters_remaining > 0)
+$coils = $coilModel->getForSaleDropdown();
 
 require_once __DIR__ . '/../../layout/header.php';
 require_once __DIR__ . '/../../layout/sidebar.php';
@@ -288,11 +285,23 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="category_filter" class="form-label">Category <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="category_filter">
+                                        <option value="">-- Select Category --</option>
+                                        <?php foreach (STOCK_CATEGORIES as $catKey => $catName):
+                                            if ($catKey === STOCK_CATEGORY_TILE) continue; ?>
+                                        <option value="<?php echo $catKey; ?>"><?php echo $catName; ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
                                 <div class="mb-3">
                                     <label for="coil_id" class="form-label">Select Coil <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="coil_id" name="coil_id" required>
-                                        <option value="">-- Select Coil --</option>
+                                    <select class="form-select" id="coil_id" name="coil_id" required disabled>
+                                        <option value="">-- Select Category First --</option>
                                         <?php if (empty($coils)): ?>
                                             <option value="">No coils found</option>
                                         <?php else: foreach ($coils as $coil): ?>
@@ -300,18 +309,19 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                                                 data-code="<?php echo htmlspecialchars($coil['code']); ?>"
                                                 data-name="<?php echo htmlspecialchars($coil['name']); ?>"
                                                 data-category="<?php echo $coil['category']; ?>"
+                                                data-track-mode="<?php echo htmlspecialchars($coil['kzinc_track_mode'] ?? ''); ?>"
                                                 data-status="<?php echo $coil['status']; ?>"
                                                 data-color_name="<?php echo htmlspecialchars($coil['color_name'] ?? ''); ?>"
-                                                data-weight="<?php echo htmlspecialchars($coil['net_weight'] ?? 0); ?>">
-                                            <?php echo htmlspecialchars($coil['code']); ?> - 
+                                                data-weight="<?php echo htmlspecialchars($coil['net_weight'] ?? 0); ?>"
+                                                style="display:none;">
+                                            <?php echo htmlspecialchars($coil['code']); ?> -
                                             <?php echo htmlspecialchars($coil['name']); ?>
-                                            (<?php echo STOCK_CATEGORIES[$coil['category']] ?? $coil['category']; ?>)
                                         </option>
                                         <?php endforeach; endif; ?>
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="stock_entry_id" class="form-label">Select Stock Entry <span class="text-danger">*</span></label>
                                     <select class="form-select" id="stock_entry_id" name="stock_entry_id" required disabled>
@@ -703,6 +713,45 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ============================================================
+    // CATEGORY FILTER — shows/hides coil options by category
+    // ============================================================
+    const categoryFilter = document.getElementById('category_filter');
+    const coilSelectEl   = document.getElementById('coil_id');
+
+    if (categoryFilter && coilSelectEl) {
+        categoryFilter.addEventListener('change', function () {
+            const selectedCat = this.value;
+
+            // Reset coil selection
+            coilSelectEl.value = '';
+            coilSelectEl.disabled = !selectedCat;
+            if (!selectedCat) {
+                coilSelectEl.options[0].text = '-- Select Category First --';
+            } else {
+                coilSelectEl.options[0].text = '-- Select Coil --';
+            }
+
+            // Show/hide coil options
+            Array.from(coilSelectEl.options).forEach(opt => {
+                if (!opt.value) return; // placeholder
+                opt.style.display = (opt.dataset.category === selectedCat) ? '' : 'none';
+            });
+
+            // Reset downstream
+            const stockEntrySelectEl = document.getElementById('stock_entry_id');
+            if (stockEntrySelectEl) {
+                stockEntrySelectEl.innerHTML = '<option value="">-- Select Stock Entry --</option>';
+                stockEntrySelectEl.disabled = true;
+            }
+            const metadataEl = document.getElementById('coil_metadata');
+            if (metadataEl) metadataEl.classList.add('d-none');
+            if (workflowManager && workflowManager.resetCoilAndProperties) {
+                workflowManager.resetCoilAndProperties();
+            }
+        });
+    }
+
+    // ============================================================
     // EVENT LISTENERS - COIL & STOCK SELECTION
     // ============================================================
     const coilSelect = document.getElementById('coil_id');
@@ -725,6 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 code: option.dataset.code,
                 name: option.dataset.name,
                 category: option.dataset.category,
+                trackMode: option.dataset.trackMode || '',
                 color_name: option.dataset.color_name,
                 weight: option.dataset.weight,
                 status: option.dataset.status

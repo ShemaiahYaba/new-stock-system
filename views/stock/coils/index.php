@@ -1,6 +1,6 @@
 <?php
 /**
- * Coils List View — Alusteel & Aluminum only (KZinc is in the K-Zinc module)
+ * Coils List View — Alusteel, Aluminum & KZinc meter coils
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -22,13 +22,20 @@ $colorFilter  = isset($_GET['color_id']) && $_GET['color_id'] !== '' ? (int)$_GE
 $coilModel  = new Coil();
 $colorModel = new Color();
 
-// Categories shown on this page — excludes KZinc and Tile
-$nonKzincCategories = array_keys(array_filter(STOCK_CATEGORIES, function ($k) {
-    return $k !== STOCK_CATEGORY_KZINC && $k !== STOCK_CATEGORY_TILE;
+// Categories shown on this page — excludes Tile; KZinc meter coils shown, KZinc pallet coils managed in K-Zinc module
+$allowedCategories = array_keys(array_filter(STOCK_CATEGORIES, function ($k) {
+    return $k !== STOCK_CATEGORY_TILE;
 }, ARRAY_FILTER_USE_KEY));
 
+// KZinc pallet coils belong in the K-Zinc module — exclude them here
+$stockMgmtFilter = function ($c) {
+    if ($c['category'] === STOCK_CATEGORY_KZINC && ($c['kzinc_track_mode'] ?? null) === 'pallets') {
+        return false;
+    }
+    return true;
+};
+
 // Gauge & color options for filter dropdowns
-// Scope to current category if one is selected, otherwise show all non-KZinc gauges
 $gaugeOptions = $coilModel->getDistinctGauges($category);
 $colorOptions = $colorModel->getAll(1000, 0);
 
@@ -41,8 +48,11 @@ if ($searchQuery !== '') {
     $allSearchResults = $coilModel->search($searchQuery, $category, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter);
 
     if (!$category) {
-        $coils            = array_values(array_filter($coils, fn($c) => in_array($c['category'], $nonKzincCategories)));
-        $allSearchResults = array_values(array_filter($allSearchResults, fn($c) => in_array($c['category'], $nonKzincCategories)));
+        $coils            = array_values(array_filter($coils, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
+        $allSearchResults = array_values(array_filter($allSearchResults, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
+    } else {
+        $coils            = array_values(array_filter($coils, $stockMgmtFilter));
+        $allSearchResults = array_values(array_filter($allSearchResults, $stockMgmtFilter));
     }
     $totalCoils = count($allSearchResults);
 } else {
@@ -50,14 +60,14 @@ if ($searchQuery !== '') {
         $category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE,
         $statusFilter, $gaugeFilter, $colorFilter
     );
+    $coils = array_values(array_filter($coils, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
+
     if (!$category) {
-        $coils = array_values(array_filter($coils, fn($c) => in_array($c['category'], $nonKzincCategories)));
-        $totalCoils = array_sum(array_map(
-            fn($cat) => $coilModel->count($cat, $statusFilter, $gaugeFilter, $colorFilter),
-            $nonKzincCategories
-        ));
+        $allCoils   = $coilModel->getAll(null, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter);
+        $totalCoils = count(array_filter($allCoils, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
     } else {
-        $totalCoils = $coilModel->count($category, $statusFilter, $gaugeFilter, $colorFilter);
+        $allCat     = $coilModel->getAll($category, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter);
+        $totalCoils = count(array_filter($allCat, $stockMgmtFilter));
     }
 }
 
@@ -99,7 +109,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
     <div class="alert alert-info alert-permanent py-2 mb-3">
         <i class="bi bi-layers"></i>
-        K-Zinc coils are managed in the
+        K-Zinc coil meter stock is managed here. For pallet / bundle / piece operations, use the
         <a href="/new-stock-system/index.php?page=kzinc_coils" class="alert-link">K-Zinc module</a>.
     </div>
     <?php endif; ?>
@@ -121,7 +131,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     All
                 </a>
                 <?php foreach (STOCK_CATEGORIES as $catKey => $catName):
-                    if ($catKey === STOCK_CATEGORY_KZINC || $catKey === STOCK_CATEGORY_TILE) continue; ?>
+                    if ($catKey === STOCK_CATEGORY_TILE) continue; ?>
                 <a href="<?php echo $catBase . '&category=' . $catKey . $catExtra; ?>"
                    class="btn btn-sm <?php echo $category === $catKey ? 'btn-primary' : 'btn-outline-primary'; ?>">
                     <?php echo $catName; ?>

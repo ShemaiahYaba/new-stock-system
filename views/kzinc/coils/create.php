@@ -86,6 +86,15 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="meters" class="form-label">Coil Length (meters)</label>
+                                <input type="number" class="form-control" id="meters" name="meters"
+                                       step="0.01" min="0" placeholder="e.g., 600.00">
+                                <small class="text-muted">Approximate meters on this coil roll (optional)</small>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="pallet_size" class="form-label">
                                 Pallet Size (bundles per pallet) <span class="text-danger">*</span>
@@ -128,9 +137,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <li class="mb-1">Pallet size varies per coil — set it here</li>
                     </ul>
                     <hr>
+                    <p class="small text-muted mb-1">
+                        <strong>K-Zinc module</strong> — pallet, bundle &amp; piece stock and sales.
+                    </p>
                     <p class="small text-muted mb-0">
-                        Stock entries, sales, and production papers for this coil will all be
-                        managed through the K-Zinc module.
+                        <strong>Stock Management</strong> — meter-based stock entries and meter sales
+                        (e.g. selling by the roll or factory use).
                     </p>
                 </div>
             </div>

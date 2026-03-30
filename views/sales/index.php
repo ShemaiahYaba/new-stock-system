@@ -22,8 +22,9 @@ $productionModel = new Production();
 $invoiceModel = new Invoice();
 $receiptModel = new Receipt();
 
-// Always exclude KZinc sales — those are managed in the K-Zinc module
-$baseWhere = "WHERE s.deleted_at IS NULL AND co.category != ?";
+// Exclude KZinc pallet coil sales — those are managed in the K-Zinc module.
+// KZinc meter coil sales appear here alongside Alusteel/Aluminum.
+$baseWhere = "WHERE s.deleted_at IS NULL AND (co.category != ? OR co.kzinc_track_mode = 'meters')";
 $baseParams = [STOCK_CATEGORY_KZINC];
 
 if (!empty($searchQuery)) {
@@ -112,7 +113,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
     <?php if (hasPermission(MODULE_KZINC_MANAGEMENT)): ?>
     <div class="alert alert-info alert-permanent py-2 mb-3">
         <i class="bi bi-layers"></i>
-        K-Zinc sales are managed in the
+        K-Zinc meter coil sales appear here. Pallet/bundle/piece sales are managed in the
         <a href="/new-stock-system/index.php?page=kzinc_sales" class="alert-link">K-Zinc module</a>.
     </div>
     <?php endif; ?>

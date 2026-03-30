@@ -180,6 +180,11 @@ $currentPage = $_GET['page'] ?? 'dashboard';
                     </a>
                 </li>
                 <li>
+                    <a href="/new-stock-system/index.php?page=coils&category=<?php echo STOCK_CATEGORY_KZINC; ?>" class="nav-link">
+                        <i class="bi bi-circle"></i> K-Zinc (meters)
+                    </a>
+                </li>
+                <li>
                     <a href="/new-stock-system/index.php?page=stock_entries" class="nav-link <?php echo $currentPage === 'stock_entries' ? 'active' : ''; ?>">
                         <i class="bi bi-circle"></i> Stock Entries
                     </a>

@@ -72,8 +72,9 @@ class WorkflowManager {
       // Hide properties and add-ons
       this.hidePropertiesAndAddons();
 
-      // Check if this is KZINC (no stock entries needed)
-      const isKzinc = this.currentCategory === "kzinc";
+      // Check if this is a KZinc pallet coil (no stock entries needed — uses piece-based workflow)
+      // KZinc meter coils go through the normal stock-entry workflow
+      const isKzinc = this.currentCategory === "kzinc" && coilData.trackMode === "pallets";
 
       if (isKzinc) {
         console.log("✅ KZINC detected - bypassing stock entry requirement");

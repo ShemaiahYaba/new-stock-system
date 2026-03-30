@@ -24,21 +24,22 @@ class Coil
     {
         try {
             $sql = "INSERT INTO {$this->table}
-                    (code, name, color_id, net_weight, meters, gauge, pallet_size, category, status, created_by, created_at)
-                    VALUES (:code, :name, :color_id, :net_weight, :meters, :gauge, :pallet_size, :category, :status, :created_by, NOW())";
+                    (code, name, color_id, net_weight, meters, gauge, pallet_size, kzinc_track_mode, category, status, created_by, created_at)
+                    VALUES (:code, :name, :color_id, :net_weight, :meters, :gauge, :pallet_size, :kzinc_track_mode, :category, :status, :created_by, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                ':code' => $data['code'],
-                ':name' => $data['name'],
-                ':color_id' => $data['color_id'],
-                ':net_weight' => $data['net_weight'],
-                ':meters' => $data['meters'] ?? null,
-                ':gauge' => $data['gauge'] ?? null,
-                ':pallet_size' => $data['pallet_size'] ?? null,
-                ':category' => $data['category'],
-                ':status' => $data['status'] ?? STOCK_STATUS_AVAILABLE,
-                ':created_by' => $data['created_by'],
+                ':code'             => $data['code'],
+                ':name'             => $data['name'],
+                ':color_id'         => $data['color_id'],
+                ':net_weight'       => $data['net_weight'],
+                ':meters'           => $data['meters'] ?? null,
+                ':gauge'            => $data['gauge'] ?? null,
+                ':pallet_size'      => $data['pallet_size'] ?? null,
+                ':kzinc_track_mode' => $data['kzinc_track_mode'] ?? null,
+                ':category'         => $data['category'],
+                ':status'           => $data['status'] ?? STOCK_STATUS_AVAILABLE,
+                ':created_by'       => $data['created_by'],
             ]);
 
             return $this->db->lastInsertId();
@@ -284,6 +285,11 @@ class Coil
                 $params[':pallet_size'] = $data['pallet_size'];
             }
 
+            if (array_key_exists('kzinc_track_mode', $data)) {
+                $fields[] = 'kzinc_track_mode = :kzinc_track_mode';
+                $params[':kzinc_track_mode'] = $data['kzinc_track_mode'];
+            }
+
             if (isset($data['status'])) {
                 $fields[] = 'status = :status';
                 $params[':status'] = $data['status'];
@@ -464,12 +470,45 @@ class Coil
                            col.name as color_name, col.hex_code as color_hex
                     FROM {$this->table} c
                     LEFT JOIN colors col ON c.color_id = col.id
-                    WHERE c.deleted_at IS NULL 
+                    WHERE c.deleted_at IS NULL
                     ORDER BY c.code ASC";
             $stmt = $this->db->query($sql);
             return $stmt->fetchAll();
         } catch (PDOException $e) {
             error_log('Coil dropdown fetch error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get coils that have at least one factory_use stock entry with meters remaining.
+     * Used by the New Sale workflow so the coil dropdown only shows coils
+     * the user can actually select a stock entry for.
+     */
+    public function getForSaleDropdown()
+    {
+        try {
+            $sql = "SELECT c.id, c.code, c.name, c.category, c.status, c.color_id,
+                           c.net_weight, c.meters, c.gauge, c.kzinc_track_mode,
+                           col.name as color_name, col.hex_code as color_hex
+                    FROM {$this->table} c
+                    LEFT JOIN colors col ON c.color_id = col.id
+                    WHERE c.deleted_at IS NULL
+                      AND c.category != :tile
+                      AND EXISTS (
+                          SELECT 1 FROM stock_entries se
+                          WHERE se.coil_id = c.id
+                            AND se.deleted_at IS NULL
+                            AND se.status = 'factory_use'
+                            AND se.meters_remaining > 0
+                            AND (se.unit_type = 'meters' OR se.unit_type IS NULL)
+                      )
+                    ORDER BY c.code ASC";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':tile' => STOCK_CATEGORY_TILE]);
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log('Coil sale dropdown fetch error: ' . $e->getMessage());
             return [];
         }
     }

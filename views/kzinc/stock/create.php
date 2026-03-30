@@ -14,7 +14,11 @@ $pageTitle = 'Add K-Zinc Stock Entry - ' . APP_NAME;
 $preselectedCoilId = isset($_GET['coil_id']) ? (int)$_GET['coil_id'] : null;
 
 $coilModel  = new Coil();
-$kzincCoils = $coilModel->getAll(STOCK_CATEGORY_KZINC, 1000, 0);
+// Only pallet/sheet coils belong in the K-Zinc stock module
+$kzincCoils = array_values(array_filter(
+    $coilModel->getAll(STOCK_CATEGORY_KZINC, 1000, 0),
+    fn($c) => ($c['kzinc_track_mode'] ?? null) === 'pallets'
+));
 
 $selectedCoil = null;
 if ($preselectedCoilId) {
