@@ -114,7 +114,7 @@ class Coil
     /**
      * Get all coils with pagination
      */
-    public function getAll($category = null, $limit = RECORDS_PER_PAGE, $offset = 0, $status = null, $gauge = null, $colorId = null)
+    public function getAll($category = null, $limit = RECORDS_PER_PAGE, $offset = 0, $status = null, $gauge = null, $colorId = null, $excludeKzincPallets = false)
     {
         try {
             $sql = "SELECT c.*, u.name as created_by_name, col.name as color_name, col.code as color_code, col.hex_code as color_hex
@@ -125,6 +125,9 @@ class Coil
 
             if ($category) {
                 $sql .= ' AND c.category = :category';
+            }
+            if ($excludeKzincPallets) {
+                $sql .= " AND NOT (c.category = 'kzinc' AND c.kzinc_track_mode = 'pallets')";
             }
             if ($status) {
                 $sql .= ' AND c.status = :status';
@@ -353,7 +356,7 @@ class Coil
      * Since utf8mb4_unicode_ci is case-insensitive, LOWER() is optional
      * but we'll use it for consistency across different collations
      */
-    public function search($query, $category = null, $limit = RECORDS_PER_PAGE, $offset = 0, $status = null, $gauge = null, $colorId = null)
+    public function search($query, $category = null, $limit = RECORDS_PER_PAGE, $offset = 0, $status = null, $gauge = null, $colorId = null, $excludeKzincPallets = false)
     {
         try {
             $searchQuery = "%{$query}%";
@@ -367,6 +370,9 @@ class Coil
 
             if ($category) {
                 $sql .= ' AND c.category = :category';
+            }
+            if ($excludeKzincPallets) {
+                $sql .= " AND NOT (c.category = 'kzinc' AND c.kzinc_track_mode = 'pallets')";
             }
             if ($status) {
                 $sql .= ' AND c.status = :status';

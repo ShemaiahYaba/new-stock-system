@@ -204,7 +204,7 @@ $currentPage = $_GET['page'] ?? 'dashboard';
             <a href="#" class="nav-link <?php echo in_array($currentPage, $kzincPages) ? 'active' : ''; ?>"
                data-bs-toggle="collapse" data-bs-target="#kzincMenu">
                 <i class="bi bi-layers"></i>
-                <span>K-Zinc</span>
+                <span>K-Zinc/Zinc-Gutter Pallets</span>
                 <i class="bi bi-chevron-down ms-auto"></i>
             </a>
             <ul class="collapse list-unstyled ps-4 <?php echo in_array($currentPage, $kzincPages) ? 'show' : ''; ?>" id="kzincMenu">

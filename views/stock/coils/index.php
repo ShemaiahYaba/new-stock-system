@@ -40,34 +40,30 @@ $gaugeOptions = $coilModel->getDistinctGauges($category);
 $colorOptions = $colorModel->getAll(1000, 0);
 
 // ---- Data fetching -------------------------------------------------------
+// $excludeKzincPallets pushes the pallet-coil exclusion into SQL so it happens
+// before LIMIT — avoids empty pages when DB rows are dominated by pallet coils.
 if ($searchQuery !== '') {
-    $coils = $coilModel->search(
-        $searchQuery, $category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE,
-        $statusFilter, $gaugeFilter, $colorFilter
-    );
-    $allSearchResults = $coilModel->search($searchQuery, $category, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter);
+    $coils            = $coilModel->search($searchQuery, $category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE, $statusFilter, $gaugeFilter, $colorFilter, true);
+    $allSearchResults = $coilModel->search($searchQuery, $category, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter, true);
 
-    if (!$category) {
-        $coils            = array_values(array_filter($coils, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
-        $allSearchResults = array_values(array_filter($allSearchResults, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
-    } else {
-        $coils            = array_values(array_filter($coils, $stockMgmtFilter));
-        $allSearchResults = array_values(array_filter($allSearchResults, $stockMgmtFilter));
-    }
+    // Tile still excluded via $allowedCategories; pallet exclusion already in SQL
+    $coils            = array_values(array_filter($coils,            fn($c) => in_array($c['category'], $allowedCategories)));
+    $allSearchResults = array_values(array_filter($allSearchResults, fn($c) => in_array($c['category'], $allowedCategories)));
     $totalCoils = count($allSearchResults);
 } else {
     $coils = $coilModel->getAll(
         $category, RECORDS_PER_PAGE, ($currentPage - 1) * RECORDS_PER_PAGE,
-        $statusFilter, $gaugeFilter, $colorFilter
+        $statusFilter, $gaugeFilter, $colorFilter, true
     );
-    $coils = array_values(array_filter($coils, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
+    // Tile still excluded via $allowedCategories; pallet exclusion already in SQL
+    $coils = array_values(array_filter($coils, fn($c) => in_array($c['category'], $allowedCategories)));
 
     if (!$category) {
-        $allCoils   = $coilModel->getAll(null, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter);
-        $totalCoils = count(array_filter($allCoils, fn($c) => in_array($c['category'], $allowedCategories) && $stockMgmtFilter($c)));
+        $allCoils   = $coilModel->getAll(null, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter, true);
+        $totalCoils = count(array_filter($allCoils, fn($c) => in_array($c['category'], $allowedCategories)));
     } else {
-        $allCat     = $coilModel->getAll($category, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter);
-        $totalCoils = count(array_filter($allCat, $stockMgmtFilter));
+        $allCat     = $coilModel->getAll($category, 10000, 0, $statusFilter, $gaugeFilter, $colorFilter, true);
+        $totalCoils = count($allCat);
     }
 }
 
