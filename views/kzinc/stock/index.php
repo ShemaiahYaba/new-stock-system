@@ -130,8 +130,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>Coil</th>
                             <th>Unit Type</th>
                             <th>Quantity</th>
-                            <th>Total Pieces</th>
-                            <th>Remaining Pieces</th>
+                            <th>Batch Total</th>
+                            <th>Batch Remaining</th>
                             <th>Status</th>
                             <th>Date</th>
                             <th>By</th>
