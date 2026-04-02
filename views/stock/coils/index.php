@@ -263,7 +263,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </td>
                             <td><?php echo number_format($coil['net_weight'], 2); ?></td>
                             <td>
-                                <?php if ($coil['category'] === STOCK_CATEGORY_KZINC): ?>
+                                <?php if ($coil['category'] === STOCK_CATEGORY_KZINC && ($coil['kzinc_track_mode'] ?? null) === 'pallets'): ?>
                                     <?php if (!empty($coil['pallet_size'])): ?>
                                         <span class="badge bg-secondary"><?php echo (int)$coil['pallet_size']; ?> bdl/pallet</span>
                                     <?php else: ?>
