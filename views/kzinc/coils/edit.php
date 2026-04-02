@@ -30,6 +30,12 @@ if (!$coil || $coil['category'] !== STOCK_CATEGORY_KZINC) {
     exit();
 }
 
+// Meter coils belong to stock management — redirect to the correct edit form
+if (($coil['kzinc_track_mode'] ?? null) !== 'pallets') {
+    header('Location: /new-stock-system/index.php?page=coils_edit&id=' . $coilId);
+    exit();
+}
+
 require_once __DIR__ . '/../../../layout/header.php';
 require_once __DIR__ . '/../../../layout/sidebar.php';
 ?>
@@ -56,6 +62,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
                         <input type="hidden" name="id" value="<?php echo $coil['id']; ?>">
                         <input type="hidden" name="category" value="<?php echo STOCK_CATEGORY_KZINC; ?>">
+                        <input type="hidden" name="kzinc_track_mode" value="pallets">
                         <input type="hidden" name="redirect_to" value="kzinc_coils">
 
                         <div class="row">

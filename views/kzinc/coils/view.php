@@ -132,7 +132,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 <div class="card-header"><i class="bi bi-gear"></i> Actions</div>
                 <div class="card-body d-grid gap-2">
                     <?php if (hasPermission(MODULE_KZINC_MANAGEMENT, ACTION_EDIT)): ?>
-                    <a href="/new-stock-system/index.php?page=kzinc_coils_edit&id=<?php echo $coil['id']; ?>"
+                    <?php $editPage = ($coil['kzinc_track_mode'] ?? null) === 'pallets' ? 'kzinc_coils_edit' : 'coils_edit'; ?>
+                    <a href="/new-stock-system/index.php?page=<?php echo $editPage; ?>&id=<?php echo $coil['id']; ?>"
                        class="btn btn-warning">
                         <i class="bi bi-pencil"></i> Edit Coil
                     </a>
