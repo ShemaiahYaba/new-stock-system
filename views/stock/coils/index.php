@@ -241,7 +241,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>Name</th>
                             <th>Color</th>
                             <th>Weight (kg)</th>
-                            <th>Meters / Pallet Size</th>
+                            <th>Meters</th>
                             <th>Gauge</th>
                             <th>Category</th>
                             <th>Status</th>

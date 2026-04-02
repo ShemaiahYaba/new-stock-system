@@ -12,11 +12,12 @@ $pageTitle = 'Create Stock Entry - ' . APP_NAME;
 
 $coilId = isset($_GET['coil_id']) ? (int)$_GET['coil_id'] : null;
 
-// Get available coils — exclude Tile only; KZinc coils can have meter-based stock entries here
+// Exclude Tile and KZinc pallet coils — pallet coils have their own flow in the K-Zinc module
 $coilModel = new Coil();
 $coils = array_filter(
     $coilModel->getAll(null, 1000, 0),
     fn($c) => $c['category'] !== STOCK_CATEGORY_TILE
+           && !($c['category'] === STOCK_CATEGORY_KZINC && ($c['kzinc_track_mode'] ?? null) === 'pallets')
 );
 
 // If coil_id is provided, get that specific coil

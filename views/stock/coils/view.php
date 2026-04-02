@@ -98,7 +98,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <th>Net Weight:</th>
                             <td><?php echo number_format($coil['net_weight'], 2); ?> kg</td>
                         </tr>
-                        <?php if ($coil['category'] === STOCK_CATEGORY_KZINC): ?>
+                        <?php if ($coil['category'] === STOCK_CATEGORY_KZINC && ($coil['kzinc_track_mode'] ?? null) === 'pallets'): ?>
                         <tr>
                             <th>Pallet Size:</th>
                             <td>
