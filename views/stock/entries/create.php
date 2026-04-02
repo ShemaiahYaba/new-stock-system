@@ -49,22 +49,48 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     <i class="bi bi-plus-circle"></i> Stock Entry Information
                 </div>
                 <div class="card-body">
+                    <?php
+                    // If a coil is pre-selected, derive its category for JS pre-selection
+                    $preselectedCategory = $selectedCoil ? $selectedCoil['category'] : null;
+                    ?>
                     <form action="/new-stock-system/controllers/stock_entries/create/index.php" method="POST" class="needs-validation" novalidate>
                         <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
-                        
-                        <div class="mb-3">
-                            <label for="coil_id" class="form-label">Select Coil <span class="text-danger">*</span></label>
+
+                        <!-- Step 1: Category -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Step 1 — Select Category <span class="text-danger">*</span></label>
+                            <div class="d-flex flex-wrap gap-2" id="category_buttons">
+                                <?php
+                                $catOptions = [
+                                    STOCK_CATEGORY_ALUSTEEL => 'Alusteel',
+                                    STOCK_CATEGORY_ALUMINUM => 'Aluminum',
+                                    STOCK_CATEGORY_KZINC    => 'K-Zinc',
+                                ];
+                                foreach ($catOptions as $catVal => $catLabel):
+                                ?>
+                                <button type="button"
+                                        class="btn btn-outline-primary category-btn <?php echo $preselectedCategory === $catVal ? 'active' : ''; ?>"
+                                        data-cat="<?php echo $catVal; ?>">
+                                    <?php echo $catLabel; ?>
+                                </button>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" id="selected_category" value="<?php echo htmlspecialchars($preselectedCategory ?? ''); ?>">
+                        </div>
+
+                        <!-- Step 2: Coil -->
+                        <div class="mb-3" id="coil_step" style="<?php echo $preselectedCategory ? '' : 'display:none;'; ?>">
+                            <label for="coil_id" class="form-label fw-semibold">Step 2 — Select Coil <span class="text-danger">*</span></label>
                             <select class="form-select" id="coil_id" name="coil_id" required <?php echo $selectedCoil ? 'disabled' : ''; ?>>
-                                <option value="">Select a coil</option>
+                                <option value="">-- Select a coil --</option>
                                 <?php foreach ($coils as $coil): ?>
                                 <option value="<?php echo $coil['id']; ?>"
                                         data-category="<?php echo htmlspecialchars($coil['category']); ?>"
                                         data-track-mode="<?php echo htmlspecialchars($coil['kzinc_track_mode'] ?? ''); ?>"
                                         data-pallet-size="<?php echo (int)($coil['pallet_size'] ?? 0); ?>"
                                         <?php echo ($selectedCoil && $selectedCoil['id'] == $coil['id']) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($coil['code']); ?> -
+                                    <?php echo htmlspecialchars($coil['code']); ?> —
                                     <?php echo htmlspecialchars($coil['name']); ?>
-                                    (<?php echo STOCK_CATEGORIES[$coil['category']]; ?>)
                                 </option>
                                 <?php endforeach; ?>
                             </select>
@@ -73,10 +99,10 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <?php endif; ?>
                             <div class="invalid-feedback">Please select a coil.</div>
                         </div>
-                        
+
                         <?php if ($selectedCoil): ?>
                         <div class="alert alert-info">
-                            <strong>Selected Coil:</strong> <?php echo htmlspecialchars($selectedCoil['code']); ?> - 
+                            <strong>Selected Coil:</strong> <?php echo htmlspecialchars($selectedCoil['code']); ?> —
                             <?php echo htmlspecialchars($selectedCoil['name']); ?><br>
                             <strong>Status:</strong> <span class="badge <?php echo getStatusBadgeClass($selectedCoil['status']); ?>">
                                 <?php echo STOCK_STATUSES[$selectedCoil['status']]; ?>
@@ -177,71 +203,93 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
 
 <script>
 (function () {
-    const KZINC_CATEGORY     = '<?php echo STOCK_CATEGORY_KZINC; ?>';
-    const PIECES_PER_BUNDLE  = <?php echo KZINC_PIECES_PER_BUNDLE; ?>;
+    const KZINC_CATEGORY    = '<?php echo STOCK_CATEGORY_KZINC; ?>';
+    const PIECES_PER_BUNDLE = <?php echo KZINC_PIECES_PER_BUNDLE; ?>;
 
-    const coilSelect      = document.getElementById('coil_id');
-    const metersSection   = document.getElementById('meters_section');
-    const kzincSection    = document.getElementById('kzinc_section');
-    const metersInput     = document.getElementById('meters');
-    const unitTypeSelect  = document.getElementById('unit_type');
-    const quantityInput   = document.getElementById('quantity');
-    const breakdownBox    = document.getElementById('kzinc_breakdown');
-    const breakdownText   = document.getElementById('kzinc_breakdown_text');
+    const categoryButtons  = document.querySelectorAll('.category-btn');
+    const selectedCatInput = document.getElementById('selected_category');
+    const coilStep         = document.getElementById('coil_step');
+    const coilSelect       = document.getElementById('coil_id');
+    const metersSection    = document.getElementById('meters_section');
+    const kzincSection     = document.getElementById('kzinc_section');
+    const metersInput      = document.getElementById('meters');
+    const unitTypeSelect   = document.getElementById('unit_type');
+    const quantityInput    = document.getElementById('quantity');
+    const breakdownBox     = document.getElementById('kzinc_breakdown');
+    const breakdownText    = document.getElementById('kzinc_breakdown_text');
 
     let currentPalletSize = 0;
+
+    // ---- Category filter ------------------------------------------------
+    function filterCoilsByCategory(cat) {
+        const options = coilSelect.querySelectorAll('option');
+        options.forEach(opt => {
+            if (!opt.value) return; // keep the placeholder
+            opt.hidden = opt.getAttribute('data-category') !== cat;
+        });
+        // Reset coil selection when category changes
+        coilSelect.value = '';
+        resetFields();
+    }
+
+    categoryButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            categoryButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const cat = btn.getAttribute('data-cat');
+            selectedCatInput.value = cat;
+            coilStep.style.display = '';
+            filterCoilsByCategory(cat);
+        });
+    });
+
+    // ---- Coil change ----------------------------------------------------
+    function resetFields() {
+        metersSection.style.display = 'none';
+        kzincSection.style.display  = 'none';
+        metersInput.required    = false;
+        unitTypeSelect.required = false;
+        quantityInput.required  = false;
+        breakdownBox.style.display = 'none';
+    }
 
     function updateBreakdown() {
         const qty      = parseFloat(quantityInput.value) || 0;
         const unitType = unitTypeSelect.value;
-
-        if (!unitType) {
+        if (!unitType || (unitType === 'pallets' && currentPalletSize <= 0)) {
             breakdownBox.style.display = 'none';
             return;
         }
-
-        if (unitType === 'pallets' && currentPalletSize <= 0) {
-            breakdownBox.style.display = 'none';
-            return;
-        }
-
-        let pieces = 0, bundles = 0, pallets = 0, text = '';
-
+        let pieces = 0, bundles = 0, text = '';
         if (unitType === 'pallets') {
-            pallets = qty;
             bundles = qty * currentPalletSize;
             pieces  = bundles * PIECES_PER_BUNDLE;
-            text    = `${pallets} pallet(s) → ${bundles} bundles → ${pieces} pieces`;
+            text    = `${qty} pallet(s) → ${bundles} bundles → ${pieces} pieces`;
         } else if (unitType === 'bundles') {
-            bundles = qty;
-            pieces  = bundles * PIECES_PER_BUNDLE;
-            text    = `${bundles} bundle(s) → ${pieces} pieces`;
+            pieces = qty * PIECES_PER_BUNDLE;
+            text   = `${qty} bundle(s) → ${pieces} pieces`;
         } else if (unitType === 'pieces') {
-            pieces = qty;
-            text   = `${pieces} piece(s)`;
+            text = `${qty} piece(s)`;
         }
-
         breakdownText.textContent = text;
         breakdownBox.style.display = '';
     }
 
     function onCoilChange() {
         const selected = coilSelect.options[coilSelect.selectedIndex];
-        const category  = selected ? selected.getAttribute('data-category') : '';
-        const trackMode = selected ? selected.getAttribute('data-track-mode') : '';
-        currentPalletSize = selected ? parseInt(selected.getAttribute('data-pallet-size') || '0', 10) : 0;
+        if (!selected || !selected.value) { resetFields(); return; }
 
-        // KZinc pallet coils → bundle/pallet/piece section
-        // Everything else (including KZinc meter coils) → meters section
+        const category  = selected.getAttribute('data-category');
+        const trackMode = selected.getAttribute('data-track-mode');
+        currentPalletSize = parseInt(selected.getAttribute('data-pallet-size') || '0', 10);
+
         const isKzincPallet = category === KZINC_CATEGORY && trackMode === 'pallets';
 
         metersSection.style.display = isKzincPallet ? 'none' : '';
         kzincSection.style.display  = isKzincPallet ? '' : 'none';
-
         metersInput.required    = !isKzincPallet;
         unitTypeSelect.required = isKzincPallet;
         quantityInput.required  = isKzincPallet;
-
         breakdownBox.style.display = 'none';
         updateBreakdown();
     }
@@ -250,8 +298,14 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
     unitTypeSelect.addEventListener('change', updateBreakdown);
     quantityInput.addEventListener('input', updateBreakdown);
 
-    // Run on page load in case a coil is pre-selected
-    onCoilChange();
+    // On page load: if a category/coil is pre-selected (coil_id in URL), apply filters
+    const preselectedCat = selectedCatInput.value;
+    if (preselectedCat) {
+        filterCoilsByCategory(preselectedCat);
+        onCoilChange();
+    } else {
+        resetFields();
+    }
 })();
 </script>
 
