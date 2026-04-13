@@ -107,25 +107,49 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 </div>
             </div>
             
-            <?php if (hasPermission(MODULE_TILE_MANAGEMENT, ACTION_CREATE)): ?>
             <div class="card mt-3">
                 <div class="card-header">
-                    <i class="bi bi-gear"></i> Quick Actions
+                    <i class="bi bi-gear"></i> Actions
                 </div>
                 <div class="card-body d-grid gap-2">
-                    <a href="/new-stock-system/index.php?page=tile_stock_add&product_id=<?= $product['id'] ?>" 
+                    <?php if (hasPermission(MODULE_TILE_MANAGEMENT, ACTION_CREATE)): ?>
+                    <a href="/new-stock-system/index.php?page=tile_stock_add&product_id=<?= $product['id'] ?>"
                        class="btn btn-success">
                         <i class="bi bi-plus-circle"></i> Add Stock
                     </a>
+                    <?php endif; ?>
+
                     <?php if ($currentStock > 0 && hasPermission(MODULE_TILE_SALES, ACTION_CREATE)): ?>
-                    <a href="/new-stock-system/index.php?page=tile_sales_create&product_id=<?= $product['id'] ?>" 
+                    <a href="/new-stock-system/index.php?page=tile_sales_create&product_id=<?= $product['id'] ?>"
                        class="btn btn-primary">
                         <i class="bi bi-cart-plus"></i> Create Sale
                     </a>
                     <?php endif; ?>
+
+                    <?php if (hasPermission(MODULE_TILE_MANAGEMENT, ACTION_EDIT)): ?>
+                    <a href="/new-stock-system/index.php?page=tile_products_edit&id=<?= $product['id'] ?>"
+                       class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Edit Product
+                    </a>
+                    <?php endif; ?>
+
+                    <?php if (hasPermission(MODULE_TILE_MANAGEMENT, ACTION_DELETE)): ?>
+                    <form method="POST"
+                          action="/new-stock-system/controllers/tiles/products/delete/index.php"
+                          onsubmit="return confirm('Delete this product? This cannot be undone.');">
+                        <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+                        <input type="hidden" name="id" value="<?= $product['id'] ?>">
+                        <button type="submit" class="btn btn-danger w-100"
+                                <?= $currentStock > 0 ? 'disabled title="Cannot delete — product has stock"' : '' ?>>
+                            <i class="bi bi-trash"></i> Delete Product
+                        </button>
+                    </form>
+                    <?php if ($currentStock > 0): ?>
+                    <small class="text-muted text-center">Delete disabled — product has <?= number_format($currentStock, 1) ?> pieces in stock</small>
+                    <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
-            <?php endif; ?>
         </div>
         
         <div class="col-md-8">

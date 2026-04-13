@@ -201,6 +201,26 @@ class TileProduct {
         }
     }
     
+    public function update($id, $data) {
+        try {
+            $sql = "UPDATE {$this->table}
+                    SET code = ?, design_id = ?, color_id = ?, gauge = ?, status = ?, updated_at = NOW()
+                    WHERE id = ? AND deleted_at IS NULL";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([
+                $data['code'],
+                $data['design_id'],
+                $data['color_id'],
+                $data['gauge'],
+                $data['status'],
+                $id,
+            ]);
+        } catch (PDOException $e) {
+            error_log("Tile product update error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function delete($id) {
         try {
             $sql = "UPDATE {$this->table} SET deleted_at = NOW() WHERE id = ?";

@@ -174,16 +174,35 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                     
                     <!-- Actions -->
                     <div class="d-grid gap-2">
-                        <a href="/new-stock-system/index.php?page=tile_products_view&id=<?= $product['id'] ?>" 
+                        <a href="/new-stock-system/index.php?page=tile_products_view&id=<?= $product['id'] ?>"
                            class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i> View Details
                         </a>
-                        
+
                         <?php if (hasPermission(MODULE_TILE_MANAGEMENT, ACTION_CREATE)): ?>
-                        <a href="/new-stock-system/index.php?page=tile_stock_add&product_id=<?= $product['id'] ?>" 
+                        <a href="/new-stock-system/index.php?page=tile_stock_add&product_id=<?= $product['id'] ?>"
                            class="btn btn-sm btn-outline-success">
                             <i class="bi bi-plus"></i> Add Stock
                         </a>
+                        <?php endif; ?>
+
+                        <?php if (hasPermission(MODULE_TILE_MANAGEMENT, ACTION_EDIT)): ?>
+                        <a href="/new-stock-system/index.php?page=tile_products_edit&id=<?= $product['id'] ?>"
+                           class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <?php endif; ?>
+
+                        <?php if (hasPermission(MODULE_TILE_MANAGEMENT, ACTION_DELETE)): ?>
+                        <form method="POST"
+                              action="/new-stock-system/controllers/tiles/products/delete/index.php"
+                              onsubmit="return confirm('Delete <?= htmlspecialchars(addslashes($product['code'])) ?>? This cannot be undone.');">
+                            <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
+                            <input type="hidden" name="id" value="<?= $product['id'] ?>">
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
                         <?php endif; ?>
                     </div>
                 </div>

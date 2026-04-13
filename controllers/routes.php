@@ -428,6 +428,11 @@ $routes = [
         'module' => MODULE_TILE_MANAGEMENT,
         'action' => ACTION_CREATE,
     ],
+    'tile_products_edit' => [
+        'view' => 'views/tiles/products/edit.php',
+        'module' => MODULE_TILE_MANAGEMENT,
+        'action' => ACTION_EDIT,
+    ],
     'tile_products_view' => [
         'view' => 'views/tiles/products/view.php',
         'module' => MODULE_TILE_MANAGEMENT,

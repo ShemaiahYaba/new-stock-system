@@ -423,6 +423,11 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         isHistoricalInput.value = isHistorical ? '1' : '0';
         historicalBanner.style.display = isHistorical ? '' : 'none';
         rebuildCoilDropdown(isHistorical ? allCoilsData : liveCoilsData);
+        // Update submit button to make historical mode unmistakable
+        submitBtn.innerHTML = isHistorical
+            ? '<i class="bi bi-clock-history"></i> Record Historical (No Stock Deduction)'
+            : '<i class="bi bi-check-circle"></i> Confirm & Create Sale';
+        submitBtn.className = isHistorical ? 'btn btn-warning w-100 mt-3' : 'btn btn-primary w-100 mt-3';
         recalcSummary();
     });
 
@@ -701,6 +706,16 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
 
     async function submitSale() {
         submitError.style.display = 'none';
+
+        // Hard confirmation gate for historical mode — prevents accidental non-deduction
+        if (isHistorical) {
+            const confirmed = window.confirm(
+                'HISTORICAL SALE — Stock will NOT be deducted.\n\n' +
+                'This records the sale for bookkeeping only. Piece counts will remain unchanged.\n\n' +
+                'Are you sure this is a historical entry?'
+            );
+            if (!confirmed) return;
+        }
 
         const customerId  = document.getElementById('customer_id').value;
         const warehouseId = document.getElementById('warehouse_id').value;
