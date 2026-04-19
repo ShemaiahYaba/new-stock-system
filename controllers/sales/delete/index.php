@@ -157,20 +157,22 @@ try {
         if ($isKzincSale) {
             // -------------------------------------------------------
             // KZinc: restore pieces_remaining across entries LIFO
+            //        and write a stock_ledger inflow so the stock card
+            //        reflects the reversal.
             // -------------------------------------------------------
             try {
-                // Compute total pieces sold
                 $saleUnitType = $sale['unit_type'];
                 $saleQty      = floatval($sale['quantity'] ?? 0);
 
-                if ($saleUnitType === STOCK_UNIT_BUNDLES) {
+                // Pallets and bundles both store quantity in bundles; pieces stores raw pieces.
+                if ($saleUnitType === STOCK_UNIT_BUNDLES || $saleUnitType === STOCK_UNIT_PALLETS) {
                     $piecesToRestore = (int)($saleQty * KZINC_PIECES_PER_BUNDLE);
                 } else {
-                    $piecesToRestore = (int)$saleQty; // pieces
+                    $piecesToRestore = (int)$saleQty; // already pieces
                 }
 
                 if ($piecesToRestore > 0) {
-                    // Get KZinc entries for the coil in LIFO order (reverse of deduction order)
+                    // KZinc entries LIFO (newest first — reverse of FIFO deduction)
                     $kzincEntriesSql = "SELECT se.id, se.pieces_total, se.pieces_remaining
                                         FROM stock_entries se
                                         JOIN coils c ON se.coil_id = c.id
@@ -182,23 +184,63 @@ try {
                     $kzincStmt->execute([$sale['coil_id']]);
                     $kzincEntries = $kzincStmt->fetchAll();
 
-                    $remaining = $piecesToRestore;
+                    $remaining       = $piecesToRestore;
+                    $restoredEntries = []; // track per-entry for ledger writes
+
                     foreach ($kzincEntries as $kzEntry) {
                         if ($remaining <= 0) break;
                         $canRestore = (int)$kzEntry['pieces_total'] - (int)$kzEntry['pieces_remaining'];
-                        $toAdd = min($remaining, $canRestore);
+                        $toAdd      = min($remaining, $canRestore);
                         if ($toAdd > 0) {
-                            $restoreSql = "UPDATE stock_entries
-                                           SET pieces_remaining = pieces_remaining + ?,
-                                               updated_at = NOW()
-                                           WHERE id = ?";
-                            $db->prepare($restoreSql)->execute([$toAdd, $kzEntry['id']]);
+                            $db->prepare(
+                                "UPDATE stock_entries
+                                 SET pieces_remaining = pieces_remaining + ?,
+                                     updated_at = NOW()
+                                 WHERE id = ?"
+                            )->execute([$toAdd, $kzEntry['id']]);
+
+                            $restoredEntries[] = [
+                                'entry_id'      => (int)$kzEntry['id'],
+                                'pieces_added'  => $toAdd,
+                                'balance_after' => (int)$kzEntry['pieces_remaining'] + $toAdd,
+                            ];
                             $remaining -= $toAdd;
                         }
                     }
 
+                    // Write a stock_ledger inflow row for each restored entry so the
+                    // stock card shows the reversal (mirrors logKzincStockEntry but inflow).
+                    foreach ($restoredEntries as $re) {
+                        $bundlesRestored = (int)($re['pieces_added']  / KZINC_PIECES_PER_BUNDLE);
+                        $balanceBundles  = (int)($re['balance_after'] / KZINC_PIECES_PER_BUNDLE);
+                        $db->prepare(
+                            "INSERT INTO stock_ledger
+                             (coil_id, stock_entry_id, transaction_type, description,
+                              inflow_meters, outflow_meters, balance_meters,
+                              inflow_pieces, outflow_pieces, balance_pieces,
+                              inflow_bundles, outflow_bundles, balance_bundles,
+                              reference_type, reference_id, created_by, created_at)
+                             VALUES
+                             (?, ?, 'inflow', ?,
+                              0, 0, 0,
+                              ?, 0, ?,
+                              ?, 0, ?,
+                              'sale_reversal', ?, ?, NOW())"
+                        )->execute([
+                            $sale['coil_id'],
+                            $re['entry_id'],
+                            "Stock restored — sale #{$saleId} deleted",
+                            $re['pieces_added'],
+                            $re['balance_after'],
+                            $bundlesRestored,
+                            $balanceBundles,
+                            $saleId,
+                            $currentUser['id'],
+                        ]);
+                    }
+
                     $stockEntryModel->checkAndUpdateCoilStatus($sale['coil_id']);
-                    $deletionLog['deleted_items'][] = "KZinc stock restored: {$piecesToRestore} pieces";
+                    $deletionLog['deleted_items'][] = "KZinc stock restored: {$piecesToRestore} pieces (stock card updated)";
                 }
             } catch (Exception $e) {
                 error_log("KZinc stock restoration failed: " . $e->getMessage());

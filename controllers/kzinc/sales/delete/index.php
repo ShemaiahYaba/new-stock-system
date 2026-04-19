@@ -108,7 +108,9 @@ try {
             $kzincStmt->execute([$sale['coil_id']]);
             $kzincEntries = $kzincStmt->fetchAll();
 
-            $remaining = $piecesToRestore;
+            $remaining       = $piecesToRestore;
+            $restoredEntries = [];
+
             foreach ($kzincEntries as $kzEntry) {
                 if ($remaining <= 0) break;
                 $canRestore = (int)$kzEntry['pieces_total'] - (int)$kzEntry['pieces_remaining'];
@@ -120,12 +122,48 @@ try {
                              updated_at = NOW()
                          WHERE id = ?"
                     )->execute([$toAdd, $kzEntry['id']]);
+
+                    $restoredEntries[] = [
+                        'entry_id'      => (int)$kzEntry['id'],
+                        'pieces_added'  => $toAdd,
+                        'balance_after' => (int)$kzEntry['pieces_remaining'] + $toAdd,
+                    ];
                     $remaining -= $toAdd;
                 }
             }
 
+            // Write stock_ledger inflow for each restored entry so the stock card reflects the reversal
+            foreach ($restoredEntries as $re) {
+                $bundlesRestored = (int)($re['pieces_added']  / KZINC_PIECES_PER_BUNDLE);
+                $balanceBundles  = (int)($re['balance_after'] / KZINC_PIECES_PER_BUNDLE);
+                $db->prepare(
+                    "INSERT INTO stock_ledger
+                     (coil_id, stock_entry_id, transaction_type, description,
+                      inflow_meters, outflow_meters, balance_meters,
+                      inflow_pieces, outflow_pieces, balance_pieces,
+                      inflow_bundles, outflow_bundles, balance_bundles,
+                      reference_type, reference_id, created_by, created_at)
+                     VALUES
+                     (?, ?, 'inflow', ?,
+                      0, 0, 0,
+                      ?, 0, ?,
+                      ?, 0, ?,
+                      'sale_reversal', ?, ?, NOW())"
+                )->execute([
+                    $sale['coil_id'],
+                    $re['entry_id'],
+                    "Stock restored — K-Zinc sale #{$saleId} deleted",
+                    $re['pieces_added'],
+                    $re['balance_after'],
+                    $bundlesRestored,
+                    $balanceBundles,
+                    $saleId,
+                    $currentUser['id'],
+                ]);
+            }
+
             $stockEntryModel->checkAndUpdateCoilStatus($sale['coil_id']);
-            $deletionLog[] = "KZinc stock restored: {$piecesToRestore} pieces";
+            $deletionLog[] = "KZinc stock restored: {$piecesToRestore} pieces (stock card updated)";
         }
 
         // --------------------------------------------------------
