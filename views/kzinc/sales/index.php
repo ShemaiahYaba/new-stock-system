@@ -152,8 +152,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             </td>
                             <td>
                                 <?php if (!empty($sale['quantity']) && !empty($sale['unit_type'])): ?>
-                                    <?php echo number_format($sale['quantity'], 0); ?>
-                                    <span class="text-capitalize"><?php echo htmlspecialchars($sale['unit_type']); ?></span>
+                                    <?php echo htmlspecialchars(formatKzincQuantity($sale['quantity'], $sale['unit_type'])); ?>
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>

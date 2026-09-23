@@ -45,10 +45,10 @@ if ($selectedEntryId) {
 
         $summaryStmt = $db->prepare(
             "SELECT
-                COALESCE(SUM(inflow_bundles), 0)  AS total_inflow,
-                COALESCE(SUM(outflow_bundles), 0) AS total_outflow,
+                COALESCE(SUM(inflow_pieces), 0)  AS total_inflow,
+                COALESCE(SUM(outflow_pieces), 0) AS total_outflow,
                 COALESCE((
-                    SELECT balance_bundles FROM stock_ledger
+                    SELECT balance_pieces FROM stock_ledger
                     WHERE stock_entry_id = ?
                     ORDER BY created_at DESC, id DESC
                     LIMIT 1
@@ -181,8 +181,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <div class="card bg-success text-white">
                                 <div class="card-body">
                                     <h6><i class="bi bi-arrow-down-circle"></i> Total Inflow</h6>
-                                    <h2><?php echo number_format($summary['total_inflow']); ?> bundles</h2>
-                                    <small>Stock additions</small>
+                                    <h2><?php echo number_format($summary['total_inflow']); ?> pcs</h2>
+                                    <small><?php echo number_format(intdiv((int)$summary['total_inflow'], KZINC_PIECES_PER_BUNDLE)); ?> bundles + <?php echo (int)$summary['total_inflow'] % KZINC_PIECES_PER_BUNDLE; ?> pcs</small>
                                 </div>
                             </div>
                         </div>
@@ -190,8 +190,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <div class="card bg-danger text-white">
                                 <div class="card-body">
                                     <h6><i class="bi bi-arrow-up-circle"></i> Total Outflow</h6>
-                                    <h2><?php echo number_format($summary['total_outflow']); ?> bundles</h2>
-                                    <small>Sales &amp; removals</small>
+                                    <h2><?php echo number_format($summary['total_outflow']); ?> pcs</h2>
+                                    <small><?php echo number_format(intdiv((int)$summary['total_outflow'], KZINC_PIECES_PER_BUNDLE)); ?> bundles + <?php echo (int)$summary['total_outflow'] % KZINC_PIECES_PER_BUNDLE; ?> pcs</small>
                                 </div>
                             </div>
                         </div>
@@ -199,8 +199,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <div class="card bg-info text-white">
                                 <div class="card-body">
                                     <h6><i class="bi bi-calculator"></i> Current Balance</h6>
-                                    <h2><?php echo number_format($summary['current_balance']); ?> bundles</h2>
-                                    <small>Available bundles</small>
+                                    <h2><?php echo number_format($summary['current_balance']); ?> pcs</h2>
+                                    <small><?php echo number_format(intdiv((int)$summary['current_balance'], KZINC_PIECES_PER_BUNDLE)); ?> bundles + <?php echo (int)$summary['current_balance'] % KZINC_PIECES_PER_BUNDLE; ?> pcs</small>
                                 </div>
                             </div>
                         </div>
@@ -229,9 +229,9 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     <th>Date</th>
                                     <th>Type</th>
                                     <th>Description</th>
-                                    <th class="text-end">Inflow (bundles)</th>
-                                    <th class="text-end">Outflow (bundles)</th>
-                                    <th class="text-end">Balance (bundles)</th>
+                                    <th class="text-end">Inflow (pcs)</th>
+                                    <th class="text-end">Outflow (pcs)</th>
+                                    <th class="text-end">Balance (pcs)</th>
                                     <th>Created By</th>
                                 </tr>
                             </thead>
@@ -252,21 +252,24 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     </td>
                                     <td><?php echo htmlspecialchars($row['description']); ?></td>
                                     <td class="text-end">
-                                        <?php if ((int)$row['inflow_bundles'] > 0): ?>
-                                        <strong class="text-success">+<?php echo number_format((int)$row['inflow_bundles']); ?></strong>
+                                        <?php if ((int)$row['inflow_pieces'] > 0): ?>
+                                        <strong class="text-success">+<?php echo number_format((int)$row['inflow_pieces']); ?></strong>
+                                        <div class="small text-muted"><?php echo htmlspecialchars(formatKzincQuantity((int)$row['inflow_pieces'] / KZINC_PIECES_PER_BUNDLE, STOCK_UNIT_BUNDLES)); ?></div>
                                         <?php else: ?>
                                         <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-end">
-                                        <?php if ((int)$row['outflow_bundles'] > 0): ?>
-                                        <strong class="text-danger">-<?php echo number_format((int)$row['outflow_bundles']); ?></strong>
+                                        <?php if ((int)$row['outflow_pieces'] > 0): ?>
+                                        <strong class="text-danger">-<?php echo number_format((int)$row['outflow_pieces']); ?></strong>
+                                        <div class="small text-muted"><?php echo htmlspecialchars(formatKzincQuantity((int)$row['outflow_pieces'] / KZINC_PIECES_PER_BUNDLE, STOCK_UNIT_BUNDLES)); ?></div>
                                         <?php else: ?>
                                         <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-end">
-                                        <strong><?php echo number_format((int)$row['balance_bundles']); ?></strong>
+                                        <strong><?php echo number_format((int)$row['balance_pieces']); ?></strong>
+                                        <div class="small text-muted"><?php echo htmlspecialchars(formatKzincQuantity((int)$row['balance_pieces'] / KZINC_PIECES_PER_BUNDLE, STOCK_UNIT_BUNDLES)); ?></div>
                                     </td>
                                     <td><?php echo htmlspecialchars($row['created_by_name'] ?? '—'); ?></td>
                                 </tr>

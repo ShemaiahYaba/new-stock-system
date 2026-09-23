@@ -92,8 +92,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                         <tr>
                             <th class="ps-3">Quantity</th>
                             <td>
-                                <?php echo number_format($sale['quantity'] ?? 0); ?>
-                                <?php echo htmlspecialchars($sale['unit_type'] ?? ''); ?>
+                                <?php echo htmlspecialchars(formatKzincQuantity($sale['quantity'] ?? 0, $sale['unit_type'] ?? null)); ?>
                             </td>
                         </tr>
                         <tr>
@@ -140,6 +139,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 <tr>
                                     <th class="ps-3">Colour / Label</th>
                                     <th>Bundles</th>
+                                    <th>Loose Pcs</th>
                                     <th>Pieces</th>
                                     <th>Price / Bundle</th>
                                     <th class="pe-3 text-end">Subtotal</th>
@@ -149,7 +149,8 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                 <?php foreach ($paper['properties'] as $prop): ?>
                                 <tr>
                                     <td class="ps-3"><?php echo htmlspecialchars($prop['label'] ?? $prop['property_id'] ?? '—'); ?></td>
-                                    <td><?php echo number_format($prop['sheet_qty'] ?? $prop['quantity'] ?? 0, 0); ?></td>
+                                    <td><?php echo number_format($prop['sheet_qty'] ?? $prop['bundles'] ?? $prop['quantity'] ?? 0, 0); ?></td>
+                                    <td><?php echo number_format($prop['loose_pieces'] ?? 0); ?></td>
                                     <td><?php echo number_format($prop['pieces'] ?? 0); ?></td>
                                     <td>₦<?php echo number_format($prop['unit_price'] ?? 0, 2); ?></td>
                                     <td class="pe-3 text-end">₦<?php echo number_format($prop['row_subtotal'] ?? $prop['subtotal'] ?? 0, 2); ?></td>
@@ -160,7 +161,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <tbody class="table-warning">
                                 <?php foreach ($paper['addons'] as $addon): ?>
                                 <tr>
-                                    <td class="ps-3 text-muted fst-italic" colspan="3">
+                                    <td class="ps-3 text-muted fst-italic" colspan="4">
                                         <i class="bi bi-plus-square"></i>
                                         <?php echo htmlspecialchars($addon['name'] ?? $addon['code'] ?? '—'); ?>
                                     </td>
@@ -175,12 +176,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                             <tfoot class="table-light">
                                 <?php if (!empty($paper['addons'])): ?>
                                 <tr>
-                                    <th class="ps-3 text-muted" colspan="4">Production Subtotal</th>
+                                    <th class="ps-3 text-muted" colspan="5">Production Subtotal</th>
                                     <th class="pe-3 text-end text-muted">₦<?php echo number_format($paper['total_amount'] ?? 0, 2); ?></th>
                                 </tr>
                                 <?php endif; ?>
                                 <tr>
-                                    <th class="ps-3" colspan="4">Grand Total</th>
+                                    <th class="ps-3" colspan="5">Grand Total</th>
                                     <th class="pe-3 text-end">₦<?php echo number_format($paper['grand_total'] ?? $paper['total_amount'] ?? $sale['total_amount'], 2); ?></th>
                                 </tr>
                             </tfoot>

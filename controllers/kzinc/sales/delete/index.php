@@ -81,18 +81,37 @@ try {
 
         // --------------------------------------------------------
         // STEP 4: Restore pieces to KZinc stock entries (LIFO)
+        // quantity for bundles = effective bundles (may include fractional
+        // loose pcs, e.g. 3.2 for 3 bundles + 3 pcs). Pallets unit is legacy.
         // --------------------------------------------------------
         $saleUnitType = $sale['unit_type'];
         $saleQty      = floatval($sale['quantity'] ?? 0);
 
         if ($saleUnitType === STOCK_UNIT_PALLETS) {
-            // quantity stored as total pieces for pallets in the sale record
-            $piecesToRestore = (int)$saleQty;
+            // Legacy: some older rows stored pallet count; prefer pieces if qty
+            // looks like a piece total, otherwise treat as bundle-equivalents.
+            // Safe path: always convert via pieces-per-bundle when qty is small
+            // relative to a piece total — use quantity × 15 for bundle units.
+            // Historical pallet rows stored effective bundle count after this fix
+            // path was introduced via STOCK_UNIT_BUNDLES; legacy pallet qty was
+            // pallet count or bundle count. Restore using ledger outflow if present.
+            $ledgerPcs = $db->prepare(
+                "SELECT COALESCE(SUM(outflow_pieces), 0) AS pcs
+                 FROM stock_ledger
+                 WHERE reference_type = 'sale' AND reference_id = ?"
+            );
+            $ledgerPcs->execute([$saleId]);
+            $loggedPcs = (int)$ledgerPcs->fetchColumn();
+            if ($loggedPcs > 0) {
+                $piecesToRestore = $loggedPcs;
+            } else {
+                $piecesToRestore = (int)round($saleQty * KZINC_PIECES_PER_BUNDLE);
+            }
         } elseif ($saleUnitType === STOCK_UNIT_BUNDLES) {
-            $piecesToRestore = (int)($saleQty * KZINC_PIECES_PER_BUNDLE);
+            $piecesToRestore = (int)round($saleQty * KZINC_PIECES_PER_BUNDLE);
         } else {
             // pieces
-            $piecesToRestore = (int)$saleQty;
+            $piecesToRestore = (int)round($saleQty);
         }
 
         if ($piecesToRestore > 0) {

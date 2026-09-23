@@ -133,24 +133,46 @@ try {
         // Set the primary stock entry (the first one we'll use)
         $primaryStockEntryId = $plannedDeductions[0]['entry_id'];
     } else {
-        // KZinc: determine sale unit type and quantity from the production paper
+        // KZinc: determine sale unit type and quantity from the production paper.
+        // Quantity is stored in effective bundles (whole bundles + loose pcs / 15)
+        // so mixed rows like "3 bundles + 3 pcs" become 3.2, not collapsed to 3.
         $totalPiecesToDeduct = 0;
-        $kzincBundleQty     = 0;
+        $kzincBundleQty     = 0.0;
         $kzincHasBundles    = false;
+        $kzincHasPallets    = false;
         $kzincPlannedDeductions = [];
         $stockEntryModel    = new StockEntry();
+        $palletSize         = (int)($coil['pallet_size'] ?? 0);
 
-        $kzincHasPallets = false;
         foreach ($productionPaper['properties'] as $prop) {
             $totalPiecesToDeduct += (int)($prop['pieces'] ?? 0);
-            $pType = $prop['propertyType'] ?? '';
-            if ($pType === STOCK_UNIT_BUNDLES) {
-                $kzincBundleQty  += (float)($prop['quantity'] ?? 0);
-                $kzincHasBundles  = true;
-            } elseif ($pType === STOCK_UNIT_PALLETS) {
-                $kzincBundleQty  += (float)($prop['pallets'] ?? 0) * (int)($coil['pallet_size'] ?? 0);
-                $kzincHasBundles  = true;
-                $kzincHasPallets  = true;
+
+            $rowPallets     = (float)($prop['pallets'] ?? 0);
+            $rowBundles     = (float)($prop['bundles'] ?? 0);
+            $rowLoosePieces = (float)($prop['loose_pieces'] ?? 0);
+
+            // Prefer explicit breakdown fields; fall back to quantity for older payloads
+            if ($rowPallets > 0 || $rowBundles > 0 || $rowLoosePieces > 0 || isset($prop['pallets']) || isset($prop['bundles'])) {
+                $rowEffectiveBundles = ($rowPallets * $palletSize) + $rowBundles
+                    + ($rowLoosePieces / KZINC_PIECES_PER_BUNDLE);
+            } else {
+                $pType = $prop['propertyType'] ?? '';
+                if ($pType === STOCK_UNIT_PIECES) {
+                    $rowEffectiveBundles = ((float)($prop['quantity'] ?? 0)) / KZINC_PIECES_PER_BUNDLE;
+                } elseif ($pType === STOCK_UNIT_PALLETS) {
+                    $rowEffectiveBundles = ((float)($prop['quantity'] ?? 0)) * $palletSize;
+                } else {
+                    $rowEffectiveBundles = (float)($prop['quantity'] ?? 0);
+                }
+            }
+
+            $kzincBundleQty += $rowEffectiveBundles;
+
+            if ($rowPallets > 0 || ($prop['propertyType'] ?? '') === STOCK_UNIT_PALLETS) {
+                $kzincHasPallets = true;
+                $kzincHasBundles = true;
+            } elseif ($rowBundles > 0 || $rowEffectiveBundles >= 1 || ($prop['propertyType'] ?? '') === STOCK_UNIT_BUNDLES) {
+                $kzincHasBundles = true;
             }
         }
 
@@ -186,8 +208,14 @@ try {
         // Historical sale: no stock deduction — $kzincPlannedDeductions stays empty,
         // $primaryStockEntryId stays null.
 
-        $kzincSaleUnitType = $kzincHasPallets ? STOCK_UNIT_PALLETS : ($kzincHasBundles ? STOCK_UNIT_BUNDLES : STOCK_UNIT_PIECES);
-        $kzincSaleQuantity = $kzincHasBundles ? $kzincBundleQty : $totalPiecesToDeduct;
+        // Prefer bundles unit whenever any whole/fractional bundles exist so delete
+        // can restore via quantity × pieces-per-bundle (handles mixed loose pcs).
+        $kzincSaleUnitType = $kzincHasPallets
+            ? STOCK_UNIT_BUNDLES  // store as bundles (effective); pallets flag not needed for restore
+            : ($kzincHasBundles || $kzincBundleQty > 0 ? STOCK_UNIT_BUNDLES : STOCK_UNIT_PIECES);
+        $kzincSaleQuantity = ($kzincSaleUnitType === STOCK_UNIT_BUNDLES)
+            ? $kzincBundleQty
+            : $totalPiecesToDeduct;
     }
 
     // ========================================
@@ -233,11 +261,15 @@ try {
         'properties' => array_map(function ($prop) {
             return [
                 'property_id' => $prop['propertyType'],
-                'label' => ucfirst($prop['propertyType']),
+                // Colour / custom label from the sale form (not the unit type)
+                'label' => $prop['label'] ?? ucfirst($prop['propertyType'] ?? ''),
                 'sheet_qty' => $prop['sheetQty'] ?? $prop['quantity'],
                 'sheet_meter' => $prop['sheetMeter'] ?? 0,
                 'meters' => $prop['meters'] ?? 0,
                 'quantity' => $prop['quantity'] ?? 0,
+                'pallets' => $prop['pallets'] ?? 0,
+                'bundles' => $prop['bundles'] ?? 0,
+                'loose_pieces' => $prop['loose_pieces'] ?? 0,
                 'pieces' => $prop['pieces'] ?? 0,
                 'unit_price' => $prop['unitPrice'],
                 'row_subtotal' => $prop['subtotal'],

@@ -3,8 +3,9 @@
  * KZinc New Sale — Multi-Color Production Workflow
  *
  * One KZinc coil can cover multiple colour variations in a single
- * production order. Each row is: colour label + bundles + price/bundle.
- * Pieces are computed automatically (bundles × KZINC_PIECES_PER_BUNDLE).
+ * production order. Each row is: colour label + pallets/bundles/loose pcs
+ * + price/bundle. Total pieces = (pallets × pallet_size × 15) + (bundles × 15)
+ * + loose pcs. Mixed bundle+piece rows keep both (stored as effective bundles).
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -753,7 +754,13 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 ? (customInput.value.trim() || 'Custom')
                 : (colourSel.value || 'KZinc');
 
-            const propertyType = pallets > 0 ? 'pallets' : (bundles > 0 ? 'bundles' : 'pieces');
+            // Whole bundles on this row (pallets converted + loose bundles column)
+            const wholeBundles = (pallets * palletSize) + bundles;
+            // Effective bundles includes loose pieces as a fraction (e.g. 3 pcs → 0.2)
+            // so mixed "3 bundles + 3 pcs" is stored as 3.2, not collapsed to 3.
+            const propertyType = pallets > 0
+                ? 'pallets'
+                : (wholeBundles > 0 ? 'bundles' : 'pieces');
 
             properties.push({
                 propertyType,
@@ -761,12 +768,12 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 pallets,
                 bundles,
                 loose_pieces: loosePieces,
-                quantity:   pallets > 0 ? pallets : (bundles > 0 ? bundles : loosePieces),
+                quantity:   propertyType === 'pieces' ? loosePieces : effectiveBundles,
                 pieces,
                 unitPrice:  price,
                 subtotal,
                 meters:     0,
-                sheetQty:   bundles,
+                sheetQty:   wholeBundles,
                 sheetMeter: 0,
             });
             totalPieces += pieces;
@@ -842,11 +849,16 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 if (p.bundles > 0)      parts.push(`${p.bundles} Bundle${p.bundles !== 1 ? 's' : ''}`);
                 if (p.loose_pieces > 0) parts.push(`${p.loose_pieces} pcs`);
                 const qtyDesc = parts.join(' + ') || `${p.pieces} pcs`;
+                // Invoice amount = quantity × unit_price; always use effective
+                // bundle-equivalents so loose pieces are included in the line total.
+                const invoiceQty = p.propertyType === 'pieces'
+                    ? (p.loose_pieces / PIECES_PER_BUNDLE)
+                    : p.quantity;
                 return {
                     product_code: `${coilCode} - ${qtyDesc} - ${p.label}`,
                     description:  `${p.pieces} pcs total`,
-                    quantity:    p.quantity,
-                    unit:        p.propertyType,
+                    quantity:    invoiceQty,
+                    unit:        'bundles',
                     unit_price:  p.unitPrice,
                     subtotal:    p.subtotal,
                 };

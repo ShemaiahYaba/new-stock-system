@@ -318,6 +318,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <th>#</th>
                         <th>Colour / Label</th>
                         <th class="text-center">Bundles</th>
+                        <th class="text-center">Loose Pcs</th>
                         <th class="text-center">Pieces</th>
                         <th class="text-end">Price / Bundle</th>
                         <th class="text-end">Subtotal</th>
@@ -328,7 +329,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     <tr>
                         <td><?php echo $i + 1; ?></td>
                         <td><strong><?php echo htmlspecialchars($prop['label'] ?? $prop['property_id'] ?? '—'); ?></strong></td>
-                        <td class="text-center"><?php echo number_format($prop['sheet_qty'] ?? $prop['quantity'] ?? 0, 0); ?></td>
+                        <td class="text-center"><?php echo number_format($prop['sheet_qty'] ?? $prop['bundles'] ?? $prop['quantity'] ?? 0, 0); ?></td>
+                        <td class="text-center"><?php echo number_format($prop['loose_pieces'] ?? 0); ?></td>
                         <td class="text-center"><?php echo number_format($prop['pieces'] ?? 0); ?></td>
                         <td class="text-end">₦<?php echo number_format($prop['unit_price'] ?? 0, 2); ?></td>
                         <td class="text-end"><strong>₦<?php echo number_format($prop['row_subtotal'] ?? $prop['subtotal'] ?? 0, 2); ?></strong></td>
@@ -344,12 +346,12 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <?php if ($hasAddons): ?>
                 <tfoot>
                     <tr class="table-light">
-                        <td colspan="5" class="text-end text-muted">Production Subtotal</td>
+                        <td colspan="6" class="text-end text-muted">Production Subtotal</td>
                         <td class="text-end text-muted">₦<?php echo number_format($productionSubtotal, 2); ?></td>
                     </tr>
                     <?php foreach ($prodPaper['addons'] as $addon): ?>
                     <tr class="addon-row">
-                        <td colspan="4">
+                        <td colspan="5">
                             <i class="bi bi-plus-square text-muted"></i>
                             <em><?php echo htmlspecialchars($addon['name'] ?? $addon['code'] ?? ''); ?></em>
                             <span class="badge bg-secondary ms-1" style="font-size:0.7rem;"><?php echo htmlspecialchars($addon['calculation_method'] ?? 'fixed'); ?></span>
@@ -360,14 +362,14 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                     </tr>
                     <?php endforeach; ?>
                     <tr class="table-primary fw-bold">
-                        <td colspan="5" class="text-end">Grand Total</td>
+                        <td colspan="6" class="text-end">Grand Total</td>
                         <td class="text-end fs-5">₦<?php echo number_format($grandTotal, 2); ?></td>
                     </tr>
                 </tfoot>
                 <?php else: ?>
                 <tfoot>
                     <tr class="table-primary fw-bold">
-                        <td colspan="5" class="text-end">Total</td>
+                        <td colspan="6" class="text-end">Total</td>
                         <td class="text-end fs-5">₦<?php echo number_format($grandTotal, 2); ?></td>
                     </tr>
                 </tfoot>
@@ -449,7 +451,8 @@ require_once __DIR__ . '/../../layout/sidebar.php';
 
         <?php if ($isKzinc): ?>
         <?php
-        $totalBundles = array_sum(array_map(fn($p) => $p['sheet_qty'] ?? $p['quantity'] ?? 0, $prodPaper['properties'] ?? []));
+        $totalBundles = array_sum(array_map(fn($p) => (float)($p['sheet_qty'] ?? $p['bundles'] ?? 0), $prodPaper['properties'] ?? []));
+        $totalLoose   = array_sum(array_map(fn($p) => (float)($p['loose_pieces'] ?? 0), $prodPaper['properties'] ?? []));
         $totalPieces  = array_sum(array_column($prodPaper['properties'] ?? [], 'pieces'));
         $grandTotal   = $prodPaper['grand_total'] ?? $prodPaper['total_amount'] ?? 0;
         $addonTotal   = array_sum(array_column($prodPaper['addons'] ?? [], 'amount'));
@@ -460,6 +463,9 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                 <div class="card bg-light text-center p-3">
                     <h6 class="text-muted mb-1">Total Bundles</h6>
                     <h3 class="mb-0 text-primary"><?php echo number_format($totalBundles, 0); ?></h3>
+                    <?php if ($totalLoose > 0): ?>
+                    <small class="text-muted">+ <?php echo number_format($totalLoose); ?> loose pcs</small>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="col-md-4">

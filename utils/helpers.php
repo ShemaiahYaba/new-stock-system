@@ -93,6 +93,56 @@ function formatCurrency($amount, $currency = '₦')
 }
 
 /**
+ * Format a K-Zinc sale quantity for display.
+ * Bundle quantities may include a fractional part from loose pieces
+ * (e.g. 3.2 → "3 bundles + 3 pcs").
+ *
+ * @param float|int|null $quantity
+ * @param string|null $unitType
+ * @return string
+ */
+function formatKzincQuantity($quantity, $unitType = null)
+{
+    $qty = (float)($quantity ?? 0);
+    $unit = strtolower((string)($unitType ?? ''));
+    $ppb = defined('KZINC_PIECES_PER_BUNDLE') ? (int)KZINC_PIECES_PER_BUNDLE : 15;
+
+    if ($unit === STOCK_UNIT_PIECES || $unit === 'pcs' || $unit === 'piece') {
+        $n = (int)round($qty);
+        return number_format($n) . ' pcs';
+    }
+
+    if ($unit === STOCK_UNIT_PALLETS) {
+        // Legacy pallet rows: show as-is
+        $whole = (int)round($qty);
+        return number_format($whole) . ' pallet' . ($whole === 1 ? '' : 's');
+    }
+
+    // Default / bundles: split whole bundles and remainder pieces
+    $whole = (int)floor($qty + 1e-9);
+    $frac  = $qty - $whole;
+    $loose = (int)round($frac * $ppb);
+
+    // Guard float noise (e.g. 2.999999)
+    if ($loose >= $ppb) {
+        $whole += intdiv($loose, $ppb);
+        $loose  = $loose % $ppb;
+    }
+
+    $parts = [];
+    if ($whole > 0) {
+        $parts[] = number_format($whole) . ' bundle' . ($whole === 1 ? '' : 's');
+    }
+    if ($loose > 0) {
+        $parts[] = number_format($loose) . ' pcs';
+    }
+    if (empty($parts)) {
+        return '0 bundles';
+    }
+    return implode(' + ', $parts);
+}
+
+/**
  * Generate random string
  *
  * @param int $length Length of string
