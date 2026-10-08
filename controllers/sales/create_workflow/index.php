@@ -208,11 +208,11 @@ try {
         // Historical sale: no stock deduction — $kzincPlannedDeductions stays empty,
         // $primaryStockEntryId stays null.
 
-        // Prefer bundles unit whenever any whole/fractional bundles exist so delete
-        // can restore via quantity × pieces-per-bundle (handles mixed loose pcs).
-        $kzincSaleUnitType = $kzincHasPallets
-            ? STOCK_UNIT_BUNDLES  // store as bundles (effective); pallets flag not needed for restore
-            : ($kzincHasBundles || $kzincBundleQty > 0 ? STOCK_UNIT_BUNDLES : STOCK_UNIT_PIECES);
+        // Bundles/pallets (incl. mixed with loose pcs): store effective bundles.
+        // Pieces-only: store piece count so price-per-piece sales stay coherent.
+        $kzincSaleUnitType = ($kzincHasPallets || $kzincHasBundles)
+            ? STOCK_UNIT_BUNDLES
+            : STOCK_UNIT_PIECES;
         $kzincSaleQuantity = ($kzincSaleUnitType === STOCK_UNIT_BUNDLES)
             ? $kzincBundleQty
             : $totalPiecesToDeduct;
@@ -272,6 +272,9 @@ try {
                 'loose_pieces' => $prop['loose_pieces'] ?? 0,
                 'pieces' => $prop['pieces'] ?? 0,
                 'unit_price' => $prop['unitPrice'],
+                'price_unit' => $prop['price_unit'] ?? (
+                    (($prop['propertyType'] ?? '') === STOCK_UNIT_PIECES) ? 'pieces' : 'bundles'
+                ),
                 'row_subtotal' => $prop['subtotal'],
             ];
         }, $productionPaper['properties']),

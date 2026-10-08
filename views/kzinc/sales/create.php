@@ -4,8 +4,9 @@
  *
  * One KZinc coil can cover multiple colour variations in a single
  * production order. Each row is: colour label + pallets/bundles/loose pcs
- * + price/bundle. Total pieces = (pallets × pallet_size × 15) + (bundles × 15)
- * + loose pcs. Mixed bundle+piece rows keep both (stored as effective bundles).
+ * + price. Total pieces = (pallets × pallet_size × 15) + (bundles × 15)
+ * + loose pcs. Pieces-only rows use price-per-piece; bundle/pallet rows use
+ * price-per-bundle. Mixed bundle+piece rows keep both (effective bundles).
  */
 
 require_once __DIR__ . '/../../../config/db.php';
@@ -201,7 +202,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                         <th style="width:10%">Bundles</th>
                                         <th style="width:10%">Pcs</th>
                                         <th style="width:10%">Total Pcs</th>
-                                        <th style="width:18%">Price / Bundle (₦)</th>
+                                        <th style="width:18%">Price (₦)</th>
                                         <th style="width:15%">Subtotal (₦)</th>
                                         <th></th>
                                     </tr>
@@ -332,7 +333,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 <div class="form-control form-control-sm bg-light pieces-display text-center fw-bold">0</div>
             </div>
             <div class="col-md-2 col-6">
-                <label class="form-label small mb-1">Price / Bundle (₦)</label>
+                <label class="form-label small mb-1 price-label">Price / Piece (₦)</label>
                 <input type="number" class="form-control form-control-sm price-input"
                        min="0" step="0.01" placeholder="0.00">
             </div>
@@ -577,6 +578,27 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         recalcSummary();
     }
 
+    /** Pieces-only row: price is per piece. Otherwise price is per bundle. */
+    function isPiecesOnlyRow(pallets, bundles, loosePieces) {
+        return pallets <= 0 && bundles <= 0 && loosePieces > 0;
+    }
+
+    function calcRowSubtotal(pallets, bundles, loosePieces, price, palletSize) {
+        if (isPiecesOnlyRow(pallets, bundles, loosePieces)) {
+            return loosePieces * price;
+        }
+        const effectiveBundles = (pallets * palletSize) + bundles + (loosePieces / PIECES_PER_BUNDLE);
+        return effectiveBundles * price;
+    }
+
+    function syncPriceLabel(rowEl, pallets, bundles, loosePieces) {
+        const labelEl = rowEl.querySelector('.price-label');
+        if (!labelEl) return;
+        labelEl.textContent = isPiecesOnlyRow(pallets, bundles, loosePieces)
+            ? 'Price / Piece (₦)'
+            : 'Price / Bundle (₦)';
+    }
+
     function getProductionSubtotal() {
         let total = 0;
         const palletSize = currentCoilData?.palletSize || 0;
@@ -585,8 +607,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             const bundles     = parseFloat(rowEl.querySelector('.bundle-input').value)       || 0;
             const loosePieces = parseFloat(rowEl.querySelector('.loose-pieces-input').value) || 0;
             const price       = parseFloat(rowEl.querySelector('.price-input').value)        || 0;
-            const effectiveBundles = (pallets * palletSize) + bundles + (loosePieces / PIECES_PER_BUNDLE);
-            total += effectiveBundles * price;
+            total += calcRowSubtotal(pallets, bundles, loosePieces, price, palletSize);
         });
         return total;
     }
@@ -635,10 +656,10 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
         const loosePieces = parseFloat(rowEl.querySelector('.loose-pieces-input').value) || 0;
         const price       = parseFloat(rowEl.querySelector('.price-input').value)        || 0;
 
-        const totalPieces      = (pallets * palletSize * PIECES_PER_BUNDLE) + (bundles * PIECES_PER_BUNDLE) + loosePieces;
-        const effectiveBundles = (pallets * palletSize) + bundles + (loosePieces / PIECES_PER_BUNDLE);
-        const subtotal         = effectiveBundles * price;
+        const totalPieces = (pallets * palletSize * PIECES_PER_BUNDLE) + (bundles * PIECES_PER_BUNDLE) + loosePieces;
+        const subtotal    = calcRowSubtotal(pallets, bundles, loosePieces, price, palletSize);
 
+        syncPriceLabel(rowEl, pallets, bundles, loosePieces);
         rowEl.querySelector('.pieces-display').textContent   = Math.round(totalPieces).toLocaleString();
         rowEl.querySelector('.subtotal-display').textContent = fmt(subtotal);
         recalcSummary();
@@ -746,7 +767,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             const price       = parseFloat(rowEl.querySelector('.price-input').value)        || 0;
             const pieces      = Math.round((pallets * palletSize * PIECES_PER_BUNDLE) + (bundles * PIECES_PER_BUNDLE) + loosePieces);
             const effectiveBundles = (pallets * palletSize) + bundles + (loosePieces / PIECES_PER_BUNDLE);
-            const subtotal    = effectiveBundles * price;
+            const subtotal    = calcRowSubtotal(pallets, bundles, loosePieces, price, palletSize);
 
             if (pieces <= 0) continue;
 
@@ -758,6 +779,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
             const wholeBundles = (pallets * palletSize) + bundles;
             // Effective bundles includes loose pieces as a fraction (e.g. 3 pcs → 0.2)
             // so mixed "3 bundles + 3 pcs" is stored as 3.2, not collapsed to 3.
+            // Pieces-only rows use price-per-piece; other rows use price-per-bundle.
             const propertyType = pallets > 0
                 ? 'pallets'
                 : (wholeBundles > 0 ? 'bundles' : 'pieces');
@@ -771,6 +793,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 quantity:   propertyType === 'pieces' ? loosePieces : effectiveBundles,
                 pieces,
                 unitPrice:  price,
+                price_unit: propertyType === 'pieces' ? 'pieces' : 'bundles',
                 subtotal,
                 meters:     0,
                 sheetQty:   wholeBundles,
@@ -849,16 +872,15 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                 if (p.bundles > 0)      parts.push(`${p.bundles} Bundle${p.bundles !== 1 ? 's' : ''}`);
                 if (p.loose_pieces > 0) parts.push(`${p.loose_pieces} pcs`);
                 const qtyDesc = parts.join(' + ') || `${p.pieces} pcs`;
-                // Invoice amount = quantity × unit_price; always use effective
-                // bundle-equivalents so loose pieces are included in the line total.
-                const invoiceQty = p.propertyType === 'pieces'
-                    ? (p.loose_pieces / PIECES_PER_BUNDLE)
-                    : p.quantity;
+                // Invoice amount = quantity × unit_price.
+                // Pieces-only: qty in pieces × price/piece.
+                // Bundles/pallets: qty in effective bundles × price/bundle.
+                const isPcs = p.propertyType === 'pieces';
                 return {
                     product_code: `${coilCode} - ${qtyDesc} - ${p.label}`,
                     description:  `${p.pieces} pcs total`,
-                    quantity:    invoiceQty,
-                    unit:        'bundles',
+                    quantity:    isPcs ? p.loose_pieces : p.quantity,
+                    unit:        isPcs ? 'pieces' : 'bundles',
                     unit_price:  p.unitPrice,
                     subtotal:    p.subtotal,
                 };

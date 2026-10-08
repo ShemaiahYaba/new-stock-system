@@ -320,7 +320,7 @@ require_once __DIR__ . '/../../layout/sidebar.php';
                         <th class="text-center">Bundles</th>
                         <th class="text-center">Loose Pcs</th>
                         <th class="text-center">Pieces</th>
-                        <th class="text-end">Price / Bundle</th>
+                        <th class="text-end">Unit Price</th>
                         <th class="text-end">Subtotal</th>
                     </tr>
                 </thead>

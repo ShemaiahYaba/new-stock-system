@@ -141,7 +141,7 @@ require_once __DIR__ . '/../../../layout/sidebar.php';
                                     <th>Bundles</th>
                                     <th>Loose Pcs</th>
                                     <th>Pieces</th>
-                                    <th>Price / Bundle</th>
+                                    <th>Unit Price</th>
                                     <th class="pe-3 text-end">Subtotal</th>
                                 </tr>
                             </thead>
